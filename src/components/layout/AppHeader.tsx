@@ -37,25 +37,25 @@ export function AppHeader({ onMenuClick, orgName, userName }: AppHeaderProps) {
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="h-9 w-9">
+                <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl">
                   <LayoutGrid className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
             </TooltipTrigger>
             <TooltipContent>Actions rapides</TooltipContent>
           </Tooltip>
-          <DropdownMenuContent align="end" className="w-52">
-            <DropdownMenuItem onClick={() => navigate("/properties?action=new")}>
+          <DropdownMenuContent align="end" className="w-52 rounded-xl">
+            <DropdownMenuItem onClick={() => navigate("/properties?action=new")} className="rounded-lg">
               <Building2 className="h-4 w-4 mr-2" /> Nouveau bien
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/tenants?action=new")}>
+            <DropdownMenuItem onClick={() => navigate("/tenants?action=new")} className="rounded-lg">
               <UserPlus className="h-4 w-4 mr-2" /> Nouveau locataire
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate("/rents?action=new")}>
+            <DropdownMenuItem onClick={() => navigate("/rents?action=new")} className="rounded-lg">
               <Banknote className="h-4 w-4 mr-2" /> Enregistrer un paiement
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/expenses?action=new")}>
+            <DropdownMenuItem onClick={() => navigate("/expenses?action=new")} className="rounded-lg">
               <Receipt className="h-4 w-4 mr-2" /> Ajouter une dépense
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -65,20 +65,20 @@ export function AppHeader({ onMenuClick, orgName, userName }: AppHeaderProps) {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-9 gap-2 px-2">
-              <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+            <Button variant="ghost" className="h-9 gap-2 px-2 rounded-xl">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary ring-2 ring-primary/20">
                 {initials}
               </div>
               <span className="text-sm font-medium hidden sm:inline">{userName || "Utilisateur"}</span>
               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={() => navigate("/settings")}>
+          <DropdownMenuContent align="end" className="w-48 rounded-xl">
+            <DropdownMenuItem onClick={() => navigate("/settings")} className="rounded-lg">
               <Settings className="h-4 w-4 mr-2" /> Paramètres
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive" onClick={signOut}>
+            <DropdownMenuItem className="text-destructive rounded-lg" onClick={signOut}>
               <LogOut className="h-4 w-4 mr-2" /> Se déconnecter
             </DropdownMenuItem>
           </DropdownMenuContent>
