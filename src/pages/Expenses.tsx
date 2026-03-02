@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useExpenses, useExpenseCategories } from "@/hooks/useExpenses";
 import { useProperties, useCities } from "@/hooks/useData";
@@ -38,11 +39,19 @@ export default function Expenses() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [showAdd, setShowAdd] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [form, setForm] = useState({
     category_id: "", amount: "", expense_date: new Date().toISOString().split("T")[0],
     description: "", expense_type: "variable", frequency: "unique",
     property_id: "", city_id: "",
   });
+
+  useEffect(() => {
+    if (searchParams.get("action") === "new") {
+      setShowAdd(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams]);
 
   const filtered = useMemo(() => {
     let result = expenses;

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Plus, Search, Loader2, ShieldAlert, UserX } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -43,8 +43,16 @@ export default function Tenants() {
   const [formerLoading, setFormerLoading] = useState(false);
   const [terminations, setTerminations] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("active");
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (searchParams.get("action") === "new") {
+      setShowAdd(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams]);
 
   // Active tenants hook
   const [tenants, setTenants] = useState<any[]>([]);
