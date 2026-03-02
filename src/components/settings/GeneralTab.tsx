@@ -193,7 +193,7 @@ export function GeneralTab({ settings, onSave, onUploadLogo }: Props) {
               <Input value={form.legal_name} onChange={e => set("legal_name", e.target.value)} placeholder="Ex: SCI Immobilia" />
             </div>
             <div className="space-y-2">
-              <Label>N° d'identification (RCCM / NIF)</Label>
+              <Label>N° d'identification (RCCM)</Label>
               <Input value={form.legal_id} onChange={e => set("legal_id", e.target.value)} placeholder="Ex: CI-ABJ-2024-B-12345" />
             </div>
             <div className="sm:col-span-2 space-y-2">
