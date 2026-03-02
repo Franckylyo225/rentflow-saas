@@ -93,7 +93,7 @@ export function UsersRolesTab() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6">
       {/* Role Legend */}
       <Card className="border-border bg-accent/30">
         <CardContent className="p-4">

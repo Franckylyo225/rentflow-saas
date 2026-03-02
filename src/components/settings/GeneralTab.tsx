@@ -70,7 +70,7 @@ export function GeneralTab({ settings, onSave, onUploadLogo }: Props) {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6">
       {/* Company Info */}
       <Card className="border-border">
         <CardHeader>

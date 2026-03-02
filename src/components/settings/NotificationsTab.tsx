@@ -48,7 +48,7 @@ export function NotificationsTab() {
   }
 
   return (
-    <div className="space-y-4 max-w-3xl">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">Configurez les relances automatiques SMS et Email</p>
         <Button size="sm" className="gap-2" onClick={handleSave} disabled={saving}>
