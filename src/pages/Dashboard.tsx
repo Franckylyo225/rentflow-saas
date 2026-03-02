@@ -403,88 +403,52 @@ export default function Dashboard() {
               </Card>
             </div>
 
-            {/* City revenue + transactions */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Revenue by city */}
-              <Card className="border-border">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-semibold">Revenus par ville</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {cityData.length === 0 ? (
-                    <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">Aucune donnée</div>
-                  ) : (
-                    <div className="space-y-4 mt-2">
-                      {cityData.map((c, i) => {
-                        const max = cityData[0]?.revenue || 1;
-                        const pct = Math.round((c.revenue / max) * 100);
-                        return (
-                          <div key={c.city}>
-                            <div className="flex justify-between text-sm mb-1.5">
-                              <span className="font-medium text-card-foreground">{c.city}</span>
-                              <span className="text-muted-foreground font-medium">{c.revenue.toLocaleString()} FCFA</span>
-                            </div>
-                            <div className="h-2 rounded-full bg-muted overflow-hidden">
-                              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: CITY_COLORS[i % CITY_COLORS.length] }} />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Transactions */}
-              <Card className="border-border lg:col-span-2">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-semibold">Transactions du mois</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  {monthPayments.length === 0 ? (
-                    <div className="py-10 text-center text-muted-foreground text-sm">Aucune transaction pour ce mois</div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-border bg-muted/30">
-                            <th className="text-left py-3 px-4 text-muted-foreground font-medium text-xs uppercase tracking-wider">Locataire</th>
-                            <th className="text-left py-3 px-4 text-muted-foreground font-medium text-xs uppercase tracking-wider">Bien</th>
-                            <th className="text-right py-3 px-4 text-muted-foreground font-medium text-xs uppercase tracking-wider">Montant</th>
-                            <th className="text-center py-3 px-4 text-muted-foreground font-medium text-xs uppercase tracking-wider">Statut</th>
+            {/* Transactions */}
+            <Card className="border-border">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold">Paiements du mois</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {monthPayments.length === 0 ? (
+                  <div className="py-10 text-center text-muted-foreground text-sm">Aucun paiement pour ce mois</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border bg-muted/30">
+                          <th className="text-left py-3 px-4 text-muted-foreground font-medium text-xs uppercase tracking-wider">Locataire</th>
+                          <th className="text-right py-3 px-4 text-muted-foreground font-medium text-xs uppercase tracking-wider">Montant</th>
+                          <th className="text-center py-3 px-4 text-muted-foreground font-medium text-xs uppercase tracking-wider">Échéance</th>
+                          <th className="text-center py-3 px-4 text-muted-foreground font-medium text-xs uppercase tracking-wider">Statut</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {monthPayments.slice(0, 10).map(p => (
+                          <tr key={p.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                            <td className="py-3 px-4">
+                              <p className="font-medium text-card-foreground">{p.tenants?.full_name}</p>
+                            </td>
+                            <td className="py-3 px-4 text-right font-semibold text-card-foreground">{p.paid_amount.toLocaleString()} / {p.amount.toLocaleString()} FCFA</td>
+                            <td className="py-3 px-4 text-center text-muted-foreground">{new Date(p.due_date).toLocaleDateString("fr-FR")}</td>
+                            <td className="py-3 px-4 text-center">
+                              <span className={cn(
+                                "text-xs font-medium px-2.5 py-1 rounded-full",
+                                p.status === "paid" ? "bg-success/10 text-success" :
+                                p.status === "late" ? "bg-destructive/10 text-destructive" :
+                                p.status === "partial" ? "bg-warning/10 text-warning" :
+                                "bg-muted text-muted-foreground"
+                              )}>
+                                {STATUS_LABELS[p.status] || p.status}
+                              </span>
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          {monthPayments.slice(0, 8).map(p => (
-                            <tr key={p.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                              <td className="py-3 px-4">
-                                <p className="font-medium text-card-foreground">{p.tenants?.full_name}</p>
-                              </td>
-                              <td className="py-3 px-4">
-                                <p className="text-card-foreground">{p.tenants?.units?.properties?.name}</p>
-                                <p className="text-xs text-muted-foreground">{p.tenants?.units?.name}</p>
-                              </td>
-                              <td className="py-3 px-4 text-right font-semibold text-card-foreground">{p.amount.toLocaleString()} FCFA</td>
-                              <td className="py-3 px-4 text-center">
-                                <span className={cn(
-                                  "text-xs font-medium px-2.5 py-1 rounded-full",
-                                  p.status === "paid" ? "bg-success/10 text-success" :
-                                  p.status === "late" ? "bg-destructive/10 text-destructive" :
-                                  p.status === "partial" ? "bg-warning/10 text-warning" :
-                                  "bg-muted text-muted-foreground"
-                                )}>
-                                  {STATUS_LABELS[p.status] || p.status}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </>
         )}
       </div>
