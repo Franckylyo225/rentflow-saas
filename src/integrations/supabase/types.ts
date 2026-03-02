@@ -162,6 +162,50 @@ export type Database = {
           },
         ]
       }
+      custom_roles: {
+        Row: {
+          base_role: Database["public"]["Enums"]["app_role"]
+          city_ids: string[]
+          created_at: string
+          id: string
+          is_system: boolean
+          name: string
+          organization_id: string
+          permissions: string[]
+          updated_at: string
+        }
+        Insert: {
+          base_role?: Database["public"]["Enums"]["app_role"]
+          city_ids?: string[]
+          created_at?: string
+          id?: string
+          is_system?: boolean
+          name: string
+          organization_id: string
+          permissions?: string[]
+          updated_at?: string
+        }
+        Update: {
+          base_role?: Database["public"]["Enums"]["app_role"]
+          city_ids?: string[]
+          created_at?: string
+          id?: string
+          is_system?: boolean
+          name?: string
+          organization_id?: string
+          permissions?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_roles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           city_id: string | null
@@ -803,24 +847,38 @@ export type Database = {
       }
       user_roles: {
         Row: {
+          city_ids: string[]
           created_at: string
+          custom_role_id: string | null
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
+          city_ids?: string[]
           created_at?: string
+          custom_role_id?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
+          city_ids?: string[]
           created_at?: string
+          custom_role_id?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_custom_role_id_fkey"
+            columns: ["custom_role_id"]
+            isOneToOne: false
+            referencedRelation: "custom_roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
