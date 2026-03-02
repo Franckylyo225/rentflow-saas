@@ -55,7 +55,7 @@ export function FinanceTab({ settings, onSave }: Props) {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6">
       {/* Late Fees */}
       <Card className="border-border">
         <CardHeader>
