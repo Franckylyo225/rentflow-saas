@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, Loader2, Trash2, Edit, MapPin, Globe } from "lucide-react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -44,7 +44,16 @@ export default function Properties() {
   const [form, setForm] = useState({ city_id: "", name: "", address: "", description: "", type: "immeuble" });
   const [cityForm, setCityForm] = useState({ name: "", country_id: "" });
   const [countryForm, setCountryForm] = useState({ name: "", code: "" });
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (searchParams.get("action") === "new") {
+      setForm({ city_id: "", name: "", address: "", description: "", type: "immeuble" });
+      setShowAdd(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams]);
 
   const { data: properties, loading, refetch } = useProperties();
   const { data: cities, refetch: refetchCities } = useCities();
