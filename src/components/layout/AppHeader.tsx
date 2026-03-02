@@ -1,4 +1,4 @@
-import { ChevronDown, Menu, LogOut, Settings, Plus, Building2, UserPlus } from "lucide-react";
+import { ChevronDown, Menu, LogOut, Settings, LayoutGrid, Building2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,7 +38,7 @@ export function AppHeader({ onMenuClick, orgName, userName }: AppHeaderProps) {
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon" className="h-9 w-9">
-                  <Plus className="h-4 w-4" />
+                  <LayoutGrid className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
             </TooltipTrigger>
