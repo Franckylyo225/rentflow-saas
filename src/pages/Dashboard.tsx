@@ -21,6 +21,13 @@ const STATUS_COLORS: Record<string, string> = {
   pending: "hsl(220, 10%, 70%)",
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  paid: "Payé",
+  partial: "Partiel",
+  late: "En retard",
+  pending: "En attente",
+};
+
 const CITY_COLORS = [
   "hsl(160, 84%, 39%)",
   "hsl(210, 100%, 52%)",
@@ -85,6 +92,19 @@ export default function Dashboard() {
   const occupiedUnits = units.filter(u => u.status === "occupied").length;
   const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
 
+  // Sparkline data - last 6 months revenue
+  const sparklineData = useMemo(() => {
+    const months: string[] = [];
+    for (let i = 5; i >= 0; i--) months.push(shiftMonth(selectedMonth, -i));
+    return months.map(m => payments.filter(p => p.month === m).reduce((s, p) => s + p.paid_amount, 0));
+  }, [payments, selectedMonth]);
+
+  const sparklineExpenses = useMemo(() => {
+    const months: string[] = [];
+    for (let i = 5; i >= 0; i--) months.push(shiftMonth(selectedMonth, -i));
+    return months.map(m => expenses.filter(e => e.expense_date.slice(0, 7) === m).reduce((s, e) => s + e.amount, 0));
+  }, [expenses, selectedMonth]);
+
   // Monthly revenue chart data
   const monthlyData = useMemo(() => {
     const byMonth: Record<string, { month: string; paid: number; unpaid: number }> = {};
@@ -143,6 +163,8 @@ export default function Dashboard() {
       .map(([key, v]) => ({ ...v, key }));
   }
 
+  const totalStatusCount = statusData.reduce((s, d) => s + d.count, 0);
+
   if (pLoading) {
     return <AppLayout><div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div></AppLayout>;
   }
@@ -150,77 +172,107 @@ export default function Dashboard() {
   return (
     <AppLayout>
       <div className="space-y-6">
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-foreground tracking-tight">Tableau de bord</h1>
             <p className="text-muted-foreground text-sm mt-1">Vue d'ensemble de votre portefeuille immobilier</p>
           </div>
-          {/* Month selector */}
-          <div className="flex items-center gap-1 bg-muted/60 rounded-lg p-1">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedMonth(m => shiftMonth(m, -1))}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <button
-              onClick={() => setSelectedMonth(now)}
-              className={cn(
-                "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-                isCurrentMonth ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
-              )}
-            >
-              <Calendar className="h-3.5 w-3.5" />
-              {formatMonthLabel(selectedMonth)}
-            </button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedMonth(m => shiftMonth(m, 1))} disabled={isCurrentMonth}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 bg-card border border-border rounded-xl p-1">
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setSelectedMonth(m => shiftMonth(m, -1))}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <button
+                onClick={() => setSelectedMonth(now)}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                  isCurrentMonth ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
+                )}
+              >
+                <Calendar className="h-3.5 w-3.5" />
+                {formatMonthLabel(selectedMonth)}
+              </button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setSelectedMonth(m => shiftMonth(m, 1))} disabled={isCurrentMonth}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
+        </div>
+
+        {/* KPI Cards - Databrain style */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            title="CA du mois"
+            value={`${(monthCA / 1000000).toFixed(1)}M FCFA`}
+            icon={TrendingUp}
+            variant="success"
+            trend={caChange.direction !== "flat" ? { value: `${caChange.pct}%`, positive: caChange.direction === "up" } : undefined}
+            subtitle="vs mois précédent"
+            sparkData={sparklineData}
+          />
+          <StatCard
+            title="Dépenses"
+            value={`${(monthExpenses / 1000000).toFixed(1)}M FCFA`}
+            icon={TrendingDown}
+            variant="destructive"
+            trend={expChange.direction !== "flat" ? { value: `${expChange.pct}%`, positive: expChange.direction === "down" } : undefined}
+            subtitle="vs mois précédent"
+            sparkData={sparklineExpenses}
+          />
+          <StatCard
+            title="Taux d'occupation"
+            value={`${occupancyRate}%`}
+            icon={Users}
+            variant="info"
+            subtitle={`${occupiedUnits}/${totalUnits} unités`}
+            sparkData={[60, 65, 70, 72, 75, occupancyRate]}
+          />
+          <StatCard
+            title="Biens gérés"
+            value={properties.length.toString()}
+            icon={Building2}
+            variant="default"
+            subtitle={`${totalUnits} unités · ${tenants.length} locataires`}
+          />
         </div>
 
         {/* Financial summary banner */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card className="border-border bg-gradient-to-br from-primary/5 to-primary/10">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-success/15">
-                <TrendingUp className="h-6 w-6 text-success" />
+          <Card className="border-border overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-transparent" />
+            <CardContent className="p-4 flex items-center gap-4 relative">
+              <div className="p-3 rounded-xl bg-success/10">
+                <TrendingUp className="h-5 w-5 text-success" />
               </div>
               <div className="flex-1">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">CA du mois</p>
-                <div className="flex items-baseline gap-2">
-                  <p className="text-2xl font-bold text-card-foreground">{(monthCA / 1000000).toFixed(1)}M <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
-                  <span className={cn("inline-flex items-center gap-0.5 text-xs font-semibold", caChange.direction === "up" ? "text-success" : caChange.direction === "down" ? "text-destructive" : "text-muted-foreground")}>
-                    {caChange.direction === "up" ? <ArrowUpRight className="h-3 w-3" /> : caChange.direction === "down" ? <ArrowDownRight className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
-                    {caChange.pct}%
-                  </span>
-                </div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Loyers attendus</p>
+                <p className="text-xl font-bold text-card-foreground">{(totalRevenue / 1000000).toFixed(1)}M <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-border bg-gradient-to-br from-destructive/5 to-destructive/10">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-destructive/15">
-                <TrendingDown className="h-6 w-6 text-destructive" />
+          <Card className="border-border overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 to-transparent" />
+            <CardContent className="p-4 flex items-center gap-4 relative">
+              <div className="p-3 rounded-xl bg-destructive/10">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
               </div>
               <div className="flex-1">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Dépenses du mois</p>
-                <div className="flex items-baseline gap-2">
-                  <p className="text-2xl font-bold text-card-foreground">{(monthExpenses / 1000000).toFixed(1)}M <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
-                  <span className={cn("inline-flex items-center gap-0.5 text-xs font-semibold", expChange.direction === "up" ? "text-destructive" : expChange.direction === "down" ? "text-success" : "text-muted-foreground")}>
-                    {expChange.direction === "up" ? <ArrowUpRight className="h-3 w-3" /> : expChange.direction === "down" ? <ArrowDownRight className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
-                    {expChange.pct}%
-                  </span>
-                </div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Impayés</p>
+                <p className="text-xl font-bold text-destructive">{(unpaidTotal / 1000000).toFixed(1)}M <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
               </div>
             </CardContent>
           </Card>
-          <Card className={cn("border-border bg-gradient-to-br", monthBenefice >= 0 ? "from-success/5 to-success/10" : "from-destructive/5 to-destructive/10")}>
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className={cn("p-3 rounded-xl", monthBenefice >= 0 ? "bg-success/15" : "bg-destructive/15")}>
-                <Wallet className={cn("h-6 w-6", monthBenefice >= 0 ? "text-success" : "text-destructive")} />
+          <Card className={cn("border-border overflow-hidden relative")}>
+            <div className={cn("absolute inset-0 bg-gradient-to-br", monthBenefice >= 0 ? "from-success/5 to-transparent" : "from-destructive/5 to-transparent")} />
+            <CardContent className="p-4 flex items-center gap-4 relative">
+              <div className={cn("p-3 rounded-xl", monthBenefice >= 0 ? "bg-success/10" : "bg-destructive/10")}>
+                <Wallet className={cn("h-5 w-5", monthBenefice >= 0 ? "text-success" : "text-destructive")} />
               </div>
               <div className="flex-1">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Bénéfice net</p>
                 <div className="flex items-baseline gap-2">
-                  <p className={cn("text-2xl font-bold", monthBenefice >= 0 ? "text-success" : "text-destructive")}>{(monthBenefice / 1000000).toFixed(1)}M <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
+                  <p className={cn("text-xl font-bold", monthBenefice >= 0 ? "text-success" : "text-destructive")}>{(monthBenefice / 1000000).toFixed(1)}M <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
                   <span className={cn("inline-flex items-center gap-0.5 text-xs font-semibold", benChange.direction === "up" ? "text-success" : benChange.direction === "down" ? "text-destructive" : "text-muted-foreground")}>
                     {benChange.direction === "up" ? <ArrowUpRight className="h-3 w-3" /> : benChange.direction === "down" ? <ArrowDownRight className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
                     {benChange.pct}%
@@ -229,14 +281,6 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Rent & portfolio stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Loyers attendus" value={`${(totalRevenue / 1000000).toFixed(1)}M FCFA`} icon={TrendingUp} variant="success" />
-          <StatCard title="Loyers impayés" value={`${(unpaidTotal / 1000000).toFixed(1)}M FCFA`} icon={AlertTriangle} variant="destructive" />
-          <StatCard title="Taux d'occupation" value={`${occupancyRate}%`} subtitle={`${occupiedUnits}/${totalUnits} unités`} icon={Users} />
-          <StatCard title="Nombre de biens" value={properties.length.toString()} icon={Home} subtitle={`${totalUnits} unités · ${tenants.length} locataires`} />
         </div>
 
         {properties.length === 0 ? (
@@ -251,70 +295,115 @@ export default function Dashboard() {
           </Card>
         ) : (
           <>
-            {/* Charts row */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Monthly revenue bar chart */}
-              <Card className="border-border lg:col-span-2">
+            {/* Charts row - Status Analysis & Revenue */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Payment status donut - Databrain style */}
+              <Card className="border-border">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-semibold">Revenus mensuels</CardTitle>
+                  <CardTitle className="text-base font-semibold flex items-center gap-2">
+                    Analyse des statuts
+                    <span className="text-muted-foreground text-xs font-normal">({formatMonthLabel(selectedMonth)})</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {statusData.length === 0 ? (
+                    <div className="h-[280px] flex items-center justify-center text-muted-foreground text-sm">Aucune donnée</div>
+                  ) : (
+                    <div className="flex items-center gap-6">
+                      <div className="relative flex-shrink-0">
+                        <ResponsiveContainer width={200} height={200}>
+                          <PieChart>
+                            <Pie
+                              data={statusData}
+                              dataKey="count"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={55}
+                              outerRadius={90}
+                              paddingAngle={3}
+                              strokeWidth={0}
+                            >
+                              {statusData.map((entry) => (
+                                <Cell key={entry.key} fill={STATUS_COLORS[entry.key]} />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(v: number, name: string) => [`${v} loyer(s)`, name]} contentStyle={{ borderRadius: 12, border: "1px solid hsl(220, 13%, 90%)", fontSize: 13, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                        {/* Center label */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                          <span className="text-2xl font-bold text-card-foreground">{totalStatusCount}</span>
+                          <span className="text-xs text-muted-foreground">Loyers</span>
+                        </div>
+                      </div>
+                      <div className="flex-1 space-y-3">
+                        {statusData.map(s => {
+                          const pct = Math.round((s.count / totalStatusCount) * 100);
+                          return (
+                            <div key={s.key} className="space-y-1">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <span className="h-3 w-3 rounded-full" style={{ backgroundColor: STATUS_COLORS[s.key] }} />
+                                  <span className="text-sm text-card-foreground font-medium">{s.name}</span>
+                                </div>
+                                <span className="text-sm font-bold text-card-foreground">{s.count}</span>
+                              </div>
+                              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all duration-500"
+                                  style={{ width: `${pct}%`, backgroundColor: STATUS_COLORS[s.key] }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Monthly revenue bar chart - Databrain style */}
+              <Card className="border-border">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base font-semibold">Revenus mensuels</CardTitle>
+                    <div className="flex items-center gap-3 text-xs">
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2.5 w-2.5 rounded-sm bg-success" />
+                        Payé
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2.5 w-2.5 rounded-sm bg-destructive" />
+                        Impayé
+                      </span>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {monthlyData.length === 0 ? (
                     <div className="h-[260px] flex items-center justify-center text-muted-foreground text-sm">Aucune donnée</div>
                   ) : (
                     <ResponsiveContainer width="100%" height={260}>
-                      <BarChart data={monthlyData} barGap={2}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 90%)" vertical={false} />
-                        <XAxis dataKey="label" tick={{ fontSize: 12, fill: "hsl(220, 10%, 46%)" }} axisLine={false} tickLine={false} />
-                        <YAxis tickFormatter={FCFA} tick={{ fontSize: 11, fill: "hsl(220, 10%, 46%)" }} axisLine={false} tickLine={false} width={55} />
+                      <BarChart data={monthlyData} barGap={2} barCategoryGap="20%">
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" vertical={false} />
+                        <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(220, 10%, 46%)" }} axisLine={false} tickLine={false} />
+                        <YAxis tickFormatter={FCFA} tick={{ fontSize: 11, fill: "hsl(220, 10%, 46%)" }} axisLine={false} tickLine={false} width={50} />
                         <Tooltip
                           formatter={(value: number) => `${value.toLocaleString()} FCFA`}
-                          contentStyle={{ borderRadius: 8, border: "1px solid hsl(220, 13%, 90%)", fontSize: 13 }}
+                          contentStyle={{ borderRadius: 12, border: "1px solid hsl(220, 13%, 90%)", fontSize: 13, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}
                         />
-                        <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
-                        <Bar dataKey="paid" name="Payé" fill="hsl(160, 84%, 39%)" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="unpaid" name="Impayé" fill="hsl(0, 72%, 51%)" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="paid" name="Payé" fill="hsl(160, 84%, 39%)" radius={[6, 6, 0, 0]} />
+                        <Bar dataKey="unpaid" name="Impayé" fill="hsl(0, 72%, 51%)" radius={[6, 6, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   )}
                 </CardContent>
               </Card>
-
-              {/* Payment status pie */}
-              <Card className="border-border">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-semibold">Statut des loyers</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {statusData.length === 0 ? (
-                    <div className="h-[260px] flex items-center justify-center text-muted-foreground text-sm">Aucune donnée</div>
-                  ) : (
-                    <div className="flex flex-col items-center">
-                      <ResponsiveContainer width="100%" height={180}>
-                        <PieChart>
-                          <Pie data={statusData} dataKey="count" nameKey="name" cx="50%" cy="50%" innerRadius={40} outerRadius={75} paddingAngle={3}>
-                            {statusData.map((entry) => (
-                              <Cell key={entry.key} fill={STATUS_COLORS[entry.key]} />
-                            ))}
-                          </Pie>
-                          <Tooltip formatter={(v: number, name: string) => [`${v} loyer(s)`, name]} contentStyle={{ borderRadius: 8, fontSize: 13 }} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div className="flex flex-wrap gap-3 justify-center mt-1">
-                        {statusData.map(s => (
-                          <div key={s.key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: STATUS_COLORS[s.key] }} />
-                            {s.name} ({s.count})
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
             </div>
 
-            {/* City revenue + tables */}
+            {/* City revenue + transactions */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Revenue by city */}
               <Card className="border-border">
@@ -325,15 +414,15 @@ export default function Dashboard() {
                   {cityData.length === 0 ? (
                     <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">Aucune donnée</div>
                   ) : (
-                    <div className="space-y-3 mt-2">
+                    <div className="space-y-4 mt-2">
                       {cityData.map((c, i) => {
                         const max = cityData[0]?.revenue || 1;
                         const pct = Math.round((c.revenue / max) * 100);
                         return (
                           <div key={c.city}>
-                            <div className="flex justify-between text-sm mb-1">
+                            <div className="flex justify-between text-sm mb-1.5">
                               <span className="font-medium text-card-foreground">{c.city}</span>
-                              <span className="text-muted-foreground">{c.revenue.toLocaleString()} FCFA</span>
+                              <span className="text-muted-foreground font-medium">{c.revenue.toLocaleString()} FCFA</span>
                             </div>
                             <div className="h-2 rounded-full bg-muted overflow-hidden">
                               <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: CITY_COLORS[i % CITY_COLORS.length] }} />
@@ -346,7 +435,7 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              {/* Transactions du mois */}
+              {/* Transactions */}
               <Card className="border-border lg:col-span-2">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-semibold">Transactions du mois</CardTitle>
@@ -358,32 +447,33 @@ export default function Dashboard() {
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b border-border bg-muted/50">
-                            <th className="text-left py-2.5 px-4 text-muted-foreground font-medium">Locataire</th>
-                            <th className="text-left py-2.5 px-4 text-muted-foreground font-medium">Bien</th>
-                            <th className="text-right py-2.5 px-4 text-muted-foreground font-medium">Montant</th>
-                            <th className="text-center py-2.5 px-4 text-muted-foreground font-medium">Statut</th>
+                          <tr className="border-b border-border bg-muted/30">
+                            <th className="text-left py-3 px-4 text-muted-foreground font-medium text-xs uppercase tracking-wider">Locataire</th>
+                            <th className="text-left py-3 px-4 text-muted-foreground font-medium text-xs uppercase tracking-wider">Bien</th>
+                            <th className="text-right py-3 px-4 text-muted-foreground font-medium text-xs uppercase tracking-wider">Montant</th>
+                            <th className="text-center py-3 px-4 text-muted-foreground font-medium text-xs uppercase tracking-wider">Statut</th>
                           </tr>
                         </thead>
                         <tbody>
                           {monthPayments.slice(0, 8).map(p => (
-                            <tr key={p.id} className="border-b border-border/50">
-                              <td className="py-2.5 px-4">
+                            <tr key={p.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                              <td className="py-3 px-4">
                                 <p className="font-medium text-card-foreground">{p.tenants?.full_name}</p>
                               </td>
-                              <td className="py-2.5 px-4">
+                              <td className="py-3 px-4">
                                 <p className="text-card-foreground">{p.tenants?.units?.properties?.name}</p>
                                 <p className="text-xs text-muted-foreground">{p.tenants?.units?.name}</p>
                               </td>
-                              <td className="py-2.5 px-4 text-right text-card-foreground">{p.amount.toLocaleString()} FCFA</td>
-                              <td className="py-2.5 px-4 text-center">
-                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                              <td className="py-3 px-4 text-right font-semibold text-card-foreground">{p.amount.toLocaleString()} FCFA</td>
+                              <td className="py-3 px-4 text-center">
+                                <span className={cn(
+                                  "text-xs font-medium px-2.5 py-1 rounded-full",
                                   p.status === "paid" ? "bg-success/10 text-success" :
                                   p.status === "late" ? "bg-destructive/10 text-destructive" :
                                   p.status === "partial" ? "bg-warning/10 text-warning" :
                                   "bg-muted text-muted-foreground"
-                                }`}>
-                                  {p.status === "paid" ? "Payé" : p.status === "late" ? "En retard" : p.status === "partial" ? "Partiel" : "En attente"}
+                                )}>
+                                  {STATUS_LABELS[p.status] || p.status}
                                 </span>
                               </td>
                             </tr>
