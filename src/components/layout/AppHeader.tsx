@@ -1,4 +1,4 @@
-import { ChevronDown, Menu, LogOut, Settings, LayoutGrid, Building2, UserPlus } from "lucide-react";
+import { ChevronDown, Menu, LogOut, Settings, LayoutGrid, Building2, UserPlus, Banknote, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,12 +44,19 @@ export function AppHeader({ onMenuClick, orgName, userName }: AppHeaderProps) {
             </TooltipTrigger>
             <TooltipContent>Actions rapides</TooltipContent>
           </Tooltip>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-52">
             <DropdownMenuItem onClick={() => navigate("/properties?action=new")}>
               <Building2 className="h-4 w-4 mr-2" /> Nouveau bien
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate("/tenants?action=new")}>
               <UserPlus className="h-4 w-4 mr-2" /> Nouveau locataire
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate("/rents?action=new")}>
+              <Banknote className="h-4 w-4 mr-2" /> Enregistrer un paiement
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/expenses?action=new")}>
+              <Receipt className="h-4 w-4 mr-2" /> Ajouter une dépense
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
