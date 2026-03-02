@@ -7,8 +7,13 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Banknote, AlertTriangle, Calendar, CreditCard, Save, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertTriangle, Calendar, CreditCard, Save, Loader2, Tag, Plus, Trash2 } from "lucide-react";
 import { OrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useExpenseCategories } from "@/hooks/useExpenses";
+import { useProfile } from "@/hooks/useProfile";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const ALL_PAYMENT_METHODS = ["Espèces", "Virement", "Mobile Money", "Chèque", "Carte bancaire", "Prélèvement"];
 const MONTHS = [
@@ -189,6 +194,9 @@ export function FinanceTab({ settings, onSave }: Props) {
         </CardContent>
       </Card>
 
+      {/* Expense Categories */}
+      <ExpenseCategoriesSection />
+
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={saving} className="gap-2">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
@@ -196,5 +204,96 @@ export function FinanceTab({ settings, onSave }: Props) {
         </Button>
       </div>
     </div>
+  );
+}
+
+/* ─── Expense Categories Section ─── */
+function ExpenseCategoriesSection() {
+  const { data: categories, loading, refetch } = useExpenseCategories();
+  const { profile } = useProfile();
+  const [showAdd, setShowAdd] = useState(false);
+  const [name, setName] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handleAdd = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    const { error } = await supabase.from("expense_categories").insert({
+      organization_id: profile?.organization_id,
+      name: name.trim(),
+      is_default: false,
+    });
+    if (error) { toast.error("Erreur : " + error.message); setSaving(false); return; }
+    toast.success("Catégorie ajoutée");
+    setShowAdd(false);
+    setName("");
+    setSaving(false);
+    refetch();
+  };
+
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from("expense_categories").delete().eq("id", id);
+    if (error) { toast.error("Impossible de supprimer (catégorie utilisée ?)"); return; }
+    toast.success("Catégorie supprimée");
+    refetch();
+  };
+
+  return (
+    <Card className="border-border">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10"><Tag className="h-4 w-4 text-primary" /></div>
+            <div>
+              <CardTitle className="text-base">Catégories de dépenses</CardTitle>
+              <CardDescription>{categories.length} catégories configurées</CardDescription>
+            </div>
+          </div>
+          <Button size="sm" variant="outline" className="gap-2" onClick={() => setShowAdd(true)}>
+            <Plus className="h-3.5 w-3.5" /> Ajouter
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        {loading ? (
+          <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+        ) : categories.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground text-sm">Aucune catégorie configurée.</div>
+        ) : (
+          <div className="divide-y divide-border">
+            {categories.map(c => (
+              <div key={c.id} className="flex items-center justify-between px-4 py-2.5 hover:bg-muted/30 transition-colors">
+                <div className="flex items-center gap-3">
+                  <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm font-medium text-card-foreground">{c.name}</span>
+                  {c.is_default && <Badge variant="secondary" className="text-xs">Par défaut</Badge>}
+                </div>
+                {!c.is_default && (
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDelete(c.id)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+
+      <Dialog open={showAdd} onOpenChange={setShowAdd}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Nouvelle catégorie</DialogTitle></DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label>Nom de la catégorie *</Label>
+            <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Jardinage" />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAdd(false)}>Annuler</Button>
+            <Button onClick={handleAdd} disabled={saving || !name.trim()}>
+              {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Ajouter
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
   );
 }
