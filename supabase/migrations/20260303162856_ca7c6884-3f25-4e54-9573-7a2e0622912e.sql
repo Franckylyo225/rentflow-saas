@@ -1,0 +1,1 @@
+ALTER TABLE public.organizations ADD COLUMN salaries_enabled boolean NOT NULL DEFAULT true;

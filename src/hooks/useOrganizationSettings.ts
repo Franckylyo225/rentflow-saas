@@ -24,6 +24,7 @@ export interface OrganizationSettings {
   fiscal_year_start: number;
   deposit_months: number;
   rent_due_day: number;
+  salaries_enabled: boolean;
 }
 
 export function useOrganizationSettings() {

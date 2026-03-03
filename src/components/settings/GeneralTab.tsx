@@ -178,6 +178,31 @@ export function GeneralTab({ settings, onSave, onUploadLogo }: Props) {
         </CardContent>
       </Card>
 
+      {/* Modules */}
+      <Card className="border-border">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10"><Users2 className="h-4 w-4 text-primary" /></div>
+            <div>
+              <CardTitle className="text-base">Modules optionnels</CardTitle>
+              <CardDescription>Activez ou désactivez les fonctionnalités selon vos besoins</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-card-foreground">Gestion des salaires</p>
+              <p className="text-xs text-muted-foreground">Suivi du personnel et génération automatique des charges salariales</p>
+            </div>
+            <Switch
+              checked={form.salaries_enabled}
+              onCheckedChange={v => setForm(prev => ({ ...prev, salaries_enabled: v }))}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Legal Info */}
       <Card className="border-border">
         <CardHeader>
