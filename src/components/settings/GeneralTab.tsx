@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Globe, Upload, Camera, Save, Loader2, MapPin, Scale } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Building2, Globe, Upload, Camera, Save, Loader2, MapPin, Scale, Users2 } from "lucide-react";
 import { OrganizationSettings, useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
 const CURRENCIES = ["FCFA", "EUR", "USD", "GBP", "MAD", "XAF"];
@@ -33,6 +34,7 @@ export function GeneralTab({ settings, onSave, onUploadLogo }: Props) {
     legal_id: settings.legal_id || "",
     legal_address: settings.legal_address || "",
     logo_url: settings.logo_url || "",
+    salaries_enabled: settings.salaries_enabled ?? true,
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -65,6 +67,7 @@ export function GeneralTab({ settings, onSave, onUploadLogo }: Props) {
       legal_name: form.legal_name || null,
       legal_id: form.legal_id || null,
       legal_address: form.legal_address || null,
+      salaries_enabled: form.salaries_enabled,
     } as any);
     setSaving(false);
   };
@@ -171,6 +174,31 @@ export function GeneralTab({ settings, onSave, onUploadLogo }: Props) {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Modules */}
+      <Card className="border-border">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10"><Users2 className="h-4 w-4 text-primary" /></div>
+            <div>
+              <CardTitle className="text-base">Modules optionnels</CardTitle>
+              <CardDescription>Activez ou désactivez les fonctionnalités selon vos besoins</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-card-foreground">Gestion des salaires</p>
+              <p className="text-xs text-muted-foreground">Suivi du personnel et génération automatique des charges salariales</p>
+            </div>
+            <Switch
+              checked={form.salaries_enabled}
+              onCheckedChange={v => setForm(prev => ({ ...prev, salaries_enabled: v }))}
+            />
           </div>
         </CardContent>
       </Card>

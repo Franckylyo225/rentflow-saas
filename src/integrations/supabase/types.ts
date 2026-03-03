@@ -562,6 +562,7 @@ export type Database = {
           name: string
           phone: string | null
           rent_due_day: number
+          salaries_enabled: boolean
           timezone: string
           updated_at: string
         }
@@ -586,6 +587,7 @@ export type Database = {
           name: string
           phone?: string | null
           rent_due_day?: number
+          salaries_enabled?: boolean
           timezone?: string
           updated_at?: string
         }
@@ -610,6 +612,7 @@ export type Database = {
           name?: string
           phone?: string | null
           rent_due_day?: number
+          salaries_enabled?: boolean
           timezone?: string
           updated_at?: string
         }

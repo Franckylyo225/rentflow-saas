@@ -3,6 +3,7 @@ import { navItems } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { Building2, X } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
 interface AppSidebarProps {
   open: boolean;
@@ -12,6 +13,7 @@ interface AppSidebarProps {
 export function AppSidebar({ open, onClose }: AppSidebarProps) {
   const location = useLocation();
   const { profile, role } = useProfile();
+  const { settings } = useOrganizationSettings();
 
   const initials = profile?.full_name
     ? profile.full_name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
@@ -44,7 +46,9 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {navItems.map((item) => {
+          {navItems
+            .filter(item => item.path !== "/employees" || settings?.salaries_enabled !== false)
+            .map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <NavLink
