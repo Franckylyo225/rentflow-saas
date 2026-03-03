@@ -81,10 +81,18 @@ export default function TenantDetail() {
           <Card className="border-border">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <User className="h-4 w-4 text-primary" /> Informations personnelles
+                <User className="h-4 w-4 text-primary" /> {tenant.tenant_type === "company" ? "Informations entreprise" : "Informations personnelles"}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
+              {tenant.tenant_type === "company" && (
+                <>
+                  <div className="flex items-center gap-2 text-muted-foreground"><Building2 className="h-3.5 w-3.5" /> {tenant.company_name || "—"}</div>
+                  <div className="flex items-center gap-2 text-muted-foreground"><FileText className="h-3.5 w-3.5" /> RCCM : {tenant.rccm || "—"}</div>
+                  <div className="flex items-center gap-2 text-muted-foreground"><User className="h-3.5 w-3.5" /> Personne ressource : {tenant.contact_person || "—"}</div>
+                </>
+              )}
+              <div className="flex items-center gap-2 text-muted-foreground"><User className="h-3.5 w-3.5" /> {tenant.full_name}</div>
               <div className="flex items-center gap-2 text-muted-foreground"><Phone className="h-3.5 w-3.5" /> {tenant.phone}</div>
               <div className="flex items-center gap-2 text-muted-foreground"><Mail className="h-3.5 w-3.5" /> {tenant.email || "—"}</div>
               <div className="flex items-center gap-2 text-muted-foreground"><CreditCard className="h-3.5 w-3.5" /> {tenant.id_number || "—"}</div>
