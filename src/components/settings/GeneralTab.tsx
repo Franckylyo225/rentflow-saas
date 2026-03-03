@@ -34,6 +34,7 @@ export function GeneralTab({ settings, onSave, onUploadLogo }: Props) {
     legal_id: settings.legal_id || "",
     legal_address: settings.legal_address || "",
     logo_url: settings.logo_url || "",
+    salaries_enabled: settings.salaries_enabled ?? true,
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
