@@ -277,12 +277,15 @@ export default function Tenants() {
                           {filtered.map(tenant => (
                             <tr key={tenant.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/tenants/${tenant.id}`)}>
                               <td className="py-3 px-4">
-                                <div className="flex items-center gap-3">
-                                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
-                                    {tenant.full_name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
+                                  <div className="flex items-center gap-3">
+                                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
+                                      {tenant.tenant_type === "company" ? <Building2 className="h-3.5 w-3.5" /> : tenant.full_name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
+                                    </div>
+                                    <div>
+                                      <span className="font-medium text-card-foreground">{tenant.tenant_type === "company" ? tenant.company_name || tenant.full_name : tenant.full_name}</span>
+                                      {tenant.tenant_type === "company" && <p className="text-xs text-muted-foreground">{tenant.full_name}</p>}
+                                    </div>
                                   </div>
-                                  <span className="font-medium text-card-foreground">{tenant.full_name}</span>
-                                </div>
                               </td>
                               <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">{tenant.phone}</td>
                               <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">{tenant.units?.properties?.name}</td>
