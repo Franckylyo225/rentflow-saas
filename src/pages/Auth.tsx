@@ -109,7 +109,7 @@ export default function AuthPage() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             {isSignUp && (
-              <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-foreground">Nom complet</Label>
                   <div className="relative">
@@ -136,37 +136,39 @@ export default function AuthPage() {
                     />
                   </div>
                 </div>
-              </>
+              </div>
             )}
 
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground">Adresse email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="vous@entreprise.com"
-                  className="pl-10 h-12 bg-muted/50 border-border/60 focus:bg-background transition-colors"
-                  required
-                />
+            <div className={isSignUp ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "space-y-5"}>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-foreground">Adresse email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="vous@entreprise.com"
+                    className="pl-10 h-12 bg-muted/50 border-border/60 focus:bg-background transition-colors"
+                    required
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-foreground">Mot de passe</Label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="pl-10 h-12 bg-muted/50 border-border/60 focus:bg-background transition-colors"
-                  required
-                  minLength={6}
-                />
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-foreground">Mot de passe</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="pl-10 h-12 bg-muted/50 border-border/60 focus:bg-background transition-colors"
+                    required
+                    minLength={6}
+                  />
+                </div>
               </div>
             </div>
 
