@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, CreditCard, Home, Mail, Phone, User, Loader2, LogOut } from "lucide-react";
+import { ArrowLeft, Calendar, CreditCard, Home, Mail, Phone, User, Loader2, LogOut, Building2, FileText } from "lucide-react";
 import { PaymentStatusBadge } from "@/components/ui/status-badge";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
