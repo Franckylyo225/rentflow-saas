@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { StatCard } from "@/components/dashboard/StatCard";
+import { useProfile } from "@/hooks/useProfile";
 import { Building2, Users, AlertTriangle, TrendingUp, Home, Loader2, Wallet, TrendingDown, ChevronLeft, ChevronRight, Calendar, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { useProperties, useUnits, useTenants, useRentPayments } from "@/hooks/useData";
 import { useExpenses } from "@/hooks/useExpenses";
@@ -51,6 +52,7 @@ function shiftMonth(month: string, delta: number): string {
 }
 
 export default function Dashboard() {
+  const { profile } = useProfile();
   const { data: properties, loading: pLoading } = useProperties();
   const { data: units } = useUnits();
   const { data: tenants } = useTenants();
@@ -175,7 +177,14 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">Tableau de bord</h1>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">
+              {(() => {
+                const hour = new Date().getHours();
+                const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+                const firstName = profile?.full_name?.split(" ")[0] || "";
+                return `${greeting}${firstName ? `, ${firstName}` : ""} 👋`;
+              })()}
+            </h1>
             <p className="text-muted-foreground text-sm mt-1">Vue d'ensemble de votre portefeuille immobilier</p>
           </div>
           <div className="flex items-center gap-2">
