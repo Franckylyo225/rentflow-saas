@@ -1,4 +1,4 @@
-import { Building2, Users, CreditCard, LayoutDashboard, Settings, Receipt, Users2, BarChart3, Bell } from "lucide-react";
+import { Building2, Users, CreditCard, LayoutDashboard, Settings, Receipt, Users2, BarChart3, Bell, Landmark } from "lucide-react";
 
 export interface City {
   id: string;
@@ -134,6 +134,7 @@ export const rentPayments: RentPayment[] = [
 export const navItems = [
   { label: "Tableau de bord", icon: LayoutDashboard, path: "/" },
   { label: "Biens", icon: Building2, path: "/properties" },
+  { label: "Patrimoine", icon: Landmark, path: "/patrimoine" },
   { label: "Locataires", icon: Users, path: "/tenants" },
   { label: "Loyers", icon: CreditCard, path: "/rents" },
   { label: "Dépenses", icon: Receipt, path: "/expenses" },

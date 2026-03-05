@@ -18,6 +18,8 @@ import Employees from "./pages/Employees";
 import FinancialReports from "./pages/FinancialReports";
 import SettingsPage from "./pages/Settings";
 import Notifications from "./pages/Notifications";
+import Patrimoine from "./pages/Patrimoine";
+import PatrimoineDetail from "./pages/PatrimoineDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +37,8 @@ const App = () => (
               <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/properties" element={<ProtectedRoute><Properties /></ProtectedRoute>} />
               <Route path="/properties/:id" element={<ProtectedRoute><PropertyDetail /></ProtectedRoute>} />
+              <Route path="/patrimoine" element={<ProtectedRoute><Patrimoine /></ProtectedRoute>} />
+              <Route path="/patrimoine/:id" element={<ProtectedRoute><PatrimoineDetail /></ProtectedRoute>} />
               <Route path="/tenants" element={<ProtectedRoute><Tenants /></ProtectedRoute>} />
               <Route path="/tenants/:id" element={<ProtectedRoute><TenantDetail /></ProtectedRoute>} />
               <Route path="/rents" element={<ProtectedRoute><Rents /></ProtectedRoute>} />
