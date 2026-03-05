@@ -18,6 +18,8 @@ import Employees from "./pages/Employees";
 import FinancialReports from "./pages/FinancialReports";
 import SettingsPage from "./pages/Settings";
 import Notifications from "./pages/Notifications";
+import Patrimoine from "./pages/Patrimoine";
+import PatrimoineDetail from "./pages/PatrimoineDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
