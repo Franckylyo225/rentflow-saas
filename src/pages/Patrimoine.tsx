@@ -12,7 +12,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Loader2, Trash2, Edit, MapPin, Landmark, Users, FolderCheck, FolderClock, UserCheck, Phone, Mail, MapPinned } from "lucide-react";
+import { Plus, Search, Loader2, Trash2, Edit, MapPin, Landmark, Users, FolderCheck, FolderClock, UserCheck, Phone, Mail, MapPinned, Eye } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -47,6 +47,7 @@ export default function Patrimoine() {
   const [editingHolder, setEditingHolder] = useState<any>(null);
   const [deletingHolder, setDeletingHolder] = useState<any>(null);
   const [holderSearch, setHolderSearch] = useState("");
+  const [viewingHolder, setViewingHolder] = useState<any>(null);
   const [form, setForm] = useState({ title: "", asset_type: "terrain", holder_id: "", locality: "", subdivision_name: "", land_title: "", handling_firm: "", description: "" });
   const [holderForm, setHolderForm] = useState({ full_name: "", phone: "", email: "", address: "" });
   const navigate = useNavigate();
@@ -366,7 +367,7 @@ export default function Patrimoine() {
                       </thead>
                       <tbody>
                         {filteredHolders.map(h => (
-                          <tr key={h.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                          <tr key={h.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => setViewingHolder(h)}>
                             <td className="py-3 px-4 font-medium text-card-foreground">{h.full_name}</td>
                             <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">{h.phone || "—"}</td>
                             <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">{h.email || "—"}</td>
@@ -376,8 +377,8 @@ export default function Patrimoine() {
                             </td>
                             <td className="py-3 px-4 text-center">
                               <div className="flex items-center justify-center gap-1">
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditHolder(h)}><Edit className="h-3.5 w-3.5" /></Button>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => { setDeletingHolder(h); setShowDeleteHolder(true); }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEditHolder(h); }}><Edit className="h-3.5 w-3.5" /></Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); setDeletingHolder(h); setShowDeleteHolder(true); }}><Trash2 className="h-3.5 w-3.5" /></Button>
                               </div>
                             </td>
                           </tr>
@@ -505,6 +506,53 @@ export default function Patrimoine() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Holder detail dialog */}
+      <Dialog open={!!viewingHolder} onOpenChange={open => { if (!open) setViewingHolder(null); }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><UserCheck className="h-5 w-5" /> {viewingHolder?.full_name}</DialogTitle>
+          </DialogHeader>
+          {viewingHolder && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {viewingHolder.phone && <div className="flex items-center gap-2 text-muted-foreground"><Phone className="h-3.5 w-3.5" /> {viewingHolder.phone}</div>}
+                {viewingHolder.email && <div className="flex items-center gap-2 text-muted-foreground"><Mail className="h-3.5 w-3.5" /> {viewingHolder.email}</div>}
+                {viewingHolder.address && <div className="col-span-2 flex items-center gap-2 text-muted-foreground"><MapPinned className="h-3.5 w-3.5" /> {viewingHolder.address}</div>}
+              </div>
+              <div>
+                <p className="text-sm font-medium mb-2">Actifs associés ({assets.filter(a => a.holder_id === viewingHolder.id).length})</p>
+                {assets.filter(a => a.holder_id === viewingHolder.id).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Aucun actif associé à ce titulaire.</p>
+                ) : (
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {assets.filter(a => a.holder_id === viewingHolder.id).map(asset => (
+                      <div
+                        key={asset.id}
+                        className="flex items-center justify-between p-3 rounded-md border border-border hover:bg-muted/30 cursor-pointer transition-colors"
+                        onClick={() => { setViewingHolder(null); navigate(`/patrimoine/${asset.id}`); }}
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-card-foreground">{asset.title}</p>
+                          <p className="text-xs text-muted-foreground">{asset.locality || asset.subdivision_name || "—"}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">{ASSET_TYPES.find(t => t.value === asset.asset_type)?.label}</Badge>
+                          {hasAcd(asset) ? (
+                            <Badge className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Complet</Badge>
+                          ) : (
+                            <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/20">En cours</Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
