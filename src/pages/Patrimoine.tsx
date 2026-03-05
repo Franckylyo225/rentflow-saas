@@ -58,8 +58,12 @@ export default function Patrimoine() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  const hasAcd = (a: any) => (a.patrimony_documents || []).some((d: any) => d.document_type === "acd");
+
   const filtered = assets.filter(a => {
     if (typeFilter !== "all" && a.asset_type !== typeFilter) return false;
+    if (statusFilter === "complet" && !hasAcd(a)) return false;
+    if (statusFilter === "en_cours" && hasAcd(a)) return false;
     if (search && !a.title.toLowerCase().includes(search.toLowerCase()) && !a.locality.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
