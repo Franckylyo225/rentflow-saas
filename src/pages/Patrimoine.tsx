@@ -216,14 +216,15 @@ export default function Patrimoine() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-border bg-muted/50">
-                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Titre</th>
-                      <th className="text-left py-3 px-4 text-muted-foreground font-medium hidden sm:table-cell">Titulaire</th>
-                      <th className="text-center py-3 px-4 text-muted-foreground font-medium hidden md:table-cell">Type</th>
-                      <th className="text-left py-3 px-4 text-muted-foreground font-medium hidden md:table-cell">Localité</th>
-                      <th className="text-left py-3 px-4 text-muted-foreground font-medium hidden lg:table-cell">Titre foncier</th>
-                      <th className="text-center py-3 px-4 text-muted-foreground font-medium w-20">Actions</th>
-                    </tr>
+                     <tr className="border-b border-border bg-muted/50">
+                       <th className="text-left py-3 px-4 text-muted-foreground font-medium">Titre</th>
+                       <th className="text-left py-3 px-4 text-muted-foreground font-medium hidden sm:table-cell">Titulaire</th>
+                       <th className="text-center py-3 px-4 text-muted-foreground font-medium hidden md:table-cell">Type</th>
+                       <th className="text-center py-3 px-4 text-muted-foreground font-medium">Statut</th>
+                       <th className="text-left py-3 px-4 text-muted-foreground font-medium hidden md:table-cell">Localité</th>
+                       <th className="text-left py-3 px-4 text-muted-foreground font-medium hidden lg:table-cell">Titre foncier</th>
+                       <th className="text-center py-3 px-4 text-muted-foreground font-medium w-20">Actions</th>
+                     </tr>
                   </thead>
                   <tbody>
                     {filtered.map(asset => (
