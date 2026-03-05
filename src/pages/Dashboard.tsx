@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { useProfile } from "@/hooks/useProfile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Building2, Users, AlertTriangle, TrendingUp, Home, Loader2, Wallet, TrendingDown, ChevronLeft, ChevronRight, Calendar, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { useProperties, useUnits, useTenants, useRentPayments } from "@/hooks/useData";
 import { useExpenses } from "@/hooks/useExpenses";
@@ -14,6 +15,14 @@ import {
 } from "recharts";
 
 const FCFA = (v: number) => `${(v / 1000).toFixed(0)}k`;
+const formatAmount = (v: number, short: boolean) => {
+  if (short) {
+    if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+    if (Math.abs(v) >= 1_000) return `${(v / 1_000).toFixed(0)}k`;
+    return v.toLocaleString();
+  }
+  return v.toLocaleString();
+};
 
 const STATUS_COLORS: Record<string, string> = {
   paid: "hsl(160, 84%, 39%)",
@@ -58,6 +67,9 @@ export default function Dashboard() {
   const { data: tenants } = useTenants();
   const { data: payments } = useRentPayments();
   const { data: expenses } = useExpenses();
+
+  const isMobile = useIsMobile();
+  const short = isMobile;
 
   const now = new Date().toISOString().slice(0, 7);
   const [selectedMonth, setSelectedMonth] = useState(now);
@@ -213,7 +225,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             title="CA du mois"
-            value={`${(monthCA / 1000000).toFixed(1)}M FCFA`}
+            value={`${formatAmount(monthCA, short)} FCFA`}
             icon={TrendingUp}
             variant="success"
             trend={caChange.direction !== "flat" ? { value: `${caChange.pct}%`, positive: caChange.direction === "up" } : undefined}
@@ -222,7 +234,7 @@ export default function Dashboard() {
           />
           <StatCard
             title="Dépenses"
-            value={`${(monthExpenses / 1000000).toFixed(1)}M FCFA`}
+            value={`${formatAmount(monthExpenses, short)} FCFA`}
             icon={TrendingDown}
             variant="destructive"
             trend={expChange.direction !== "flat" ? { value: `${expChange.pct}%`, positive: expChange.direction === "down" } : undefined}
@@ -256,7 +268,7 @@ export default function Dashboard() {
               </div>
               <div className="flex-1">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Loyers attendus</p>
-                <p className="text-xl font-bold text-card-foreground">{(totalRevenue / 1000000).toFixed(1)}M <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
+                <p className="text-xl font-bold text-card-foreground">{formatAmount(totalRevenue, short)} <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
               </div>
             </CardContent>
           </Card>
@@ -268,7 +280,7 @@ export default function Dashboard() {
               </div>
               <div className="flex-1">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Impayés</p>
-                <p className="text-xl font-bold text-destructive">{(unpaidTotal / 1000000).toFixed(1)}M <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
+                <p className="text-xl font-bold text-destructive">{formatAmount(unpaidTotal, short)} <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
               </div>
             </CardContent>
           </Card>
@@ -281,7 +293,7 @@ export default function Dashboard() {
               <div className="flex-1">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Bénéfice net</p>
                 <div className="flex items-baseline gap-2">
-                  <p className={cn("text-xl font-bold", monthBenefice >= 0 ? "text-success" : "text-destructive")}>{(monthBenefice / 1000000).toFixed(1)}M <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
+                  <p className={cn("text-xl font-bold", monthBenefice >= 0 ? "text-success" : "text-destructive")}>{formatAmount(monthBenefice, short)} <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
                   <span className={cn("inline-flex items-center gap-0.5 text-xs font-semibold", benChange.direction === "up" ? "text-success" : benChange.direction === "down" ? "text-destructive" : "text-muted-foreground")}>
                     {benChange.direction === "up" ? <ArrowUpRight className="h-3 w-3" /> : benChange.direction === "down" ? <ArrowDownRight className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
                     {benChange.pct}%
