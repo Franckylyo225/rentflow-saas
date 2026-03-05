@@ -105,6 +105,20 @@ export default function PatrimoineDetail() {
     else { toast.success("Document supprimé"); setDeletingDoc(null); fetchData(); }
   };
 
+  const previewDoc = async (doc: any) => {
+    const { data, error } = await supabase.storage.from("patrimony-docs").download(doc.file_url);
+    if (error || !data) { toast.error("Erreur visualisation"); return; }
+    const url = URL.createObjectURL(data);
+    setPreviewUrl(url);
+    setPreviewName(doc.name);
+  };
+
+  const closePreview = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setPreviewName("");
+  };
+
   const downloadDoc = async (doc: any) => {
     const { data, error } = await supabase.storage.from("patrimony-docs").download(doc.file_url);
     if (error || !data) { toast.error("Erreur téléchargement"); return; }
