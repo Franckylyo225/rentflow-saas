@@ -506,6 +506,53 @@ export default function Patrimoine() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Holder detail dialog */}
+      <Dialog open={!!viewingHolder} onOpenChange={open => { if (!open) setViewingHolder(null); }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><UserCheck className="h-5 w-5" /> {viewingHolder?.full_name}</DialogTitle>
+          </DialogHeader>
+          {viewingHolder && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {viewingHolder.phone && <div className="flex items-center gap-2 text-muted-foreground"><Phone className="h-3.5 w-3.5" /> {viewingHolder.phone}</div>}
+                {viewingHolder.email && <div className="flex items-center gap-2 text-muted-foreground"><Mail className="h-3.5 w-3.5" /> {viewingHolder.email}</div>}
+                {viewingHolder.address && <div className="col-span-2 flex items-center gap-2 text-muted-foreground"><MapPinned className="h-3.5 w-3.5" /> {viewingHolder.address}</div>}
+              </div>
+              <div>
+                <p className="text-sm font-medium mb-2">Actifs associés ({assets.filter(a => a.holder_id === viewingHolder.id).length})</p>
+                {assets.filter(a => a.holder_id === viewingHolder.id).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Aucun actif associé à ce titulaire.</p>
+                ) : (
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {assets.filter(a => a.holder_id === viewingHolder.id).map(asset => (
+                      <div
+                        key={asset.id}
+                        className="flex items-center justify-between p-3 rounded-md border border-border hover:bg-muted/30 cursor-pointer transition-colors"
+                        onClick={() => { setViewingHolder(null); navigate(`/patrimoine/${asset.id}`); }}
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-card-foreground">{asset.title}</p>
+                          <p className="text-xs text-muted-foreground">{asset.locality || asset.subdivision_name || "—"}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">{ASSET_TYPES.find(t => t.value === asset.asset_type)?.label}</Badge>
+                          {hasAcd(asset) ? (
+                            <Badge className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Complet</Badge>
+                          ) : (
+                            <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/20">En cours</Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
