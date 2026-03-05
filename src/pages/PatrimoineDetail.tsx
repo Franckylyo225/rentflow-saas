@@ -10,7 +10,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Loader2, Plus, Trash2, Upload, FileText, UserPlus, Download } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Trash2, Upload, FileText, UserPlus, Download, Eye, X } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -41,6 +41,8 @@ export default function PatrimoineDetail() {
   const [contactForm, setContactForm] = useState({ full_name: "", phone: "", role: "", email: "" });
   const [docForm, setDocForm] = useState({ name: "", document_type: "autre" });
   const [docFile, setDocFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewName, setPreviewName] = useState("");
 
   const fetchData = useCallback(async () => {
     if (!id) return;
@@ -101,6 +103,20 @@ export default function PatrimoineDetail() {
     const { error } = await supabase.from("patrimony_documents").delete().eq("id", deletingDoc.id);
     if (error) { toast.error("Erreur : " + error.message); }
     else { toast.success("Document supprimé"); setDeletingDoc(null); fetchData(); }
+  };
+
+  const previewDoc = async (doc: any) => {
+    const { data, error } = await supabase.storage.from("patrimony-docs").download(doc.file_url);
+    if (error || !data) { toast.error("Erreur visualisation"); return; }
+    const url = URL.createObjectURL(data);
+    setPreviewUrl(url);
+    setPreviewName(doc.name);
+  };
+
+  const closePreview = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setPreviewName("");
   };
 
   const downloadDoc = async (doc: any) => {
@@ -166,35 +182,6 @@ export default function PatrimoineDetail() {
           </Card>
         )}
 
-        {/* Contacts */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-base">Personnes ressources</CardTitle>
-            <Button size="sm" variant="outline" className="gap-1" onClick={() => setShowAddContact(true)}>
-              <UserPlus className="h-3.5 w-3.5" /> Ajouter
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {contacts.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Aucune personne ressource.</p>
-            ) : (
-              <div className="space-y-2">
-                {contacts.map(c => (
-                  <div key={c.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-                    <div>
-                      <p className="font-medium text-sm text-card-foreground">{c.full_name}</p>
-                      <p className="text-xs text-muted-foreground">{c.role}{c.phone ? ` · ${c.phone}` : ""}{c.email ? ` · ${c.email}` : ""}</p>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingContact(c)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
         {/* Documents */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-3">
@@ -221,6 +208,9 @@ export default function PatrimoineDetail() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => previewDoc(doc)}>
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => downloadDoc(doc)}>
                         <Download className="h-3.5 w-3.5" />
                       </Button>
@@ -228,6 +218,35 @@ export default function PatrimoineDetail() {
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Contacts */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="text-base">Personnes ressources</CardTitle>
+            <Button size="sm" variant="outline" className="gap-1" onClick={() => setShowAddContact(true)}>
+              <UserPlus className="h-3.5 w-3.5" /> Ajouter
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {contacts.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Aucune personne ressource.</p>
+            ) : (
+              <div className="space-y-2">
+                {contacts.map(c => (
+                  <div key={c.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+                    <div>
+                      <p className="font-medium text-sm text-card-foreground">{c.full_name}</p>
+                      <p className="text-xs text-muted-foreground">{c.role}{c.phone ? ` · ${c.phone}` : ""}{c.email ? ` · ${c.email}` : ""}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingContact(c)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -323,7 +342,25 @@ export default function PatrimoineDetail() {
             <AlertDialogAction onClick={handleDeleteDoc} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Supprimer</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+       </AlertDialog>
+
+      {/* Document preview */}
+      <Dialog open={!!previewUrl} onOpenChange={v => !v && closePreview()}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{previewName}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 overflow-auto">
+            {previewUrl && (
+              previewUrl && /\.(jpg|jpeg|png|gif|webp)$/i.test(previewName) ? (
+                <img src={previewUrl} alt={previewName} className="max-w-full h-auto mx-auto rounded" />
+              ) : (
+                <iframe src={previewUrl} className="w-full h-[70vh] rounded border border-border" title={previewName} />
+              )
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
