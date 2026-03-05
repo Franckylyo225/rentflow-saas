@@ -32,6 +32,7 @@ export default function Patrimoine() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
@@ -57,8 +58,12 @@ export default function Patrimoine() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  const hasAcd = (a: any) => (a.patrimony_documents || []).some((d: any) => d.document_type === "acd");
+
   const filtered = assets.filter(a => {
     if (typeFilter !== "all" && a.asset_type !== typeFilter) return false;
+    if (statusFilter === "complet" && !hasAcd(a)) return false;
+    if (statusFilter === "en_cours" && hasAcd(a)) return false;
     if (search && !a.title.toLowerCase().includes(search.toLowerCase()) && !a.locality.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
@@ -215,6 +220,14 @@ export default function Patrimoine() {
             <SelectContent>
               <SelectItem value="all">Tous les types</SelectItem>
               {ASSET_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48"><SelectValue placeholder="Tous les statuts" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les statuts</SelectItem>
+              <SelectItem value="complet">Complet</SelectItem>
+              <SelectItem value="en_cours">En cours</SelectItem>
             </SelectContent>
           </Select>
         </div>
