@@ -238,11 +238,18 @@ export default function Patrimoine() {
                           <p className="text-xs text-muted-foreground">{asset.subdivision_name}</p>
                         </td>
                         <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">{asset.asset_holders?.full_name || "—"}</td>
-                        <td className="py-3 px-4 text-center hidden md:table-cell">
-                          <Badge variant="outline" className="text-xs">{ASSET_TYPES.find(t => t.value === asset.asset_type)?.label || asset.asset_type}</Badge>
-                        </td>
-                        <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">{asset.locality || "—"}</td>
-                        <td className="py-3 px-4 text-muted-foreground hidden lg:table-cell">{asset.land_title || "—"}</td>
+                         <td className="py-3 px-4 text-center hidden md:table-cell">
+                           <Badge variant="outline" className="text-xs">{ASSET_TYPES.find(t => t.value === asset.asset_type)?.label || asset.asset_type}</Badge>
+                         </td>
+                         <td className="py-3 px-4 text-center">
+                           {(asset.patrimony_documents || []).some((d: any) => d.document_type === "acd") ? (
+                             <Badge className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Complet</Badge>
+                           ) : (
+                             <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/20">Dossier en cours</Badge>
+                           )}
+                         </td>
+                         <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">{asset.locality || "—"}</td>
+                         <td className="py-3 px-4 text-muted-foreground hidden lg:table-cell">{asset.land_title || "—"}</td>
                         <td className="py-3 px-4 text-center">
                           <div className="flex items-center justify-center gap-1">
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => openEdit(asset, e)}><Edit className="h-3.5 w-3.5" /></Button>
