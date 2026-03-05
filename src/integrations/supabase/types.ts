@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      asset_holders: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          notes: string | null
+          organization_id: string
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          phone?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_holders_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bail_terminations: {
         Row: {
           balance: number
@@ -617,6 +661,145 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      patrimony_assets: {
+        Row: {
+          asset_type: string
+          created_at: string
+          description: string | null
+          handling_firm: string | null
+          holder_id: string | null
+          id: string
+          land_title: string
+          locality: string
+          organization_id: string
+          status: string
+          subdivision_name: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          asset_type?: string
+          created_at?: string
+          description?: string | null
+          handling_firm?: string | null
+          holder_id?: string | null
+          id?: string
+          land_title?: string
+          locality?: string
+          organization_id: string
+          status?: string
+          subdivision_name?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          asset_type?: string
+          created_at?: string
+          description?: string | null
+          handling_firm?: string | null
+          holder_id?: string | null
+          id?: string
+          land_title?: string
+          locality?: string
+          organization_id?: string
+          status?: string
+          subdivision_name?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patrimony_assets_holder_id_fkey"
+            columns: ["holder_id"]
+            isOneToOne: false
+            referencedRelation: "asset_holders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patrimony_assets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patrimony_contacts: {
+        Row: {
+          asset_id: string
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          phone: string
+          role: string | null
+        }
+        Insert: {
+          asset_id: string
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          phone?: string
+          role?: string | null
+        }
+        Update: {
+          asset_id?: string
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          phone?: string
+          role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patrimony_contacts_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "patrimony_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patrimony_documents: {
+        Row: {
+          asset_id: string
+          document_type: string
+          file_size: number | null
+          file_url: string
+          id: string
+          name: string
+          uploaded_at: string
+        }
+        Insert: {
+          asset_id: string
+          document_type?: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          name: string
+          uploaded_at?: string
+        }
+        Update: {
+          asset_id?: string
+          document_type?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          name?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patrimony_documents_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "patrimony_assets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_records: {
         Row: {
