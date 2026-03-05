@@ -121,6 +121,34 @@ export default function Patrimoine() {
     else { toast.success("Titulaire ajouté"); setShowAddHolder(false); setHolderForm({ full_name: "", phone: "", email: "", address: "" }); fetchData(); }
   };
 
+  const handleEditHolder = async () => {
+    if (!holderForm.full_name || !editingHolder) return;
+    setSaving(true);
+    const { error } = await supabase.from("asset_holders").update(holderForm).eq("id", editingHolder.id);
+    setSaving(false);
+    if (error) { toast.error("Erreur : " + error.message); }
+    else { toast.success("Titulaire modifié"); setShowEditHolder(false); setEditingHolder(null); fetchData(); }
+  };
+
+  const handleDeleteHolder = async () => {
+    if (!deletingHolder) return;
+    setSaving(true);
+    const { error } = await supabase.from("asset_holders").delete().eq("id", deletingHolder.id);
+    setSaving(false);
+    if (error) { toast.error("Erreur : " + error.message); }
+    else { toast.success("Titulaire supprimé"); setShowDeleteHolder(false); setDeletingHolder(null); fetchData(); }
+  };
+
+  const openEditHolder = (h: any) => {
+    setEditingHolder(h);
+    setHolderForm({ full_name: h.full_name, phone: h.phone || "", email: h.email || "", address: h.address || "" });
+    setShowEditHolder(true);
+  };
+
+  const filteredHolders = holders.filter(h =>
+    !holderSearch || h.full_name.toLowerCase().includes(holderSearch.toLowerCase()) || (h.phone || "").includes(holderSearch)
+  );
+
   const resetForm = () => setForm({ title: "", asset_type: "terrain", holder_id: "", locality: "", subdivision_name: "", land_title: "", handling_firm: "", description: "" });
 
   const openEdit = (asset: any, e: React.MouseEvent) => {
