@@ -268,7 +268,7 @@ export default function Dashboard() {
               </div>
               <div className="flex-1">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Loyers attendus</p>
-                <p className="text-xl font-bold text-card-foreground">{(totalRevenue / 1000000).toFixed(1)}M <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
+                <p className="text-xl font-bold text-card-foreground">{formatAmount(totalRevenue, short)} <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
               </div>
             </CardContent>
           </Card>
