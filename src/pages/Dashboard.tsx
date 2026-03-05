@@ -14,6 +14,14 @@ import {
 } from "recharts";
 
 const FCFA = (v: number) => `${(v / 1000).toFixed(0)}k`;
+const formatAmount = (v: number, short: boolean) => {
+  if (short) {
+    if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+    if (Math.abs(v) >= 1_000) return `${(v / 1_000).toFixed(0)}k`;
+    return v.toLocaleString();
+  }
+  return v.toLocaleString();
+};
 
 const STATUS_COLORS: Record<string, string> = {
   paid: "hsl(160, 84%, 39%)",
