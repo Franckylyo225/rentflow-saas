@@ -342,7 +342,25 @@ export default function PatrimoineDetail() {
             <AlertDialogAction onClick={handleDeleteDoc} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Supprimer</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+       </AlertDialog>
+
+      {/* Document preview */}
+      <Dialog open={!!previewUrl} onOpenChange={v => !v && closePreview()}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{previewName}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 overflow-auto">
+            {previewUrl && (
+              previewUrl && /\.(jpg|jpeg|png|gif|webp)$/i.test(previewName) ? (
+                <img src={previewUrl} alt={previewName} className="max-w-full h-auto mx-auto rounded" />
+              ) : (
+                <iframe src={previewUrl} className="w-full h-[70vh] rounded border border-border" title={previewName} />
+              )
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
