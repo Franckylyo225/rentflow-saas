@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
+import { StatCard } from "@/components/dashboard/StatCard";
 
 const ASSET_TYPES = [
   { value: "terrain", label: "Terrain" },
