@@ -20,6 +20,7 @@ import SettingsPage from "./pages/Settings";
 import Notifications from "./pages/Notifications";
 import Patrimoine from "./pages/Patrimoine";
 import PatrimoineDetail from "./pages/PatrimoineDetail";
+import MfaVerify from "./pages/MfaVerify";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
