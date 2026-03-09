@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { navItems } from "@/data/mockData";
 import { cn } from "@/lib/utils";
-import { Building2, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
