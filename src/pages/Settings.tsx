@@ -30,6 +30,7 @@ export default function SettingsPage() {
               <TabsTrigger value="finance" className="gap-1.5"><Banknote className="h-3.5 w-3.5" /> Finance</TabsTrigger>
               <TabsTrigger value="notifications" className="gap-1.5"><Bell className="h-3.5 w-3.5" /> Notifications</TabsTrigger>
               <TabsTrigger value="users" className="gap-1.5"><Users className="h-3.5 w-3.5" /> Utilisateurs & Rôles</TabsTrigger>
+              <TabsTrigger value="security" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Sécurité</TabsTrigger>
             </TabsList>
 
             <TabsContent value="general">
