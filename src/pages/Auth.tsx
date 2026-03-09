@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate, useSearchParams } from "react-router-dom";
-import { Building2, Mail, Lock, User, Briefcase, ArrowRight, UserPlus } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Building2, Mail, Lock, User, Briefcase, ArrowRight, UserPlus, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
