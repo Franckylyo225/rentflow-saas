@@ -37,6 +37,27 @@ export default function AuthPage() {
 
   if (user) return <Navigate to="/" replace />;
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) {
+      toast.error("Veuillez entrer votre adresse email");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Un email de réinitialisation vous a été envoyé");
+      setIsForgotPassword(false);
+    } catch (e: any) {
+      toast.error("Erreur : " + e.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -54,7 +75,6 @@ export default function AuthPage() {
       }
 
       if (inviteToken) {
-        // Invite signup: pass invite_token in metadata
         const { error } = await signUp(email, password, fullName, "", inviteToken);
         if (error) {
           toast.error(error.message);
@@ -62,7 +82,6 @@ export default function AuthPage() {
           toast.success("Inscription réussie ! Un administrateur doit approuver votre accès.");
         }
       } else {
-        // Normal signup
         const { error } = await signUp(email, password, fullName, companyName);
         if (error) {
           toast.error(error.message);
