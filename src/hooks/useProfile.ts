@@ -9,6 +9,7 @@ export interface Profile {
   full_name: string;
   email: string | null;
   phone: string | null;
+  is_approved: boolean;
 }
 
 export interface UserRole {
@@ -21,6 +22,7 @@ export interface Organization {
   email: string | null;
   phone: string | null;
   address: string | null;
+  invite_token?: string;
 }
 
 export function useProfile() {
@@ -47,14 +49,13 @@ export function useProfile() {
       ]);
 
       if (profileRes.data) {
-        setProfile(profileRes.data as Profile);
-        // Fetch organization
+        setProfile(profileRes.data as unknown as Profile);
         const orgRes = await supabase
           .from("organizations")
           .select("*")
           .eq("id", profileRes.data.organization_id)
           .single();
-        if (orgRes.data) setOrganization(orgRes.data as Organization);
+        if (orgRes.data) setOrganization(orgRes.data as unknown as Organization);
       }
 
       if (roleRes.data) setRole(roleRes.data as UserRole);
