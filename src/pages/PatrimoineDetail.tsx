@@ -22,6 +22,7 @@ const DOC_TYPES = [
   { value: "extrait_topographique", label: "Extrait Topographique" },
   { value: "titre_foncier", label: "Titre Foncier" },
   { value: "permis_construire", label: "Permis de Construire" },
+  { value: "ordre_recette", label: "Ordre de recette" },
   { value: "autre", label: "Autre" },
 ];
 
