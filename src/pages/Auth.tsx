@@ -127,10 +127,7 @@ export default function AuthPage() {
         className="flex-1 flex flex-col justify-center px-6 sm:px-12 lg:px-16 xl:px-24 bg-background relative"
       >
         <div className="absolute top-8 left-6 sm:left-12 lg:left-16 xl:left-24 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/25">
-            <Building2 className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="text-2xl font-bold tracking-tight text-foreground">Rentflow</span>
+          <img src="/logo-horizontal.png" alt="Rentflow" className="h-10" />
         </div>
 
         <AnimatePresence mode="wait">

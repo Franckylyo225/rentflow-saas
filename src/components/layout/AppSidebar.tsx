@@ -35,10 +35,7 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
       >
         {/* Logo */}
         <div className="flex items-center gap-3 px-5 h-14 border-b border-border">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-            <Building2 className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <span className="text-base font-bold text-foreground tracking-tight">Rentflow</span>
+          <img src="/logo-horizontal.png" alt="Rentflow" className="h-8" />
           <button onClick={onClose} className="ml-auto lg:hidden text-muted-foreground hover:text-foreground">
             <X className="h-5 w-5" />
           </button>
