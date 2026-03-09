@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
-import { Building2, Mail, Lock, User, Briefcase, ArrowRight } from "lucide-react";
+import { Navigate, useSearchParams } from "react-router-dom";
+import { Building2, Mail, Lock, User, Briefcase, ArrowRight, UserPlus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,12 +10,20 @@ import { toast } from "sonner";
 
 export default function AuthPage() {
   const { user, loading, signIn, signUp } = useAuth();
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [searchParams] = useSearchParams();
+  const inviteToken = searchParams.get("invite");
+
+  const [isSignUp, setIsSignUp] = useState(!!inviteToken);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // If invite link, default to signup mode
+  useEffect(() => {
+    if (inviteToken) setIsSignUp(true);
+  }, [inviteToken]);
 
   if (loading) {
     return (
@@ -32,16 +40,33 @@ export default function AuthPage() {
     setSubmitting(true);
 
     if (isSignUp) {
-      if (!fullName.trim() || !companyName.trim()) {
+      if (!fullName.trim()) {
         toast.error("Veuillez remplir tous les champs");
         setSubmitting(false);
         return;
       }
-      const { error } = await signUp(email, password, fullName, companyName);
-      if (error) {
-        toast.error(error.message);
+      if (!inviteToken && !companyName.trim()) {
+        toast.error("Veuillez remplir le nom de l'entreprise");
+        setSubmitting(false);
+        return;
+      }
+
+      if (inviteToken) {
+        // Invite signup: pass invite_token in metadata
+        const { error } = await signUp(email, password, fullName, "", inviteToken);
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success("Inscription réussie ! Un administrateur doit approuver votre accès.");
+        }
       } else {
-        toast.success("Vérifiez votre email pour confirmer votre inscription");
+        // Normal signup
+        const { error } = await signUp(email, password, fullName, companyName);
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success("Vérifiez votre email pour confirmer votre inscription");
+        }
       }
     } else {
       const { error } = await signIn(email, password);
@@ -61,18 +86,13 @@ export default function AuthPage() {
         transition={{ duration: 0.7, ease: "easeOut" }}
         className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-primary/5"
       >
-        {/* Decorative gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent z-10" />
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent z-10" />
-
-        {/* Placeholder image — can be replaced via settings */}
         <img
           src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
           alt="Gestion immobilière"
           className="absolute inset-0 w-full h-full object-cover"
         />
-
-        {/* Hero message overlay */}
         <div className="absolute inset-0 z-20 flex flex-col justify-end p-12 xl:p-16">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -106,7 +126,6 @@ export default function AuthPage() {
         transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
         className="flex-1 flex flex-col justify-center px-6 sm:px-12 lg:px-16 xl:px-24 bg-background relative"
       >
-        {/* Company name header */}
         <div className="absolute top-8 left-6 sm:left-12 lg:left-16 xl:left-24 flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/25">
             <Building2 className="h-5 w-5 text-primary-foreground" />
@@ -116,7 +135,7 @@ export default function AuthPage() {
 
         <AnimatePresence mode="wait">
           <motion.div
-            key={isSignUp ? "signup" : "signin"}
+            key={isSignUp ? (inviteToken ? "invite" : "signup") : "signin"}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -125,20 +144,37 @@ export default function AuthPage() {
           >
           {/* Title */}
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              {isSignUp ? "Créer votre compte" : "Bon retour parmi nous"}
-            </h1>
-            <p className="text-muted-foreground">
-              {isSignUp
-                ? "Inscrivez-vous pour commencer à gérer vos biens immobiliers"
-                : "Connectez-vous pour accéder à votre espace de gestion"}
-            </p>
+            {inviteToken && isSignUp ? (
+              <>
+                <div className="flex items-center gap-2 text-primary mb-2">
+                  <UserPlus className="h-5 w-5" />
+                  <span className="text-sm font-medium">Invitation</span>
+                </div>
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                  Rejoindre l'équipe
+                </h1>
+                <p className="text-muted-foreground">
+                  Créez votre compte pour rejoindre l'organisation. Un administrateur validera votre accès.
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                  {isSignUp ? "Créer votre compte" : "Bon retour parmi nous"}
+                </h1>
+                <p className="text-muted-foreground">
+                  {isSignUp
+                    ? "Inscrivez-vous pour commencer à gérer vos biens immobiliers"
+                    : "Connectez-vous pour accéder à votre espace de gestion"}
+                </p>
+              </>
+            )}
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             {isSignUp && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className={inviteToken ? "space-y-4" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-foreground">Nom complet</Label>
                   <div className="relative">
@@ -152,23 +188,25 @@ export default function AuthPage() {
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-foreground">Nom de l'entreprise</Label>
-                  <div className="relative">
-                    <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      value={companyName}
-                      onChange={e => setCompanyName(e.target.value)}
-                      placeholder="Ex: Immobilière Ivoire"
-                      className="pl-10 h-12 bg-muted/50 border-border/60 focus:bg-background transition-colors"
-                      required
-                    />
+                {!inviteToken && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-foreground">Nom de l'entreprise</Label>
+                    <div className="relative">
+                      <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        value={companyName}
+                        onChange={e => setCompanyName(e.target.value)}
+                        placeholder="Ex: Immobilière Ivoire"
+                        className="pl-10 h-12 bg-muted/50 border-border/60 focus:bg-background transition-colors"
+                        required
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
 
-            <div className={isSignUp ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "space-y-5"}>
+            <div className={isSignUp && !inviteToken ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "space-y-5"}>
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-foreground">Adresse email</Label>
                 <div className="relative">
@@ -210,7 +248,7 @@ export default function AuthPage() {
                 <div className="animate-spin h-5 w-5 border-2 border-primary-foreground border-t-transparent rounded-full" />
               ) : (
                 <>
-                  {isSignUp ? "Créer mon compte" : "Se connecter"}
+                  {isSignUp ? (inviteToken ? "Demander l'accès" : "Créer mon compte") : "Se connecter"}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </>
               )}
@@ -244,7 +282,6 @@ export default function AuthPage() {
           </motion.div>
         </AnimatePresence>
 
-        {/* Footer */}
         <p className="absolute bottom-6 left-6 sm:left-12 lg:left-16 xl:left-24 text-xs text-muted-foreground">
           © {new Date().getFullYear()} Rentflow. Développé avec ❤️ à Abidjan. Tous droits réservés.
         </p>

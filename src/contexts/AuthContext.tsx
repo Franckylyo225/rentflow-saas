@@ -6,7 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, companyName: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string, companyName: string, inviteToken?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
@@ -34,12 +34,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string, companyName: string) => {
+  const signUp = async (email: string, password: string, fullName: string, companyName: string, inviteToken?: string) => {
+    const metadata: Record<string, string> = { full_name: fullName };
+    if (inviteToken) {
+      metadata.invite_token = inviteToken;
+    } else {
+      metadata.company_name = companyName;
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: fullName, company_name: companyName },
+        data: metadata,
         emailRedirectTo: window.location.origin,
       },
     });
