@@ -468,6 +468,8 @@ export default function Rents() {
           )}
         </DialogContent>
       </Dialog>
+
+      <QuittanceDialog open={showQuittance} onOpenChange={setShowQuittance} data={quittanceData} />
     </AppLayout>
   );
 }
