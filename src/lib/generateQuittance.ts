@@ -30,7 +30,7 @@ function buildQuittancePDF(data: QuittanceData): jsPDF {
     : today;
 
   // Helper to format numbers with regular space as thousand separator (jsPDF doesn't handle nbsp well)
-  const formatNumber = (num: number) => num.toLocaleString("fr-FR").replace(/\u00A0/g, " ");
+  const formatNumber = (num: number) => num.toLocaleString("fr-FR").replace(/[\u00A0\u202F\u2009]/g, " ");
 
   const marginLeft = 25;
   const pageWidth = 210;
