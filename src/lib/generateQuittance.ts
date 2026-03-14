@@ -29,6 +29,9 @@ function buildQuittancePDF(data: QuittanceData): jsPDF {
     ? new Date(data.paymentDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
     : today;
 
+  // Helper to format numbers with regular space as thousand separator (jsPDF doesn't handle nbsp well)
+  const formatNumber = (num: number) => num.toLocaleString("fr-FR").replace(/\u00A0/g, " ");
+
   const marginLeft = 25;
   const pageWidth = 210;
   const contentWidth = pageWidth - marginLeft * 2;
