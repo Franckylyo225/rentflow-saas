@@ -277,6 +277,11 @@ export default function Rents() {
                             </td>
                             <td className="py-3 px-4 text-center">
                               <div className="flex items-center justify-center gap-1">
+                                {payment.status === "paid" && (
+                                  <Button variant="ghost" size="sm" onClick={() => openQuittance(payment)} title="Quittance">
+                                    <Receipt className="h-4 w-4" />
+                                  </Button>
+                                )}
                                 {payment.status !== "paid" && (
                                   <Button variant="outline" size="sm" onClick={() => openPayment(payment)}>Payer</Button>
                                 )}
