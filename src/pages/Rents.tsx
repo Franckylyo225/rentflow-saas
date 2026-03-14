@@ -18,6 +18,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getEscalationInfo, defaultTasksByLevel, type EscalationInfo } from "@/lib/escalation";
 import { generateMiseEnDemeure } from "@/lib/generateMiseEnDemeure";
+import { QuittanceDialog } from "@/components/rent/QuittanceDialog";
+import type { QuittanceData } from "@/lib/generateQuittance";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
 const paymentMethods = ["Espèces", "Virement bancaire", "Chèque", "Mobile Money", "Carte bancaire"];
 
