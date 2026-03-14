@@ -97,6 +97,26 @@ export default function Rents() {
     setShowTasks(true);
   };
 
+  const openQuittance = (payment: any) => {
+    setQuittanceData({
+      tenantName: payment.tenants?.full_name ?? "",
+      tenantPhone: payment.tenants?.phone ?? "",
+      tenantEmail: payment.tenants?.email ?? "",
+      unitName: payment.tenants?.units?.name ?? "",
+      propertyName: payment.tenants?.units?.properties?.name ?? "",
+      propertyAddress: "",
+      amount: payment.amount,
+      paidAmount: payment.paid_amount,
+      dueDate: payment.due_date,
+      month: payment.month,
+      organizationName: orgSettings?.name,
+      organizationAddress: orgSettings?.address ?? undefined,
+      organizationPhone: orgSettings?.phone ?? undefined,
+      organizationEmail: orgSettings?.email ?? undefined,
+    });
+    setShowQuittance(true);
+  };
+
   const handleRecordPayment = async () => {
     if (!selectedPayment || !payForm.amount || !payForm.method) return;
     setSaving(true);
