@@ -99,7 +99,7 @@ export interface DbRentPayment {
   due_date: string;
   status: "pending" | "paid" | "partial" | "late";
   month: string;
-  tenants?: { full_name: string; unit_id: string; units?: { name: string; property_id: string; properties?: { name: string; city_id: string; cities?: { name: string } } } };
+  tenants?: { full_name: string; phone?: string; email?: string; unit_id: string; units?: { name: string; property_id: string; properties?: { name: string; city_id: string; cities?: { name: string } } } };
 }
 
 // Specific hooks
