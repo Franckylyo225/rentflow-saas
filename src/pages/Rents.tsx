@@ -21,6 +21,7 @@ import { generateMiseEnDemeure } from "@/lib/generateMiseEnDemeure";
 import { QuittanceDialog } from "@/components/rent/QuittanceDialog";
 import type { QuittanceData } from "@/lib/generateQuittance";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useProfile } from "@/hooks/useProfile";
 
 const paymentMethods = ["Espèces", "Virement bancaire", "Chèque", "Mobile Money", "Carte bancaire"];
 
@@ -49,6 +50,7 @@ export default function Rents() {
   const { data: cities } = useCities();
   const { data: allTasks, refetch: refetchTasks } = useEscalationTasks();
   const { settings: orgSettings } = useOrganizationSettings();
+  const { profile } = useProfile();
 
   // Compute escalation info for each payment
   const paymentsWithEscalation = useMemo(() =>
@@ -105,6 +107,7 @@ export default function Rents() {
 
     setQuittanceData({
       quittanceNumber,
+      agentName: profile?.full_name || undefined,
       tenantName: payment.tenants?.full_name ?? "",
       tenantPhone: payment.tenants?.phone ?? "",
       tenantEmail: payment.tenants?.email ?? "",
