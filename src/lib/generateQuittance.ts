@@ -123,7 +123,7 @@ function buildQuittancePDF(data: QuittanceData): jsPDF {
   doc.text("Montant réglé :", marginLeft + 8, y);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(0, 120, 60);
-  doc.text(`${data.paidAmount.toLocaleString("fr-FR")} FCFA`, marginLeft + contentWidth - 8, y, { align: "right" });
+  doc.text(`${formatNumber(data.paidAmount)} FCFA`, marginLeft + contentWidth - 8, y, { align: "right" });
   doc.setTextColor(0);
 
   y += 7;
