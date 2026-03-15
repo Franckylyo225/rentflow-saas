@@ -11,6 +11,8 @@ import { Bell, MessageSquare, Mail, Save, Loader2, Send, Phone, Info, Smartphone
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
+import { SmsHistoryTable } from "./SmsHistoryTable";
 
 const TIMELINE_ICONS: Record<string, { icon: typeof Bell; label: string; color: string; bg: string }> = {
   before_5: { icon: Clock, label: "J-5", color: "text-blue-600", bg: "bg-blue-100 dark:bg-blue-900/30" },
@@ -20,6 +22,7 @@ const TIMELINE_ICONS: Record<string, { icon: typeof Bell; label: string; color: 
 
 export function NotificationsTab() {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -69,7 +72,14 @@ export function NotificationsTab() {
     setSendingTest(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-sms", {
-        body: { to: testPhone.trim(), message: testMessage.trim(), senderName: "Rentflow" },
+        body: {
+          to: testPhone.trim(),
+          message: testMessage.trim(),
+          senderName: "Rentflow",
+          organizationId: profile?.organization_id,
+          recipientName: "",
+          templateKey: null,
+        },
       });
       if (error) throw error;
       if (data?.success) {
@@ -314,6 +324,11 @@ export function NotificationsTab() {
           </div>
         </CardContent>
       </Card>
+
+      <Separator />
+
+      {/* SMS History */}
+      <SmsHistoryTable />
     </div>
   );
 }
