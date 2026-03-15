@@ -1,36 +1,32 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// Orange Developer endpoints
 const ORANGE_TOKEN_URL = "https://api.orange.com/oauth/v3/token";
 const ORANGE_SMS_URL = "https://api.orange.com/smsmessaging/v1/outbound";
 
-// Country sender numbers per Orange Developer docs
-// The senderAddress must use these, NOT the recipient's number
 const COUNTRY_SENDER_NUMBERS: Record<string, string> = {
-  "225": "2250000", // Côte d'Ivoire
-  "237": "2370000", // Cameroon
-  "226": "2260000", // Burkina Faso
-  "224": "2240000", // Guinea Conakry
-  "245": "2450000", // Guinea Bissau
-  "243": "2430000", // DR Congo
-  "231": "2310000", // Liberia
-  "223": "2230000", // Mali
-  "261": "2610000", // Madagascar
-  "221": "2210000", // Senegal
-  "216": "2160000", // Tunisia
-  "267": "2670000", // Botswana
-  "962": "9620000", // Jordan
+  "225": "2250000",
+  "237": "2370000",
+  "226": "2260000",
+  "224": "2240000",
+  "245": "2450000",
+  "243": "2430000",
+  "231": "2310000",
+  "223": "2230000",
+  "261": "2610000",
+  "221": "2210000",
+  "216": "2160000",
+  "267": "2670000",
+  "962": "9620000",
 };
 
 async function getOrangeAccessToken(clientId: string, clientSecret: string): Promise<string> {
   const credentials = btoa(`${clientId}:${clientSecret}`);
-
-  console.log("Requesting OAuth token from:", ORANGE_TOKEN_URL);
   const response = await fetch(ORANGE_TOKEN_URL, {
     method: "POST",
     headers: {
@@ -47,35 +43,21 @@ async function getOrangeAccessToken(clientId: string, clientSecret: string): Pro
   }
 
   const data = await response.json();
-  console.log("OAuth token obtained successfully");
   return data.access_token;
 }
 
 function formatPhoneNumber(phone: string): string {
-  // Remove spaces, dashes, dots, parentheses
   let cleaned = phone.replace(/[\s\-\.()]/g, "");
-  // Ensure starts with +
-  if (!cleaned.startsWith("+")) {
-    cleaned = "+" + cleaned;
-  }
+  if (!cleaned.startsWith("+")) cleaned = "+" + cleaned;
   return cleaned;
 }
 
 function getSenderNumberFromRecipient(recipientPhone: string): string {
-  // recipientPhone is like "+2250758160904"
-  // Extract country code by matching against known prefixes
   const withoutPlus = recipientPhone.replace("+", "");
-
   for (const [prefix, senderNum] of Object.entries(COUNTRY_SENDER_NUMBERS)) {
-    if (withoutPlus.startsWith(prefix)) {
-      return senderNum;
-    }
+    if (withoutPlus.startsWith(prefix)) return senderNum;
   }
-
-  // Fallback: use first 3 digits + "0000"
-  const fallback = withoutPlus.substring(0, 3) + "0000";
-  console.log(`No known country sender for prefix, using fallback: ${fallback}`);
-  return fallback;
+  return withoutPlus.substring(0, 3) + "0000";
 }
 
 serve(async (req) => {
@@ -83,14 +65,18 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Create Supabase admin client for logging
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
   try {
     const ORANGE_CLIENT_ID = Deno.env.get("ORANGE_CLIENT_ID");
     if (!ORANGE_CLIENT_ID) throw new Error("ORANGE_CLIENT_ID is not configured");
-
     const ORANGE_CLIENT_SECRET = Deno.env.get("ORANGE_CLIENT_SECRET");
     if (!ORANGE_CLIENT_SECRET) throw new Error("ORANGE_CLIENT_SECRET is not configured");
 
-    const { to, message, senderName } = await req.json();
+    const { to, message, senderName, organizationId, recipientName, templateKey } = await req.json();
 
     if (!to || !message) {
       return new Response(
@@ -101,17 +87,13 @@ serve(async (req) => {
 
     const recipientPhone = formatPhoneNumber(to);
     const recipientAddress = `tel:${recipientPhone}`;
-
-    // Per Orange docs: senderAddress must be the country_sender_number, NOT the recipient
     const countrySenderNumber = getSenderNumberFromRecipient(recipientPhone);
     const senderAddress = `tel:+${countrySenderNumber}`;
 
     console.log(`Sending SMS: senderAddress=${senderAddress} to=${recipientAddress}`);
 
-    // Get OAuth2 token
     const accessToken = await getOrangeAccessToken(ORANGE_CLIENT_ID, ORANGE_CLIENT_SECRET);
 
-    // Build URL: tel:+ must be URL-encoded as tel%3A%2B
     const encodedSender = `tel%3A%2B${countrySenderNumber}`;
     const smsUrl = `${ORANGE_SMS_URL}/${encodedSender}/requests`;
 
@@ -120,14 +102,9 @@ serve(async (req) => {
         address: recipientAddress,
         senderAddress: senderAddress,
         ...(senderName ? { senderName } : {}),
-        outboundSMSTextMessage: {
-          message: message,
-        },
+        outboundSMSTextMessage: { message },
       },
     };
-
-    console.log(`SMS API URL: ${smsUrl}`);
-    console.log(`SMS Payload: ${JSON.stringify(smsPayload)}`);
 
     const smsResponse = await fetch(smsUrl, {
       method: "POST",
@@ -140,6 +117,23 @@ serve(async (req) => {
 
     const smsData = await smsResponse.json();
     console.log(`SMS API response [${smsResponse.status}]: ${JSON.stringify(smsData)}`);
+
+    const orangeMessageId = smsData?.outboundSMSMessageRequest?.resourceURL || null;
+
+    // Log to sms_history
+    if (organizationId) {
+      await supabaseAdmin.from("sms_history").insert({
+        organization_id: organizationId,
+        recipient_phone: recipientPhone,
+        recipient_name: recipientName || "",
+        message: message,
+        sender_name: senderName || "",
+        status: smsResponse.ok ? "sent" : "failed",
+        error_message: smsResponse.ok ? null : JSON.stringify(smsData),
+        orange_message_id: orangeMessageId,
+        template_key: templateKey || null,
+      });
+    }
 
     if (!smsResponse.ok) {
       throw new Error(`Orange SMS API error [${smsResponse.status}]: ${JSON.stringify(smsData)}`);
