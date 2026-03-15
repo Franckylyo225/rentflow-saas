@@ -72,7 +72,14 @@ export function NotificationsTab() {
     setSendingTest(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-sms", {
-        body: { to: testPhone.trim(), message: testMessage.trim(), senderName: "Rentflow" },
+        body: {
+          to: testPhone.trim(),
+          message: testMessage.trim(),
+          senderName: "Rentflow",
+          organizationId: profile?.organization_id,
+          recipientName: "",
+          templateKey: null,
+        },
       });
       if (error) throw error;
       if (data?.success) {
