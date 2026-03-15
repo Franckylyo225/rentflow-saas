@@ -324,6 +324,11 @@ export function NotificationsTab() {
           </div>
         </CardContent>
       </Card>
+
+      <Separator />
+
+      {/* SMS History */}
+      <SmsHistoryTable />
     </div>
   );
 }
