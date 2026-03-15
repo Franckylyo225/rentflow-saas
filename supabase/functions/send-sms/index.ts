@@ -2,56 +2,80 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// Orange Developer OAuth & SMS endpoints
-const ORANGE_TOKEN_URLS = [
-  "https://api.orange.com/oauth/v3/token",
-  "https://api.orange.com/oauth/v2/token",
-];
+// Orange Developer endpoints
+const ORANGE_TOKEN_URL = "https://api.orange.com/oauth/v3/token";
 const ORANGE_SMS_URL = "https://api.orange.com/smsmessaging/v1/outbound";
+
+// Country sender numbers per Orange Developer docs
+// The senderAddress must use these, NOT the recipient's number
+const COUNTRY_SENDER_NUMBERS: Record<string, string> = {
+  "225": "2250000", // Côte d'Ivoire
+  "237": "2370000", // Cameroon
+  "226": "2260000", // Burkina Faso
+  "224": "2240000", // Guinea Conakry
+  "245": "2450000", // Guinea Bissau
+  "243": "2430000", // DR Congo
+  "231": "2310000", // Liberia
+  "223": "2230000", // Mali
+  "261": "2610000", // Madagascar
+  "221": "2210000", // Senegal
+  "216": "2160000", // Tunisia
+  "267": "2670000", // Botswana
+  "962": "9620000", // Jordan
+};
 
 async function getOrangeAccessToken(clientId: string, clientSecret: string): Promise<string> {
   const credentials = btoa(`${clientId}:${clientSecret}`);
 
-  for (const tokenUrl of ORANGE_TOKEN_URLS) {
-    console.log(`Trying OAuth endpoint: ${tokenUrl}`);
-    const response = await fetch(tokenUrl, {
-      method: "POST",
-      headers: {
-        "Authorization": `Basic ${credentials}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: "grant_type=client_credentials",
-    });
+  console.log("Requesting OAuth token from:", ORANGE_TOKEN_URL);
+  const response = await fetch(ORANGE_TOKEN_URL, {
+    method: "POST",
+    headers: {
+      "Authorization": `Basic ${credentials}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Accept": "application/json",
+    },
+    body: "grant_type=client_credentials",
+  });
 
-    if (response.ok) {
-      const data = await response.json();
-      console.log("OAuth token obtained successfully");
-      return data.access_token;
-    }
-
+  if (!response.ok) {
     const errorBody = await response.text();
-    console.log(`OAuth endpoint ${tokenUrl} failed [${response.status}]: ${errorBody}`);
-
-    // If it's not a 404, don't try the next URL — it's a real error
-    if (response.status !== 404) {
-      throw new Error(`Orange OAuth failed [${response.status}]: ${errorBody}`);
-    }
+    throw new Error(`Orange OAuth failed [${response.status}]: ${errorBody}`);
   }
 
-  throw new Error("All Orange OAuth endpoints failed with 404. Check your Client ID/Secret.");
+  const data = await response.json();
+  console.log("OAuth token obtained successfully");
+  return data.access_token;
 }
 
 function formatPhoneNumber(phone: string): string {
-  // Remove spaces, dashes, dots
+  // Remove spaces, dashes, dots, parentheses
   let cleaned = phone.replace(/[\s\-\.()]/g, "");
   // Ensure starts with +
   if (!cleaned.startsWith("+")) {
     cleaned = "+" + cleaned;
   }
   return cleaned;
+}
+
+function getSenderNumberFromRecipient(recipientPhone: string): string {
+  // recipientPhone is like "+2250758160904"
+  // Extract country code by matching against known prefixes
+  const withoutPlus = recipientPhone.replace("+", "");
+
+  for (const [prefix, senderNum] of Object.entries(COUNTRY_SENDER_NUMBERS)) {
+    if (withoutPlus.startsWith(prefix)) {
+      return senderNum;
+    }
+  }
+
+  // Fallback: use first 3 digits + "0000"
+  const fallback = withoutPlus.substring(0, 3) + "0000";
+  console.log(`No known country sender for prefix, using fallback: ${fallback}`);
+  return fallback;
 }
 
 serve(async (req) => {
@@ -66,10 +90,7 @@ serve(async (req) => {
     const ORANGE_CLIENT_SECRET = Deno.env.get("ORANGE_CLIENT_SECRET");
     if (!ORANGE_CLIENT_SECRET) throw new Error("ORANGE_CLIENT_SECRET is not configured");
 
-    // Optional: sender phone number from Orange Developer app
-    const ORANGE_SENDER_NUMBER = Deno.env.get("ORANGE_SENDER_NUMBER");
-
-    const { to, message, senderName, senderNumber } = await req.json();
+    const { to, message, senderName } = await req.json();
 
     if (!to || !message) {
       return new Response(
@@ -81,47 +102,41 @@ serve(async (req) => {
     const recipientPhone = formatPhoneNumber(to);
     const recipientAddress = `tel:${recipientPhone}`;
 
-    // Sender: use provided number, env variable, or fallback to "tel:+22500000000" 
-    // In Orange Dev sandbox, senderAddress must match your registered dev number
-    const senderPhone = senderNumber 
-      ? formatPhoneNumber(senderNumber) 
-      : ORANGE_SENDER_NUMBER 
-        ? formatPhoneNumber(ORANGE_SENDER_NUMBER)
-        : recipientPhone; // Fallback for sandbox: some configs allow same number
-    const senderAddr = `tel:${senderPhone}`;
+    // Per Orange docs: senderAddress must be the country_sender_number, NOT the recipient
+    const countrySenderNumber = getSenderNumberFromRecipient(recipientPhone);
+    const senderAddress = `tel:+${countrySenderNumber}`;
 
-    console.log(`Sending SMS: from=${senderAddr} to=${recipientAddress}`);
+    console.log(`Sending SMS: senderAddress=${senderAddress} to=${recipientAddress}`);
 
     // Get OAuth2 token
     const accessToken = await getOrangeAccessToken(ORANGE_CLIENT_ID, ORANGE_CLIENT_SECRET);
 
-    // Send SMS via Orange API
-    const encodedSender = encodeURIComponent(senderAddr);
+    // Build URL: tel:+ must be URL-encoded as tel%3A%2B
+    const encodedSender = `tel%3A%2B${countrySenderNumber}`;
+    const smsUrl = `${ORANGE_SMS_URL}/${encodedSender}/requests`;
+
     const smsPayload = {
       outboundSMSMessageRequest: {
         address: recipientAddress,
-        senderAddress: senderAddr,
-        senderName: senderName || "Rentflow",
+        senderAddress: senderAddress,
+        ...(senderName ? { senderName } : {}),
         outboundSMSTextMessage: {
           message: message,
         },
       },
     };
 
-    console.log(`SMS API URL: ${ORANGE_SMS_URL}/${encodedSender}/requests`);
+    console.log(`SMS API URL: ${smsUrl}`);
     console.log(`SMS Payload: ${JSON.stringify(smsPayload)}`);
 
-    const smsResponse = await fetch(
-      `${ORANGE_SMS_URL}/${encodedSender}/requests`,
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(smsPayload),
-      }
-    );
+    const smsResponse = await fetch(smsUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(smsPayload),
+    });
 
     const smsData = await smsResponse.json();
     console.log(`SMS API response [${smsResponse.status}]: ${JSON.stringify(smsData)}`);
