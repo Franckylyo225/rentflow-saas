@@ -28,15 +28,12 @@ const DOC_TYPES = [
   { value: "autre", label: "Autre" },
 ];
 
-function PatrimoineMap({ latitude, longitude, title }: { latitude: number | null; longitude: number | null; title: string }) {
+function PatrimoineMapDialog({ latitude, longitude, title, open, onOpenChange }: { latitude: number; longitude: number; title: string; open: boolean; onOpenChange: (v: boolean) => void }) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const [showMap, setShowMap] = useState(false);
-
-  const hasCoords = latitude != null && longitude != null;
 
   useEffect(() => {
-    if (!showMap || !hasCoords || !mapRef.current) return;
+    if (!open || !mapRef.current) return;
     if (mapInstanceRef.current) {
       mapInstanceRef.current.remove();
       mapInstanceRef.current = null;
@@ -55,34 +52,20 @@ function PatrimoineMap({ latitude, longitude, title }: { latitude: number | null
     mapInstanceRef.current = map;
     setTimeout(() => map.invalidateSize(), 200);
     return () => { map.remove(); mapInstanceRef.current = null; };
-  }, [showMap, latitude, longitude, title, hasCoords]);
-
-  if (!hasCoords) {
-    return (
-      <Card>
-        <CardContent className="pt-6 flex items-center gap-3 text-muted-foreground">
-          <MapPin className="h-5 w-5" />
-          <p className="text-sm">Aucune géolocalisation enregistrée pour cet actif.</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  }, [open, latitude, longitude, title]);
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-3">
-        <CardTitle className="text-base flex items-center gap-2"><MapPin className="h-4 w-4" /> Localisation</CardTitle>
-        <Button size="sm" variant="outline" className="gap-1" onClick={() => setShowMap(v => !v)}>
-          {showMap ? "Masquer" : "Afficher la localisation"}
-        </Button>
-      </CardHeader>
-      {showMap && (
-        <CardContent>
-          <div ref={mapRef} className="h-[350px] w-full rounded-lg border border-border overflow-hidden" />
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col" aria-describedby={undefined}>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><MapPin className="h-4 w-4" /> Localisation — {title}</DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 min-h-0">
+          <div ref={mapRef} className="h-[450px] w-full rounded-lg border border-border overflow-hidden" />
           <p className="text-xs text-muted-foreground mt-2">Coordonnées : {latitude}, {longitude}</p>
-        </CardContent>
-      )}
-    </Card>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
