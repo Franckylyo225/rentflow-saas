@@ -132,7 +132,8 @@ export function LeaseTerminationDialog({ open, onOpenChange, tenant, payments, o
     setReason("");
     setNotificationDate(new Date());
     setNoticeDuration("1");
-  };
+    setRepairCost(0);
+    setRepairDescription("");
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleReset(); onOpenChange(v); }}>
