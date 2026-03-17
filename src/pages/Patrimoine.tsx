@@ -45,6 +45,7 @@ export default function Patrimoine() {
   const [showAddHolder, setShowAddHolder] = useState(false);
   const [showEditHolder, setShowEditHolder] = useState(false);
   const [showDeleteHolder, setShowDeleteHolder] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingAsset, setEditingAsset] = useState<any>(null);
   const [deletingAsset, setDeletingAsset] = useState<any>(null);
