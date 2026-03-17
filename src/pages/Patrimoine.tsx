@@ -247,12 +247,22 @@ export default function Patrimoine() {
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label>Localité</Label>
+          <Label>Lotissement</Label>
           <Input value={form.locality} onChange={e => setForm(f => ({ ...f, locality: e.target.value }))} placeholder="Ex: Cocody, Abidjan" />
         </div>
         <div className="space-y-2">
           <Label>Nom du lotissement</Label>
           <Input value={form.subdivision_name} onChange={e => setForm(f => ({ ...f, subdivision_name: e.target.value }))} placeholder="Ex: Lot 45, Ilot 12" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>N° Ordre de recette</Label>
+          <Input value={form.receipt_order_number} onChange={e => setForm(f => ({ ...f, receipt_order_number: e.target.value }))} placeholder="Ex: OR-2024-001" />
+        </div>
+        <div className="space-y-2">
+          <Label>Date création du titre</Label>
+          <Input type="date" value={form.title_creation_date} onChange={e => setForm(f => ({ ...f, title_creation_date: e.target.value }))} />
         </div>
       </div>
       <div className="space-y-2">
