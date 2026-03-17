@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { PatrimoineMap } from "@/components/patrimoine/PatrimoineMap";
+import { PatrimoineExcelImport } from "@/components/patrimoine/PatrimoineExcelImport";
 
 const ASSET_TYPES = [
   { value: "terrain", label: "Terrain" },
