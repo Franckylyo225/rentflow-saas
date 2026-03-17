@@ -12,13 +12,16 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, Loader2, Trash2, Edit, MapPin, Landmark, Users, FolderCheck, FolderClock, UserCheck, Phone, Mail, MapPinned, Eye, Link } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { Plus, Search, Loader2, Trash2, Edit, MapPin, Landmark, Users, FolderCheck, FolderClock, UserCheck, Phone, Mail, MapPinned, Eye, Link, Map } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { StatCard } from "@/components/dashboard/StatCard";
+import { PatrimoineMap } from "@/components/patrimoine/PatrimoineMap";
 
 const ASSET_TYPES = [
   { value: "terrain", label: "Terrain" },
@@ -276,8 +279,9 @@ export default function Patrimoine() {
         })()}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
+           <TabsList>
             <TabsTrigger value="actifs">Actifs</TabsTrigger>
+            <TabsTrigger value="carte" className="gap-1.5"><Map className="h-3.5 w-3.5" /> Carte</TabsTrigger>
             <TabsTrigger value="titulaires">Titulaires</TabsTrigger>
           </TabsList>
 
@@ -360,6 +364,10 @@ export default function Patrimoine() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="carte" className="mt-4">
+            <PatrimoineMap assets={filtered} onAssetClick={(id) => navigate(`/patrimoine/${id}`)} />
           </TabsContent>
 
           <TabsContent value="titulaires" className="space-y-4 mt-4">
