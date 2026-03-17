@@ -290,9 +290,14 @@ export default function Patrimoine() {
             <h1 className="text-2xl font-bold text-foreground tracking-tight">Patrimoine</h1>
             <p className="text-muted-foreground text-sm mt-1">Gestion de vos actifs fonciers et immobiliers</p>
           </div>
-          <Button className="gap-2 self-start" onClick={() => { resetForm(); setShowAdd(true); }}>
-            <Plus className="h-4 w-4" /> Ajouter un actif
-          </Button>
+          <div className="flex gap-2 self-start">
+            <Button variant="outline" className="gap-2" onClick={() => setShowImport(true)}>
+              <FileSpreadsheet className="h-4 w-4" /> Importer Excel
+            </Button>
+            <Button className="gap-2" onClick={() => { resetForm(); setShowAdd(true); }}>
+              <Plus className="h-4 w-4" /> Ajouter un actif
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
