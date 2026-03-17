@@ -278,8 +278,9 @@ export default function Patrimoine() {
         })()}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
+           <TabsList>
             <TabsTrigger value="actifs">Actifs</TabsTrigger>
+            <TabsTrigger value="carte" className="gap-1.5"><Map className="h-3.5 w-3.5" /> Carte</TabsTrigger>
             <TabsTrigger value="titulaires">Titulaires</TabsTrigger>
           </TabsList>
 
