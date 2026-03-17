@@ -204,7 +204,8 @@ export default function Patrimoine() {
       title: asset.title, asset_type: asset.asset_type, holder_id: asset.holder_id || "",
       locality: asset.locality, subdivision_name: asset.subdivision_name, land_title: asset.land_title,
       handling_firm: asset.handling_firm || "", description: asset.description || "",
-      map_link: asset.map_link || "",
+      map_link: asset.map_link || "", receipt_order_number: asset.receipt_order_number || "",
+      title_creation_date: asset.title_creation_date || "",
     });
     setShowEdit(true);
   };
