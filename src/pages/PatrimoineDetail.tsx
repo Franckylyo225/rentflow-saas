@@ -226,17 +226,44 @@ export default function PatrimoineDetail() {
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6 space-y-2">
-              <p className="text-xs text-muted-foreground">Titulaire</p>
-              <p className="font-medium text-card-foreground">{asset.asset_holders?.full_name || "—"}</p>
-              {asset.asset_holders?.phone && <p className="text-xs text-muted-foreground">{asset.asset_holders.phone}</p>}
+            <CardContent className="pt-6 space-y-4">
+              <div>
+                <p className="text-xs text-muted-foreground">Titulaire</p>
+                <p className="font-medium text-card-foreground">{asset.asset_holders?.full_name || "—"}</p>
+                {asset.asset_holders?.phone && <p className="text-xs text-muted-foreground">{asset.asset_holders.phone}</p>}
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Cabinet traitant</p>
+                <p className="font-medium text-card-foreground">{asset.handling_firm || "—"}</p>
+              </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="pt-6 space-y-2">
-              <p className="text-xs text-muted-foreground">Cabinet traitant</p>
-              <p className="font-medium text-card-foreground">{asset.handling_firm || "—"}</p>
-            </CardContent>
+          <Card className="overflow-hidden relative group">
+            {asset.latitude && asset.longitude ? (
+              <>
+                <div
+                  className="absolute inset-0 bg-cover bg-center opacity-20 group-hover:opacity-30 transition-opacity"
+                  style={{
+                    backgroundImage: `url(https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${asset.longitude},${asset.latitude},13,0/400x200@2x?access_token=pk.placeholder)`,
+                  }}
+                />
+                <div className="absolute inset-0 bg-[url('https://tile.openstreetmap.org/13/${Math.floor((asset.longitude + 180) / 360 * Math.pow(2, 13))}/${Math.floor((1 - Math.log(Math.tan(asset.latitude * Math.PI / 180) + 1 / Math.cos(asset.latitude * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, 13))}.png')] bg-cover bg-center opacity-15 group-hover:opacity-25 transition-opacity" />
+                <CardContent className="pt-6 flex flex-col items-center justify-center h-full relative z-10 min-h-[120px]">
+                  <MapPin className="h-8 w-8 text-primary mb-2" />
+                  <p className="text-xs text-muted-foreground mb-3">
+                    {asset.latitude.toFixed(4)}, {asset.longitude.toFixed(4)}
+                  </p>
+                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowMapDialog(true)}>
+                    <MapPin className="h-3.5 w-3.5" /> Afficher la localisation
+                  </Button>
+                </CardContent>
+              </>
+            ) : (
+              <CardContent className="pt-6 flex flex-col items-center justify-center min-h-[120px] text-muted-foreground">
+                <MapPin className="h-6 w-6 opacity-40 mb-2" />
+                <p className="text-xs">Aucune géolocalisation</p>
+              </CardContent>
+            )}
           </Card>
         </div>
 
