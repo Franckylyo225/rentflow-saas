@@ -48,7 +48,7 @@ export default function Patrimoine() {
   const [deletingHolder, setDeletingHolder] = useState<any>(null);
   const [holderSearch, setHolderSearch] = useState("");
   const [viewingHolder, setViewingHolder] = useState<any>(null);
-  const [form, setForm] = useState({ title: "", asset_type: "terrain", holder_id: "", locality: "", subdivision_name: "", land_title: "", handling_firm: "", description: "", latitude: "", longitude: "" });
+  const [form, setForm] = useState({ title: "", asset_type: "terrain", holder_id: "", locality: "", subdivision_name: "", land_title: "", handling_firm: "", description: "", map_link: "" });
   const [holderForm, setHolderForm] = useState({ full_name: "", phone: "", email: "", address: "" });
   const navigate = useNavigate();
   const { profile } = useProfile();
@@ -156,7 +156,7 @@ export default function Patrimoine() {
     !holderSearch || h.full_name.toLowerCase().includes(holderSearch.toLowerCase()) || (h.phone || "").includes(holderSearch)
   );
 
-  const resetForm = () => setForm({ title: "", asset_type: "terrain", holder_id: "", locality: "", subdivision_name: "", land_title: "", handling_firm: "", description: "", latitude: "", longitude: "" });
+  const resetForm = () => setForm({ title: "", asset_type: "terrain", holder_id: "", locality: "", subdivision_name: "", land_title: "", handling_firm: "", description: "", map_link: "" });
 
   const openEdit = (asset: any, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -165,7 +165,7 @@ export default function Patrimoine() {
       title: asset.title, asset_type: asset.asset_type, holder_id: asset.holder_id || "",
       locality: asset.locality, subdivision_name: asset.subdivision_name, land_title: asset.land_title,
       handling_firm: asset.handling_firm || "", description: asset.description || "",
-      latitude: asset.latitude != null ? String(asset.latitude) : "", longitude: asset.longitude != null ? String(asset.longitude) : "",
+      map_link: asset.map_link || "",
     });
     setShowEdit(true);
   };
@@ -219,15 +219,9 @@ export default function Patrimoine() {
         <Label>Cabinet traitant</Label>
         <Input value={form.handling_firm} onChange={e => setForm(f => ({ ...f, handling_firm: e.target.value }))} placeholder="Ex: Cabinet Me Koné" />
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Latitude</Label>
-          <Input type="number" step="any" value={form.latitude} onChange={e => setForm(f => ({ ...f, latitude: e.target.value }))} placeholder="Ex: 5.3600" />
-        </div>
-        <div className="space-y-2">
-          <Label>Longitude</Label>
-          <Input type="number" step="any" value={form.longitude} onChange={e => setForm(f => ({ ...f, longitude: e.target.value }))} placeholder="Ex: -4.0083" />
-        </div>
+      <div className="space-y-2">
+        <Label>Lien Google Maps</Label>
+        <Input value={form.map_link} onChange={e => setForm(f => ({ ...f, map_link: e.target.value }))} placeholder="Ex: https://maps.google.com/..." />
       </div>
       <div className="space-y-2">
         <Label>Description</Label>
