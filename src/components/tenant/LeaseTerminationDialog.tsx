@@ -29,6 +29,7 @@ const NOTICE_DURATIONS = [
   { value: 1, label: "1 mois" },
   { value: 2, label: "2 mois" },
   { value: 3, label: "3 mois" },
+  { value: 6, label: "6 mois" },
 ];
 
 interface Props {
