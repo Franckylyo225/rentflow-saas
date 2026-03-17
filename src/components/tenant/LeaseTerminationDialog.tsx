@@ -45,6 +45,8 @@ export function LeaseTerminationDialog({ open, onOpenChange, tenant, payments, o
   const [reason, setReason] = useState("");
   const [notificationDate, setNotificationDate] = useState<Date | undefined>(new Date());
   const [noticeDuration, setNoticeDuration] = useState("1");
+  const [repairCost, setRepairCost] = useState(0);
+  const [repairDescription, setRepairDescription] = useState("");
   const [saving, setSaving] = useState(false);
 
   const effectiveDate = useMemo(() => {
