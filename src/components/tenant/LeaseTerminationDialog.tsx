@@ -63,19 +63,20 @@ export function LeaseTerminationDialog({ open, onOpenChange, tenant, payments, o
       .reduce((sum: number, p: any) => sum + (p.amount - p.paid_amount), 0);
 
     const depositAmount = tenant.deposit;
-    const totalDue = remainingRentDue;
+    const totalDue = remainingRentDue + repairCost;
     const balance = depositAmount - totalDue;
 
     return {
       remainingRentDue,
-      pendingCharges: 0,
+      repairCost,
+      pendingCharges: repairCost,
       penalties: 0,
       depositAmount,
       totalDue: Math.max(0, totalDue),
       depositRetained: Math.max(0, Math.min(depositAmount, totalDue)),
       balance,
     };
-  }, [effectiveDate, payments, tenant]);
+  }, [effectiveDate, payments, tenant, repairCost]);
 
   const canProceed = reason && notificationDate && noticeDuration;
 
