@@ -78,7 +78,7 @@ export function NotificationsTab() {
         body: {
           to: testPhone.trim(),
           message: testMessage.trim(),
-          senderName: "SCI Binieba",
+          senderName,
           organizationId: profile?.organization_id,
           recipientName: "",
           templateKey: null,
