@@ -36,6 +36,7 @@ export function GeneralTab({ settings, onSave, onUploadLogo }: Props) {
     logo_url: settings.logo_url || "",
     salaries_enabled: settings.salaries_enabled ?? true,
     sms_sender_name: settings.sms_sender_name || "SCI Binieba",
+    sms_sender_number: settings.sms_sender_number || "",
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
