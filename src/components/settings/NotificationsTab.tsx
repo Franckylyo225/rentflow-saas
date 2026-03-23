@@ -26,6 +26,7 @@ export function NotificationsTab() {
   const { profile } = useProfile();
   const { settings: orgSettings } = useOrganizationSettings();
   const senderName = orgSettings?.sms_sender_name || "SCI Binieba";
+  const senderNumber = orgSettings?.sms_sender_number || null;
   const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
