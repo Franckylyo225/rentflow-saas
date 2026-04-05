@@ -22,6 +22,7 @@ import { QuittanceDialog } from "@/components/rent/QuittanceDialog";
 import type { QuittanceData } from "@/lib/generateQuittance";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useProfile } from "@/hooks/useProfile";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 
 const paymentMethods = ["Espèces", "Virement bancaire", "Chèque", "Mobile Money", "Carte bancaire"];
 
