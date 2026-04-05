@@ -596,6 +596,7 @@ export type Database = {
           fiscal_year_start: number
           id: string
           invite_token: string
+          is_active: boolean
           late_fee_enabled: boolean
           late_fee_grace_days: number
           late_fee_type: string
@@ -624,6 +625,7 @@ export type Database = {
           fiscal_year_start?: number
           id?: string
           invite_token?: string
+          is_active?: boolean
           late_fee_enabled?: boolean
           late_fee_grace_days?: number
           late_fee_type?: string
@@ -652,6 +654,7 @@ export type Database = {
           fiscal_year_start?: number
           id?: string
           invite_token?: string
+          is_active?: boolean
           late_fee_enabled?: boolean
           late_fee_grace_days?: number
           late_fee_type?: string
@@ -1052,6 +1055,68 @@ export type Database = {
           },
         ]
       }
+      subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          organization_id: string
+          plan: string
+          status: string
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          organization_id: string
+          plan?: string
+          status?: string
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          organization_id?: string
+          plan?: string
+          status?: string
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      super_admins: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tenants: {
         Row: {
           company_name: string | null
@@ -1218,6 +1283,7 @@ export type Database = {
       }
       is_gestionnaire_or_admin: { Args: { _user_id: string }; Returns: boolean }
       is_org_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "gestionnaire" | "comptable"
