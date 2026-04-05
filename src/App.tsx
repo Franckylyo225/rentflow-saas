@@ -27,6 +27,7 @@ import Home from "./pages/Home";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrganizations from "./pages/admin/AdminOrganizations";
 import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
+import AdminLogin from "./pages/admin/AdminLogin";
 import { SuperAdminRoute } from "./components/admin/SuperAdminRoute";
 import NotFound from "./pages/NotFound";
 
@@ -41,11 +42,14 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              {/* Public */}
               <Route path="/" element={<Home />} />
               <Route path="/landing" element={<Landing />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/mfa-verify" element={<MfaVerify />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+
+              {/* SaaS user routes */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/properties" element={<ProtectedRoute><Properties /></ProtectedRoute>} />
               <Route path="/properties/:id" element={<ProtectedRoute><PropertyDetail /></ProtectedRoute>} />
@@ -59,9 +63,13 @@ const App = () => (
               <Route path="/financial-reports" element={<ProtectedRoute><FinancialReports /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-              <Route path="/admin" element={<ProtectedRoute><SuperAdminRoute><AdminDashboard /></SuperAdminRoute></ProtectedRoute>} />
-              <Route path="/admin/organizations" element={<ProtectedRoute><SuperAdminRoute><AdminOrganizations /></SuperAdminRoute></ProtectedRoute>} />
-              <Route path="/admin/subscriptions" element={<ProtectedRoute><SuperAdminRoute><AdminSubscriptions /></SuperAdminRoute></ProtectedRoute>} />
+
+              {/* Super Admin routes — separate auth */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin" element={<SuperAdminRoute><AdminDashboard /></SuperAdminRoute>} />
+              <Route path="/admin/organizations" element={<SuperAdminRoute><AdminOrganizations /></SuperAdminRoute>} />
+              <Route path="/admin/subscriptions" element={<SuperAdminRoute><AdminSubscriptions /></SuperAdminRoute>} />
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
