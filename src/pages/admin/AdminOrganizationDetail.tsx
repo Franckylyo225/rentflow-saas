@@ -306,8 +306,8 @@ const AdminOrganizationDetail = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {PLAN_OPTIONS.map((p) => (
-                          <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                        {plans.map((p) => (
+                          <SelectItem key={p.slug} value={p.slug}>{p.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

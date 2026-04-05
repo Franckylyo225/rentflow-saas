@@ -111,11 +111,21 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     async function fetchStats() {
-      const [orgsRes, profilesRes, subsRes] = await Promise.all([
+      const [orgsRes, profilesRes, subsRes, plansRes] = await Promise.all([
         supabase.from("organizations").select("id, name, email, is_active, created_at").order("created_at", { ascending: false }),
         supabase.from("profiles").select("id, organization_id, created_at"),
         supabase.from("subscriptions").select("plan, status, organization_id, created_at, current_period_start, current_period_end"),
+        supabase.from("plans").select("slug, name, price_monthly"),
       ]);
+
+      // Build dynamic price/label maps from plans table
+      const planRows = (plansRes.data || []) as { slug: string; name: string; price_monthly: number }[];
+      const PLAN_PRICES: Record<string, number> = {};
+      const PLAN_LABELS: Record<string, string> = {};
+      for (const p of planRows) {
+        PLAN_PRICES[p.slug] = p.price_monthly;
+        PLAN_LABELS[p.slug] = p.name;
+      }
 
       const orgs: OrgRow[] = (orgsRes.data || []) as OrgRow[];
       const profiles: ProfileRow[] = (profilesRes.data || []) as ProfileRow[];
