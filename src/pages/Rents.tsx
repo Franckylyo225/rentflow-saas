@@ -52,6 +52,8 @@ export default function Rents() {
   const { data: allTasks, refetch: refetchTasks } = useEscalationTasks();
   const { settings: orgSettings } = useOrganizationSettings();
   const { profile } = useProfile();
+  const { expired } = usePlanLimits();
+  const navigate = useNavigate();
 
   // Compute escalation info for each payment
   const paymentsWithEscalation = useMemo(() =>
