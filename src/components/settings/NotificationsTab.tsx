@@ -231,7 +231,7 @@ export function NotificationsTab() {
                       <Label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
                         <MessageSquare className="h-4 w-4 text-primary" /> SMS
                       </Label>
-                      <Switch checked={template.sms_enabled} onCheckedChange={v => updateTemplate(template.id, "sms_enabled", v)} />
+                      <Switch checked={template.sms_enabled} onCheckedChange={v => updateTemplate(template.id, "sms_enabled", v)} disabled={smsDisabled} />
                     </div>
                     <Textarea
                       value={template.sms_content}
