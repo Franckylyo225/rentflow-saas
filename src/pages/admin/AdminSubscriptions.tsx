@@ -35,11 +35,11 @@ interface SubRow {
   created_at: string;
 }
 
-const PLAN_LABELS: Record<string, string> = {
-  starter: "Starter",
-  pro: "Pro",
-  enterprise: "Entreprise",
-};
+interface PlanOption {
+  slug: string;
+  name: string;
+  price_monthly: number;
+}
 
 const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   trial: { label: "Essai", variant: "secondary" },
@@ -49,16 +49,20 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
 };
 
 const AdminSubscriptions = () => {
+  const [plans, setPlans] = useState<PlanOption[]>([]);
   const [subs, setSubs] = useState<SubRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetch() {
-      const [subsRes, orgsRes] = await Promise.all([
+      const [subsRes, orgsRes, plansRes] = await Promise.all([
         supabase.from("subscriptions").select("*"),
         supabase.from("organizations").select("id, name"),
+        supabase.from("plans").select("slug, name, price_monthly").order("sort_order"),
       ]);
+
+      setPlans((plansRes.data || []) as PlanOption[]);
 
       const orgs = orgsRes.data || [];
       const enriched: SubRow[] = (subsRes.data || []).map((s: any) => ({
@@ -150,9 +154,9 @@ const AdminSubscriptions = () => {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="starter">Starter</SelectItem>
-                                <SelectItem value="pro">Pro</SelectItem>
-                                <SelectItem value="enterprise">Entreprise</SelectItem>
+                                {plans.map((p) => (
+                                  <SelectItem key={p.slug} value={p.slug}>{p.name}</SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                           </TableCell>

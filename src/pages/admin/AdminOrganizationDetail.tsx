@@ -22,11 +22,11 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
 
-const PLAN_OPTIONS = [
-  { value: "starter", label: "Starter" },
-  { value: "pro", label: "Pro" },
-  { value: "enterprise", label: "Enterprise" },
-];
+interface PlanOption {
+  slug: string;
+  name: string;
+  price_monthly: number;
+}
 
 const STATUS_OPTIONS = [
   { value: "trial", label: "Essai" },
@@ -75,6 +75,7 @@ const AdminOrganizationDetail = () => {
   const { user } = useAuth();
 
   const [org, setOrg] = useState<OrgDetail | null>(null);
+  const [plans, setPlans] = useState<PlanOption[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [usage, setUsage] = useState<UsageStats>({ properties: 0, units: 0, tenants: 0, users: 0 });
   const [notes, setNotes] = useState<AdminNote[]>([]);
@@ -85,13 +86,16 @@ const AdminOrganizationDetail = () => {
   const fetchAll = async () => {
     if (!id) return;
 
-    const [orgRes, subRes, notesRes, profilesRes, propsRes] = await Promise.all([
+    const [orgRes, subRes, notesRes, profilesRes, propsRes, plansRes] = await Promise.all([
       supabase.from("organizations").select("id, name, email, phone, address, is_active, created_at, currency").eq("id", id).single(),
       supabase.from("subscriptions").select("*").eq("organization_id", id).maybeSingle(),
       supabase.from("admin_notes").select("*").eq("organization_id", id).order("created_at", { ascending: false }),
       supabase.from("profiles").select("id").eq("organization_id", id),
       supabase.from("properties").select("id").eq("organization_id", id),
+      supabase.from("plans").select("slug, name, price_monthly").order("sort_order"),
     ]);
+
+    setPlans((plansRes.data || []) as PlanOption[]);
 
     if (orgRes.data) setOrg(orgRes.data);
     if (subRes.data) setSubscription(subRes.data);
@@ -302,8 +306,8 @@ const AdminOrganizationDetail = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {PLAN_OPTIONS.map((p) => (
-                          <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                        {plans.map((p) => (
+                          <SelectItem key={p.slug} value={p.slug}>{p.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

@@ -16,17 +16,7 @@ import {
   CartesianGrid, PieChart, Pie, Cell, AreaChart, Area, LineChart, Line,
 } from "recharts";
 
-const PLAN_PRICES: Record<string, number> = {
-  starter: 15000,
-  pro: 35000,
-  enterprise: 75000,
-};
-
-const PLAN_LABELS: Record<string, string> = {
-  starter: "Starter",
-  pro: "Pro",
-  enterprise: "Enterprise",
-};
+// Plans are now loaded dynamically from the database
 
 interface SubRow {
   plan: string;
@@ -97,6 +87,8 @@ interface DashboardStats {
   mrrGrowth: number;
   newOrgsThisMonth: number;
   newOrgsLastMonth: number;
+  planPrices: Record<string, number>;
+  planLabels: Record<string, string>;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -121,11 +113,21 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     async function fetchStats() {
-      const [orgsRes, profilesRes, subsRes] = await Promise.all([
+      const [orgsRes, profilesRes, subsRes, plansRes] = await Promise.all([
         supabase.from("organizations").select("id, name, email, is_active, created_at").order("created_at", { ascending: false }),
         supabase.from("profiles").select("id, organization_id, created_at"),
         supabase.from("subscriptions").select("plan, status, organization_id, created_at, current_period_start, current_period_end"),
+        supabase.from("plans").select("slug, name, price_monthly"),
       ]);
+
+      // Build dynamic price/label maps from plans table
+      const planRows = (plansRes.data || []) as { slug: string; name: string; price_monthly: number }[];
+      const PLAN_PRICES: Record<string, number> = {};
+      const PLAN_LABELS: Record<string, string> = {};
+      for (const p of planRows) {
+        PLAN_PRICES[p.slug] = p.price_monthly;
+        PLAN_LABELS[p.slug] = p.name;
+      }
 
       const orgs: OrgRow[] = (orgsRes.data || []) as OrgRow[];
       const profiles: ProfileRow[] = (profilesRes.data || []) as ProfileRow[];
@@ -291,6 +293,8 @@ const AdminDashboard = () => {
         mrrGrowth,
         newOrgsThisMonth,
         newOrgsLastMonth,
+        planPrices: PLAN_PRICES,
+        planLabels: PLAN_LABELS,
       });
       setLoading(false);
     }
@@ -638,7 +642,7 @@ const AdminDashboard = () => {
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <Badge variant="outline" className="text-xs">
-                          {PLAN_LABELS[tenant.plan] || tenant.plan}
+                          {stats.planLabels[tenant.plan] || tenant.plan}
                         </Badge>
                         <span className="text-sm font-semibold text-foreground whitespace-nowrap">
                           {fmt(tenant.mrr)} FCFA
@@ -694,11 +698,11 @@ const AdminDashboard = () => {
               <p className="text-xs text-muted-foreground mt-0.5">Prix mensuels utilisés pour le calcul du MRR</p>
             </div>
             <div className="grid grid-cols-3 divide-x divide-border">
-              {Object.entries(PLAN_PRICES).map(([plan, price]) => (
+              {Object.entries(stats.planPrices).map(([plan, price]) => (
                 <div key={plan} className="px-5 py-4 text-center">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider">{PLAN_LABELS[plan] || plan}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider">{stats.planLabels[plan] || plan}</p>
                   <p className="text-lg font-bold text-foreground mt-1">
-                    {fmt(price)} <span className="text-xs font-normal text-muted-foreground">FCFA/mois</span>
+                    {fmt(price as number)} <span className="text-xs font-normal text-muted-foreground">FCFA/mois</span>
                   </p>
                 </div>
               ))}
