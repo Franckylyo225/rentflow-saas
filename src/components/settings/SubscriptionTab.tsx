@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Check, ArrowRight, Loader2, Crown, Clock, AlertTriangle } from "lucide-react";
+import { PromoCodeInput } from "@/components/promo/PromoCodeInput";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
