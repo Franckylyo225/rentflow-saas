@@ -92,6 +92,10 @@ export default function Rents() {
   const criticalCount = paymentsWithEscalation.filter(r => r.escalation.level === "critical").length;
 
   const openPayment = (payment: any) => {
+    if (expired) {
+      toast.error("Abonnement expiré", { description: "Renouvelez votre abonnement pour enregistrer des paiements.", action: { label: "Renouveler", onClick: () => navigate("/settings") } });
+      return;
+    }
     setSelectedPayment(payment);
     setPayForm({ amount: (payment.amount - payment.paid_amount).toString(), date: new Date().toISOString().split("T")[0], method: "", comment: "" });
     setShowPayment(true);
