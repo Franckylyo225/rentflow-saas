@@ -204,7 +204,7 @@ export default function Tenants() {
           </div>
           <Button className="gap-2 self-start" disabled={expired} onClick={() => {
             if (expired) {
-              toast.error("Abonnement expiré", { description: "Renouvelez votre abonnement pour continuer.", action: { label: "Renouveler", onClick: () => navigate("/tenants") } });
+              toast.error("Abonnement expiré", { description: "Renouvelez votre abonnement pour continuer.", action: { label: "Renouveler", onClick: () => navigate("/settings") } });
               return;
             }
             setShowAdd(true);
