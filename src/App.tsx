@@ -36,6 +36,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              <Route path="/landing" element={<Landing />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/mfa-verify" element={<MfaVerify />} />
               <Route path="/reset-password" element={<ResetPassword />} />
