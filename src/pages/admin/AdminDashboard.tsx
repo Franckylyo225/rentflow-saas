@@ -620,7 +620,7 @@ const AdminDashboard = () => {
                 <p className="text-xs text-muted-foreground mt-0.5">Abonnements actifs les plus contributeurs</p>
               </div>
               <div className="divide-y divide-border">
-                {stats.topTenants.length === 0 ? (
+                {(stats.topTenants?.length ?? 0) === 0 ? (
                   <div className="px-5 py-8 text-center text-sm text-muted-foreground">
                     Aucun abonnement actif
                   </div>
