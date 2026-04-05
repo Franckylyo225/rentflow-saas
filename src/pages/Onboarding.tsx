@@ -358,6 +358,19 @@ export default function Onboarding() {
                 </div>
               )}
 
+              {/* Promo code */}
+              {organization && selectedPlanData && (
+                <div className="max-w-md mx-auto">
+                  <PromoCodeInput
+                    organizationId={organization.id}
+                    planSlug={selectedPlan}
+                    planPrice={selectedPlanData.price_monthly}
+                    onApplied={(r) => setPromoApplied({ discount: r.discount!, final_price: r.final_price! })}
+                    onRemoved={() => setPromoApplied(null)}
+                  />
+                </div>
+              )}
+
               <div className="flex justify-between">
                 <Button variant="ghost" onClick={() => setStep(0)} className="gap-2">
                   <ArrowLeft className="h-4 w-4" /> Retour

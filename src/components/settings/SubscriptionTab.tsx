@@ -283,7 +283,7 @@ export function SubscriptionTab() {
       {/* Confirmation panel */}
       {selectedPlan && (
         <Card className="border-primary/40 bg-primary/5">
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h4 className="font-semibold text-foreground">
@@ -307,6 +307,21 @@ export function SubscriptionTab() {
                 </Button>
               </div>
             </div>
+
+            {/* Promo code input */}
+            {organizationId && (() => {
+              const sp = plans.find(p => p.slug === selectedPlan);
+              if (!sp || (sp.price_monthly === 0 && sp.max_properties === null)) return null;
+              return (
+                <PromoCodeInput
+                  organizationId={organizationId}
+                  planSlug={selectedPlan}
+                  planPrice={sp.price_monthly}
+                  onApplied={() => {}}
+                  onRemoved={() => {}}
+                />
+              );
+            })()}
           </CardContent>
         </Card>
       )}
