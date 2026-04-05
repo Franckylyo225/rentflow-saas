@@ -49,6 +49,7 @@ export default function Tenants() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { expired } = usePlanLimits();
 
   useEffect(() => {
     if (searchParams.get("action") === "new") {
