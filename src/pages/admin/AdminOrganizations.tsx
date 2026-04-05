@@ -31,9 +31,12 @@ interface OrgRow {
 }
 
 const AdminOrganizations = () => {
+  const navigate = useNavigate();
   const [orgs, setOrgs] = useState<OrgRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [filterPlan, setFilterPlan] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [toggling, setToggling] = useState<string | null>(null);
 
   const fetchOrgs = async () => {
