@@ -210,11 +210,17 @@ const AdminOrganizations = () => {
                         <TableCell className="text-sm text-muted-foreground">
                           {format(new Date(org.created_at), "dd MMM yyyy", { locale: fr })}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right space-x-1">
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="gap-1.5"
+                            onClick={() => navigate(`/admin/organizations/${org.id}`)}
+                          >
+                            <Eye className="h-3.5 w-3.5 mr-1" /> Voir
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => toggleActive(org.id, org.is_active)}
                             disabled={toggling === org.id}
                           >
@@ -225,7 +231,6 @@ const AdminOrganizations = () => {
                             ) : (
                               <Power className="h-3.5 w-3.5" />
                             )}
-                            {org.is_active ? "Désactiver" : "Activer"}
                           </Button>
                         </TableCell>
                       </TableRow>
