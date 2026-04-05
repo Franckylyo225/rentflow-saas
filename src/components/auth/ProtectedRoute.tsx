@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading, signOut } = useAuth();
-  const { profile, loading: profileLoading } = useProfile();
+  const { profile, role, organization, loading: profileLoading } = useProfile();
   const location = useLocation();
   const [mfaChecking, setMfaChecking] = useState(true);
   const [needsMfa, setNeedsMfa] = useState(false);
@@ -51,6 +51,18 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!user) return <Navigate to="/auth" replace />;
 
   if (needsMfa) return <Navigate to="/mfa-verify" replace />;
+
+  // Redirect admins to onboarding if not completed (skip for invited users)
+  if (
+    profile &&
+    profile.is_approved &&
+    role?.role === "admin" &&
+    organization &&
+    organization.onboarding_completed === false &&
+    location.pathname !== "/onboarding"
+  ) {
+    return <Navigate to="/onboarding" replace />;
+  }
 
   // Show pending approval screen
   if (profile && !profile.is_approved) {
