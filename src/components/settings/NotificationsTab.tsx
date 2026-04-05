@@ -110,6 +110,19 @@ export function NotificationsTab() {
 
   return (
     <div className="space-y-6">
+      {/* SMS disabled banner */}
+      {smsDisabled && (
+        <Card className="border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30">
+          <CardContent className="p-4 flex items-start gap-3">
+            <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-300">SMS temporairement désactivé</p>
+              <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">L'envoi de SMS est suspendu en attendant l'intégration d'un nouveau fournisseur. Les modèles Email restent fonctionnels.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header with stats */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
