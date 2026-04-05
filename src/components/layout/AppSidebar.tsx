@@ -66,23 +66,6 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
               </NavLink>
             );
           })}
-          {isSuperAdmin && (
-            <div className="mt-4 pt-4 border-t border-border">
-              <NavLink
-                to="/admin"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
-                  location.pathname.startsWith("/admin")
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <Shield className="h-4 w-4 flex-shrink-0" />
-                Super Admin
-              </NavLink>
-            </div>
-          )}
         </nav>
 
         {/* User */}
