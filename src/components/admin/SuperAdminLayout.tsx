@@ -1,13 +1,14 @@
 import { ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
   Building2,
   CreditCard,
-  ArrowLeft,
+  LogOut,
   Shield,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const NAV_ITEMS = [
   { label: "Vue d'ensemble", href: "/admin", icon: LayoutDashboard },
@@ -17,6 +18,13 @@ const NAV_ITEMS = [
 
 export function SuperAdminLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/admin/login");
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -27,10 +35,8 @@ export function SuperAdminLayout({ children }: { children: ReactNode }) {
             <Shield className="h-5 w-5 text-primary" />
             <span className="font-bold text-foreground">Super Admin</span>
           </div>
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/dashboard" className="gap-2">
-              <ArrowLeft className="h-4 w-4" /> Retour à l'app
-            </Link>
+          <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2 text-muted-foreground">
+            <LogOut className="h-4 w-4" /> Déconnexion
           </Button>
         </div>
       </header>
