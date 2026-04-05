@@ -484,7 +484,7 @@ const AdminDashboard = () => {
                 <p className="text-xs text-muted-foreground mt-0.5">Répartition du revenu</p>
               </div>
               <div className="p-5">
-                {stats.revenueByPlan.length > 0 ? (
+                {(stats.revenueByPlan?.length ?? 0) > 0 ? (
                   <>
                     <ResponsiveContainer width="100%" height={160}>
                       <PieChart>
@@ -497,7 +497,7 @@ const AdminDashboard = () => {
                           paddingAngle={3}
                           dataKey="value"
                         >
-                          {stats.revenueByPlan.map((_, i) => (
+                          {(stats.revenueByPlan || []).map((_, i) => (
                             <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                           ))}
                         </Pie>
@@ -513,7 +513,7 @@ const AdminDashboard = () => {
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="space-y-2.5 mt-3">
-                      {stats.revenueByPlan.map((plan, i) => (
+                      {(stats.revenueByPlan || []).map((plan, i) => (
                         <div key={plan.name} className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
@@ -576,10 +576,10 @@ const AdminDashboard = () => {
                 <p className="text-xs text-muted-foreground mt-0.5">Répartition actuelle</p>
               </div>
               <div className="p-5">
-                {stats.subsByStatus.length > 0 ? (
+                {(stats.subsByStatus?.length ?? 0) > 0 ? (
                   <div className="space-y-4">
-                    {stats.subsByStatus.map((item) => {
-                      const total = stats.subsByStatus.reduce((s, i) => s + i.value, 0);
+                    {(stats.subsByStatus || []).map((item) => {
+                      const total = (stats.subsByStatus || []).reduce((s, i) => s + i.value, 0);
                       const pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
                       return (
                         <div key={item.name}>
@@ -620,12 +620,12 @@ const AdminDashboard = () => {
                 <p className="text-xs text-muted-foreground mt-0.5">Abonnements actifs les plus contributeurs</p>
               </div>
               <div className="divide-y divide-border">
-                {stats.topTenants.length === 0 ? (
+                {(stats.topTenants?.length ?? 0) === 0 ? (
                   <div className="px-5 py-8 text-center text-sm text-muted-foreground">
                     Aucun abonnement actif
                   </div>
                 ) : (
-                  stats.topTenants.map((tenant, idx) => (
+                  (stats.topTenants || []).map((tenant, idx) => (
                     <div key={idx} className="flex items-center justify-between px-5 py-3.5 hover:bg-muted/30 transition-colors">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0">
@@ -661,12 +661,12 @@ const AdminDashboard = () => {
                 </h2>
               </div>
               <div className="divide-y divide-border">
-                {stats.recentActivities.length === 0 ? (
+                {(stats.recentActivities?.length ?? 0) === 0 ? (
                   <div className="px-5 py-8 text-center text-sm text-muted-foreground">
                     Aucune activité récente
                   </div>
                 ) : (
-                  stats.recentActivities.slice(0, 7).map((activity) => (
+                  (stats.recentActivities || []).slice(0, 7).map((activity) => (
                     <div key={activity.id} className="flex items-start gap-3 px-5 py-3 hover:bg-muted/30 transition-colors">
                       <div className={`p-1.5 rounded-lg ${activity.iconBg} mt-0.5 shrink-0`}>
                         <activity.icon className={`h-3.5 w-3.5 ${activity.iconColor}`} />
