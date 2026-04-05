@@ -52,6 +52,9 @@ export function usePlanLimits(): PlanLimits {
       ]);
 
       const planSlug = subRes.data?.plan || "starter";
+      const subStatus = subRes.data?.status || "trial";
+      const trialEndsAt = subRes.data?.trial_ends_at || null;
+      const periodEndsAt = subRes.data?.current_period_end || null;
       const plans = (plansRes.data || []) as { slug: string; name: string; max_properties: number | null; max_users: number | null }[];
       const currentPlan = plans.find((p) => p.slug === planSlug);
 
@@ -62,6 +65,9 @@ export function usePlanLimits(): PlanLimits {
         currentProperties: propsRes.data?.length || 0,
         currentUsers: profilesRes.data?.length || 0,
         loading: false,
+        subscriptionStatus: subStatus,
+        trialEndsAt,
+        periodEndsAt,
       });
     }
 
