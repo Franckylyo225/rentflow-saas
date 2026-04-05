@@ -642,7 +642,7 @@ const AdminDashboard = () => {
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <Badge variant="outline" className="text-xs">
-                          {PLAN_LABELS[tenant.plan] || tenant.plan}
+                          {stats.planLabels[tenant.plan] || tenant.plan}
                         </Badge>
                         <span className="text-sm font-semibold text-foreground whitespace-nowrap">
                           {fmt(tenant.mrr)} FCFA
