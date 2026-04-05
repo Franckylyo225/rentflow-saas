@@ -28,7 +28,7 @@ export function SuperAdminLayout({ children }: { children: ReactNode }) {
             <span className="font-bold text-foreground">Super Admin</span>
           </div>
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/" className="gap-2">
+            <Link to="/dashboard" className="gap-2">
               <ArrowLeft className="h-4 w-4" /> Retour à l'app
             </Link>
           </Button>
