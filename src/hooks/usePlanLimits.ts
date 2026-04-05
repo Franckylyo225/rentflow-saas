@@ -45,7 +45,7 @@ export function usePlanLimits(): PlanLimits {
 
     async function fetch() {
       const [subRes, propsRes, profilesRes, plansRes] = await Promise.all([
-        supabase.from("subscriptions").select("plan").eq("organization_id", organizationId).maybeSingle(),
+        supabase.from("subscriptions").select("plan, status, trial_ends_at, current_period_end").eq("organization_id", organizationId).maybeSingle(),
         supabase.from("properties").select("id").eq("organization_id", organizationId!),
         supabase.from("profiles").select("id").eq("organization_id", organizationId!),
         supabase.from("plans").select("slug, name, max_properties, max_users"),
