@@ -241,9 +241,20 @@ function MembersSection({ isAdmin, currentUserId, orgId }: { isAdmin: boolean; c
               </div>
             </div>
             {isAdmin && (
-              <Button size="sm" className="gap-2" onClick={() => setShowAddUser(true)}>
-                <UserPlus className="h-4 w-4" /> Ajouter
-              </Button>
+              <div className="flex items-center gap-3">
+                {userLimitLabel && (
+                  <span className="text-xs text-muted-foreground">{userLimitLabel}</span>
+                )}
+                <Button
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => setShowAddUser(true)}
+                  disabled={!canAddUser}
+                  title={!canAddUser ? "Limite du plan atteinte" : undefined}
+                >
+                  <UserPlus className="h-4 w-4" /> Ajouter
+                </Button>
+              </div>
             )}
           </div>
         </CardHeader>
