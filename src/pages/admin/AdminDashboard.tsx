@@ -16,17 +16,7 @@ import {
   CartesianGrid, PieChart, Pie, Cell, AreaChart, Area, LineChart, Line,
 } from "recharts";
 
-const PLAN_PRICES: Record<string, number> = {
-  starter: 15000,
-  pro: 35000,
-  enterprise: 75000,
-};
-
-const PLAN_LABELS: Record<string, string> = {
-  starter: "Starter",
-  pro: "Pro",
-  enterprise: "Enterprise",
-};
+// Plans are now loaded dynamically from the database
 
 interface SubRow {
   plan: string;
