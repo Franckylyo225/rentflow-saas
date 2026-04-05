@@ -625,7 +625,7 @@ const AdminDashboard = () => {
                     Aucun abonnement actif
                   </div>
                 ) : (
-                  stats.topTenants.map((tenant, idx) => (
+                  (stats.topTenants || []).map((tenant, idx) => (
                     <div key={idx} className="flex items-center justify-between px-5 py-3.5 hover:bg-muted/30 transition-colors">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0">
