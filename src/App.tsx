@@ -26,6 +26,7 @@ import Landing from "./pages/Landing";
 import Home from "./pages/Home";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrganizations from "./pages/admin/AdminOrganizations";
+import AdminOrganizationDetail from "./pages/admin/AdminOrganizationDetail";
 import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
 import AdminAdmins from "./pages/admin/AdminAdmins";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -69,6 +70,7 @@ const App = () => (
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin" element={<SuperAdminRoute><AdminDashboard /></SuperAdminRoute>} />
               <Route path="/admin/organizations" element={<SuperAdminRoute><AdminOrganizations /></SuperAdminRoute>} />
+              <Route path="/admin/organizations/:id" element={<SuperAdminRoute><AdminOrganizationDetail /></SuperAdminRoute>} />
               <Route path="/admin/subscriptions" element={<SuperAdminRoute><AdminSubscriptions /></SuperAdminRoute>} />
               <Route path="/admin/admins" element={<SuperAdminRoute><AdminAdmins /></SuperAdminRoute>} />
 

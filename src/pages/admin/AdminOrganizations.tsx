@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -12,7 +19,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Search, Power, PowerOff } from "lucide-react";
+import { Loader2, Search, Power, PowerOff, Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -30,9 +38,12 @@ interface OrgRow {
 }
 
 const AdminOrganizations = () => {
+  const navigate = useNavigate();
   const [orgs, setOrgs] = useState<OrgRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [filterPlan, setFilterPlan] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [toggling, setToggling] = useState<string | null>(null);
 
   const fetchOrgs = async () => {
@@ -81,9 +92,15 @@ const AdminOrganizations = () => {
     setToggling(null);
   };
 
-  const filtered = orgs.filter((o) =>
-    o.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = orgs.filter((o) => {
+    if (!o.name.toLowerCase().includes(search.toLowerCase())) return false;
+    if (filterPlan !== "all" && (o.subscription?.plan || "") !== filterPlan) return false;
+    if (filterStatus !== "all") {
+      if (filterStatus === "active" && !o.is_active) return false;
+      if (filterStatus === "inactive" && o.is_active) return false;
+    }
+    return true;
+  });
 
   const statusBadge = (status: string) => {
     const map: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -116,14 +133,37 @@ const AdminOrganizations = () => {
               {orgs.length} organisation{orgs.length > 1 ? "s" : ""} enregistrée{orgs.length > 1 ? "s" : ""}
             </p>
           </div>
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <div className="relative w-full sm:w-56">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={filterPlan} onValueChange={setFilterPlan}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Plan" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les plans</SelectItem>
+                <SelectItem value="starter">Starter</SelectItem>
+                <SelectItem value="pro">Pro</SelectItem>
+                <SelectItem value="enterprise">Enterprise</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="active">Actifs</SelectItem>
+                <SelectItem value="inactive">Inactifs</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -170,11 +210,17 @@ const AdminOrganizations = () => {
                         <TableCell className="text-sm text-muted-foreground">
                           {format(new Date(org.created_at), "dd MMM yyyy", { locale: fr })}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right space-x-1">
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="gap-1.5"
+                            onClick={() => navigate(`/admin/organizations/${org.id}`)}
+                          >
+                            <Eye className="h-3.5 w-3.5 mr-1" /> Voir
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => toggleActive(org.id, org.is_active)}
                             disabled={toggling === org.id}
                           >
@@ -185,7 +231,6 @@ const AdminOrganizations = () => {
                             ) : (
                               <Power className="h-3.5 w-3.5" />
                             )}
-                            {org.is_active ? "Désactiver" : "Activer"}
                           </Button>
                         </TableCell>
                       </TableRow>
