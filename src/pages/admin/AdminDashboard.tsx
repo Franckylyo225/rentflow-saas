@@ -484,7 +484,7 @@ const AdminDashboard = () => {
                 <p className="text-xs text-muted-foreground mt-0.5">Répartition du revenu</p>
               </div>
               <div className="p-5">
-                {stats.revenueByPlan.length > 0 ? (
+                {(stats.revenueByPlan?.length ?? 0) > 0 ? (
                   <>
                     <ResponsiveContainer width="100%" height={160}>
                       <PieChart>
