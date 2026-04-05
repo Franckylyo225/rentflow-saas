@@ -59,6 +59,7 @@ export default function Onboarding() {
   const [selectedPlan, setSelectedPlan] = useState<string>("starter");
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [promoApplied, setPromoApplied] = useState<{ discount: number; final_price: number } | null>(null);
 
   // Org config form
   const [orgName, setOrgName] = useState("");
