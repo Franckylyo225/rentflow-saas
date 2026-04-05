@@ -7,6 +7,7 @@ import {
   CreditCard,
   LogOut,
   Shield,
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -14,6 +15,7 @@ const NAV_ITEMS = [
   { label: "Vue d'ensemble", href: "/admin", icon: LayoutDashboard },
   { label: "Organisations", href: "/admin/organizations", icon: Building2 },
   { label: "Abonnements", href: "/admin/subscriptions", icon: CreditCard },
+  { label: "Super Admins", href: "/admin/admins", icon: Users },
 ];
 
 export function SuperAdminLayout({ children }: { children: ReactNode }) {
