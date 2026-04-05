@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 
 /* ─── Permission definitions ─── */
 const PERMISSION_GROUPS = [
@@ -149,6 +150,7 @@ export function UsersRolesTab() {
    MEMBERS SECTION
    ═══════════════════════════════════════════════════ */
 function MembersSection({ isAdmin, currentUserId, orgId }: { isAdmin: boolean; currentUserId?: string; orgId?: string }) {
+  const { canAddUser, userLimitLabel } = usePlanLimits();
   const [members, setMembers] = useState<OrgMember[]>([]);
   const [roles, setRoles] = useState<CustomRole[]>([]);
   const [cities, setCities] = useState<CityOption[]>([]);
@@ -239,9 +241,20 @@ function MembersSection({ isAdmin, currentUserId, orgId }: { isAdmin: boolean; c
               </div>
             </div>
             {isAdmin && (
-              <Button size="sm" className="gap-2" onClick={() => setShowAddUser(true)}>
-                <UserPlus className="h-4 w-4" /> Ajouter
-              </Button>
+              <div className="flex items-center gap-3">
+                {userLimitLabel && (
+                  <span className="text-xs text-muted-foreground">{userLimitLabel}</span>
+                )}
+                <Button
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => setShowAddUser(true)}
+                  disabled={!canAddUser}
+                  title={!canAddUser ? "Limite du plan atteinte" : undefined}
+                >
+                  <UserPlus className="h-4 w-4" /> Ajouter
+                </Button>
+              </div>
             )}
           </div>
         </CardHeader>
