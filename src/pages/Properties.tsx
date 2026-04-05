@@ -249,9 +249,19 @@ export default function Properties() {
             <h1 className="text-2xl font-bold text-foreground tracking-tight">Biens immobiliers</h1>
             <p className="text-muted-foreground text-sm mt-1">{properties.length} biens · {cities.length} villes</p>
           </div>
-          <Button className="gap-2 self-start" onClick={() => { setForm({ city_id: "", name: "", address: "", description: "", type: "immeuble" }); setShowAdd(true); }}>
-            <Plus className="h-4 w-4" /> Ajouter un bien
-          </Button>
+          <div className="flex items-center gap-3">
+            {propertyLimitLabel && (
+              <span className="text-xs text-muted-foreground">{propertyLimitLabel}</span>
+            )}
+            <Button
+              className="gap-2 self-start"
+              onClick={() => { setForm({ city_id: "", name: "", address: "", description: "", type: "immeuble" }); setShowAdd(true); }}
+              disabled={!canAddProperty}
+              title={!canAddProperty ? "Limite du plan atteinte" : undefined}
+            >
+              <Plus className="h-4 w-4" /> Ajouter un bien
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
