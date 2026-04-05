@@ -55,6 +55,10 @@ export default function SettingsPage() {
             <TabsContent value="security">
               <SecurityTab />
             </TabsContent>
+
+            <TabsContent value="subscription">
+              <SubscriptionTab />
+            </TabsContent>
           </Tabs>
         )}
       </div>
