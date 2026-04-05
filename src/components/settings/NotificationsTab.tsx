@@ -238,7 +238,7 @@ export function NotificationsTab() {
                       onChange={e => updateTemplate(template.id, "sms_content", e.target.value)}
                       rows={4}
                       className="text-sm resize-none"
-                      disabled={!template.sms_enabled}
+                      disabled={!template.sms_enabled || smsDisabled}
                       placeholder="Contenu du SMS..."
                     />
                     {template.sms_enabled && (
