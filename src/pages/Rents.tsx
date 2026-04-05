@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreditCard, AlertTriangle, CheckCircle2, Clock, Loader2, ListTodo, Plus, Check, FileText } from "lucide-react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { useState, useMemo, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +22,7 @@ import { QuittanceDialog } from "@/components/rent/QuittanceDialog";
 import type { QuittanceData } from "@/lib/generateQuittance";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useProfile } from "@/hooks/useProfile";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 
 const paymentMethods = ["Espèces", "Virement bancaire", "Chèque", "Mobile Money", "Carte bancaire"];
 
@@ -51,6 +52,8 @@ export default function Rents() {
   const { data: allTasks, refetch: refetchTasks } = useEscalationTasks();
   const { settings: orgSettings } = useOrganizationSettings();
   const { profile } = useProfile();
+  const { expired } = usePlanLimits();
+  const navigate = useNavigate();
 
   // Compute escalation info for each payment
   const paymentsWithEscalation = useMemo(() =>
@@ -89,6 +92,10 @@ export default function Rents() {
   const criticalCount = paymentsWithEscalation.filter(r => r.escalation.level === "critical").length;
 
   const openPayment = (payment: any) => {
+    if (expired) {
+      toast.error("Abonnement expiré", { description: "Renouvelez votre abonnement pour enregistrer des paiements.", action: { label: "Renouveler", onClick: () => navigate("/settings") } });
+      return;
+    }
     setSelectedPayment(payment);
     setPayForm({ amount: (payment.amount - payment.paid_amount).toString(), date: new Date().toISOString().split("T")[0], method: "", comment: "" });
     setShowPayment(true);

@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { computeTenantRiskScore, riskStyles, riskProgressColors, type TenantRiskScore } from "@/lib/riskScoring";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 
 const REASON_LABELS: Record<string, string> = {
   normal: "Fin normale",
@@ -48,6 +49,7 @@ export default function Tenants() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { expired } = usePlanLimits();
 
   useEffect(() => {
     if (searchParams.get("action") === "new") {
@@ -200,7 +202,13 @@ export default function Tenants() {
             <h1 className="text-2xl font-bold text-foreground tracking-tight">Locataires</h1>
             <p className="text-muted-foreground text-sm mt-1">{tenants.length} actifs · {formerTenants.length > 0 ? `${formerTenants.length} anciens` : ""}</p>
           </div>
-          <Button className="gap-2 self-start" onClick={() => setShowAdd(true)}>
+          <Button className="gap-2 self-start" disabled={expired} onClick={() => {
+            if (expired) {
+              toast.error("Abonnement expiré", { description: "Renouvelez votre abonnement pour continuer.", action: { label: "Renouveler", onClick: () => navigate("/settings") } });
+              return;
+            }
+            setShowAdd(true);
+          }}>
             <Plus className="h-4 w-4" /> Ajouter un locataire
           </Button>
         </div>
