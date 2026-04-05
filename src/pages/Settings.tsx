@@ -1,12 +1,13 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Building2, Banknote, Bell, Users, Shield, Loader2 } from "lucide-react";
+import { Building2, Banknote, Bell, Users, Shield, Loader2, CreditCard } from "lucide-react";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { GeneralTab } from "@/components/settings/GeneralTab";
 import { FinanceTab } from "@/components/settings/FinanceTab";
 import { NotificationsTab } from "@/components/settings/NotificationsTab";
 import { UsersRolesTab } from "@/components/settings/UsersRolesTab";
 import { SecurityTab } from "@/components/settings/SecurityTab";
+import { SubscriptionTab } from "@/components/settings/SubscriptionTab";
 
 export default function SettingsPage() {
   const { settings, loading, updateSettings, uploadLogo } = useOrganizationSettings();
