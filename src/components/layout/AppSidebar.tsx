@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
-import { useSuperAdmin } from "@/hooks/useSuperAdmin";
+
 
 interface AppSidebarProps {
   open: boolean;
