@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Check, ArrowRight, ArrowLeft, Building2, Sparkles, Rocket, Loader2 } from "lucide-react";
+import { PromoCodeInput } from "@/components/promo/PromoCodeInput";
 import { toast } from "sonner";
 
 interface Plan {
@@ -58,6 +59,7 @@ export default function Onboarding() {
   const [selectedPlan, setSelectedPlan] = useState<string>("starter");
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [promoApplied, setPromoApplied] = useState<{ discount: number; final_price: number } | null>(null);
 
   // Org config form
   const [orgName, setOrgName] = useState("");
@@ -353,6 +355,19 @@ export default function Onboarding() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+
+              {/* Promo code */}
+              {organization && selectedPlanData && (
+                <div className="max-w-md mx-auto">
+                  <PromoCodeInput
+                    organizationId={organization.id}
+                    planSlug={selectedPlan}
+                    planPrice={selectedPlanData.price_monthly}
+                    onApplied={(r) => setPromoApplied({ discount: r.discount!, final_price: r.final_price! })}
+                    onRemoved={() => setPromoApplied(null)}
+                  />
                 </div>
               )}
 

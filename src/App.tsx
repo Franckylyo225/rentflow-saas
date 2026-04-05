@@ -32,6 +32,7 @@ import AdminOrganizationDetail from "./pages/admin/AdminOrganizationDetail";
 import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
 import AdminPlans from "./pages/admin/AdminPlans";
 import AdminAdmins from "./pages/admin/AdminAdmins";
+import AdminPromoCodes from "./pages/admin/AdminPromoCodes";
 import AdminLogin from "./pages/admin/AdminLogin";
 import { SuperAdminRoute } from "./components/admin/SuperAdminRoute";
 import NotFound from "./pages/NotFound";
@@ -79,6 +80,7 @@ const App = () => (
               <Route path="/admin/plans" element={<SuperAdminRoute><AdminPlans /></SuperAdminRoute>} />
               <Route path="/admin/subscriptions" element={<SuperAdminRoute><AdminSubscriptions /></SuperAdminRoute>} />
               <Route path="/admin/admins" element={<SuperAdminRoute><AdminAdmins /></SuperAdminRoute>} />
+              <Route path="/admin/promo-codes" element={<SuperAdminRoute><AdminPromoCodes /></SuperAdminRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
