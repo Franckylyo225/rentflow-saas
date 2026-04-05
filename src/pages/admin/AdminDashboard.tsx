@@ -698,11 +698,11 @@ const AdminDashboard = () => {
               <p className="text-xs text-muted-foreground mt-0.5">Prix mensuels utilisés pour le calcul du MRR</p>
             </div>
             <div className="grid grid-cols-3 divide-x divide-border">
-              {Object.entries(PLAN_PRICES).map(([plan, price]) => (
+              {Object.entries(stats.planPrices).map(([plan, price]) => (
                 <div key={plan} className="px-5 py-4 text-center">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider">{PLAN_LABELS[plan] || plan}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider">{stats.planLabels[plan] || plan}</p>
                   <p className="text-lg font-bold text-foreground mt-1">
-                    {fmt(price)} <span className="text-xs font-normal text-muted-foreground">FCFA/mois</span>
+                    {fmt(price as number)} <span className="text-xs font-normal text-muted-foreground">FCFA/mois</span>
                   </p>
                 </div>
               ))}
