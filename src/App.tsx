@@ -22,6 +22,7 @@ import Patrimoine from "./pages/Patrimoine";
 import PatrimoineDetail from "./pages/PatrimoineDetail";
 import MfaVerify from "./pages/MfaVerify";
 import ResetPassword from "./pages/ResetPassword";
+import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              <Route path="/landing" element={<Landing />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/mfa-verify" element={<MfaVerify />} />
               <Route path="/reset-password" element={<ResetPassword />} />
