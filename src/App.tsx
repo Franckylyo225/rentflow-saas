@@ -41,11 +41,12 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              <Route path="/" element={<Home />} />
               <Route path="/landing" element={<Landing />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/mfa-verify" element={<MfaVerify />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/properties" element={<ProtectedRoute><Properties /></ProtectedRoute>} />
               <Route path="/properties/:id" element={<ProtectedRoute><PropertyDetail /></ProtectedRoute>} />
               <Route path="/patrimoine" element={<ProtectedRoute><Patrimoine /></ProtectedRoute>} />
