@@ -35,11 +35,11 @@ interface SubRow {
   created_at: string;
 }
 
-const PLAN_LABELS: Record<string, string> = {
-  starter: "Starter",
-  pro: "Pro",
-  enterprise: "Entreprise",
-};
+interface PlanOption {
+  slug: string;
+  name: string;
+  price_monthly: number;
+}
 
 const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   trial: { label: "Essai", variant: "secondary" },
