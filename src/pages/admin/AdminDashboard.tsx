@@ -3,12 +3,25 @@ import { SuperAdminLayout } from "@/components/admin/SuperAdminLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Building2, Users, CreditCard, TrendingUp, Loader2,
-  ArrowUpRight, ArrowDownRight, Banknote, AlertTriangle, PiggyBank, Receipt,
+  Banknote, AlertTriangle, PiggyBank, Receipt, DollarSign,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { BarChart, Bar, XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell } from "recharts";
+
+// Prix mensuels par plan (FCFA)
+const PLAN_PRICES: Record<string, number> = {
+  starter: 15000,
+  pro: 35000,
+  enterprise: 75000,
+};
+
+interface SubRow {
+  plan: string;
+  status: string;
+  organization_id: string;
+}
 
 interface DashboardStats {
   totalOrgs: number;
@@ -16,15 +29,24 @@ interface DashboardStats {
   totalUsers: number;
   trialOrgs: number;
   paidOrgs: number;
+  cancelledOrgs: number;
   recentOrgs: { id: string; name: string; created_at: string; is_active: boolean }[];
-  // Financial
-  totalExpected: number;
-  totalCollected: number;
-  totalUnpaid: number;
-  totalExpenses: number;
-  lateCount: number;
-  monthlyRevenue: { month: string; collected: number; expected: number }[];
+  // SaaS financials
+  mrr: number;
+  arr: number;
+  churnRate: number;
+  revenueByPlan: { name: string; value: number; count: number }[];
+  subsByStatus: { name: string; value: number }[];
 }
+
+const STATUS_LABELS: Record<string, string> = {
+  trial: "Essai",
+  active: "Actif",
+  past_due: "Impayé",
+  cancelled: "Annulé",
+};
+
+const PIE_COLORS = ["hsl(var(--primary))", "hsl(160 84% 50%)", "hsl(38 92% 50%)", "hsl(0 72% 51%)"];
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -32,54 +54,64 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     async function fetchStats() {
-      const [orgsRes, profilesRes, subsRes, rentsRes, expensesRes] = await Promise.all([
+      const [orgsRes, profilesRes, subsRes] = await Promise.all([
         supabase.from("organizations").select("id, name, is_active, created_at").order("created_at", { ascending: false }),
         supabase.from("profiles").select("id"),
-        supabase.from("subscriptions").select("id, status"),
-        supabase.from("rent_payments").select("amount, paid_amount, status, month"),
-        supabase.from("expenses").select("amount"),
+        supabase.from("subscriptions").select("plan, status, organization_id"),
       ]);
 
       const orgs = orgsRes.data || [];
       const profiles = profilesRes.data || [];
-      const subs = subsRes.data || [];
-      const rents = rentsRes.data || [];
-      const expenses = expensesRes.data || [];
+      const subs: SubRow[] = (subsRes.data || []) as SubRow[];
 
-      // Financial aggregation
-      const totalExpected = rents.reduce((s, r) => s + Number(r.amount || 0), 0);
-      const totalCollected = rents.reduce((s, r) => s + Number(r.paid_amount || 0), 0);
-      const totalUnpaid = totalExpected - totalCollected;
-      const lateCount = rents.filter((r) => r.status === "late").length;
-      const totalExpenses = expenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+      const activeSubs = subs.filter((s) => s.status === "active");
+      const trialSubs = subs.filter((s) => s.status === "trial");
+      const cancelledSubs = subs.filter((s) => s.status === "cancelled");
 
-      // Monthly revenue (last 6 months)
-      const monthMap = new Map<string, { collected: number; expected: number }>();
-      for (const r of rents) {
-        if (!r.month) continue;
-        const existing = monthMap.get(r.month) || { collected: 0, expected: 0 };
-        existing.collected += Number(r.paid_amount || 0);
-        existing.expected += Number(r.amount || 0);
-        monthMap.set(r.month, existing);
+      // MRR = sum of monthly prices for active subscriptions
+      const mrr = activeSubs.reduce((sum, s) => sum + (PLAN_PRICES[s.plan] || 0), 0);
+      const arr = mrr * 12;
+
+      // Churn rate = cancelled / total
+      const churnRate = subs.length > 0 ? Math.round((cancelledSubs.length / subs.length) * 100) : 0;
+
+      // Revenue by plan
+      const planMap = new Map<string, { value: number; count: number }>();
+      for (const s of activeSubs) {
+        const price = PLAN_PRICES[s.plan] || 0;
+        const existing = planMap.get(s.plan) || { value: 0, count: 0 };
+        existing.value += price;
+        existing.count += 1;
+        planMap.set(s.plan, existing);
       }
-      const monthlyRevenue = Array.from(monthMap.entries())
-        .sort((a, b) => a[0].localeCompare(b[0]))
-        .slice(-6)
-        .map(([month, data]) => ({ month, ...data }));
+      const revenueByPlan = Array.from(planMap.entries()).map(([plan, data]) => ({
+        name: plan.charAt(0).toUpperCase() + plan.slice(1),
+        ...data,
+      }));
+
+      // Subscriptions by status
+      const statusMap = new Map<string, number>();
+      for (const s of subs) {
+        statusMap.set(s.status, (statusMap.get(s.status) || 0) + 1);
+      }
+      const subsByStatus = Array.from(statusMap.entries()).map(([status, count]) => ({
+        name: STATUS_LABELS[status] || status,
+        value: count,
+      }));
 
       setStats({
         totalOrgs: orgs.length,
         activeOrgs: orgs.filter((o: any) => o.is_active).length,
         totalUsers: profiles.length,
-        trialOrgs: subs.filter((s: any) => s.status === "trial").length,
-        paidOrgs: subs.filter((s: any) => s.status === "active").length,
+        trialOrgs: trialSubs.length,
+        paidOrgs: activeSubs.length,
+        cancelledOrgs: cancelledSubs.length,
         recentOrgs: orgs.slice(0, 5),
-        totalExpected,
-        totalCollected,
-        totalUnpaid,
-        totalExpenses,
-        lateCount,
-        monthlyRevenue,
+        mrr,
+        arr,
+        churnRate,
+        revenueByPlan,
+        subsByStatus,
       });
       setLoading(false);
     }
@@ -103,11 +135,6 @@ const AdminDashboard = () => {
       ? Math.round(((stats.paidOrgs || 0) / stats.totalOrgs) * 100)
       : 0;
 
-  const collectionRate =
-    stats && stats.totalExpected > 0
-      ? Math.round((stats.totalCollected / stats.totalExpected) * 100)
-      : 0;
-
   const platformCards = [
     {
       title: "Organisations",
@@ -126,9 +153,9 @@ const AdminDashboard = () => {
       iconColor: "text-blue-500",
     },
     {
-      title: "Abonnements payants",
+      title: "Abonnements actifs",
       value: stats?.paidOrgs || 0,
-      subtitle: `${stats?.trialOrgs || 0} en essai`,
+      subtitle: `${stats?.trialOrgs || 0} en essai · ${stats?.cancelledOrgs || 0} annulés`,
       icon: CreditCard,
       iconBg: "bg-emerald-500/10",
       iconColor: "text-emerald-500",
@@ -143,35 +170,35 @@ const AdminDashboard = () => {
     },
   ];
 
-  const financeCards = [
+  const revenueCards = [
     {
-      title: "Loyers attendus",
-      value: `${fmt(stats?.totalExpected || 0)} FCFA`,
-      subtitle: "Total cumulé toutes organisations",
-      icon: Receipt,
-      iconBg: "bg-primary/10",
-      iconColor: "text-primary",
-    },
-    {
-      title: "Loyers encaissés",
-      value: `${fmt(stats?.totalCollected || 0)} FCFA`,
-      subtitle: `Taux de recouvrement : ${collectionRate}%`,
+      title: "MRR",
+      value: `${fmt(stats?.mrr || 0)} FCFA`,
+      subtitle: "Revenu mensuel récurrent",
       icon: Banknote,
       iconBg: "bg-emerald-500/10",
       iconColor: "text-emerald-500",
     },
     {
-      title: "Impayés",
-      value: `${fmt(stats?.totalUnpaid || 0)} FCFA`,
-      subtitle: `${stats?.lateCount || 0} échéance${(stats?.lateCount || 0) > 1 ? "s" : ""} en retard`,
+      title: "ARR",
+      value: `${fmt(stats?.arr || 0)} FCFA`,
+      subtitle: "Revenu annuel récurrent",
+      icon: DollarSign,
+      iconBg: "bg-primary/10",
+      iconColor: "text-primary",
+    },
+    {
+      title: "Taux de churn",
+      value: `${stats?.churnRate || 0}%`,
+      subtitle: `${stats?.cancelledOrgs || 0} abonnement${(stats?.cancelledOrgs || 0) > 1 ? "s" : ""} annulé${(stats?.cancelledOrgs || 0) > 1 ? "s" : ""}`,
       icon: AlertTriangle,
       iconBg: "bg-destructive/10",
       iconColor: "text-destructive",
     },
     {
-      title: "Dépenses totales",
-      value: `${fmt(stats?.totalExpenses || 0)} FCFA`,
-      subtitle: "Toutes catégories confondues",
+      title: "ARPU",
+      value: stats?.paidOrgs ? `${fmt(Math.round((stats.mrr) / stats.paidOrgs))} FCFA` : "—",
+      subtitle: "Revenu moyen par client",
       icon: PiggyBank,
       iconBg: "bg-amber-500/10",
       iconColor: "text-amber-500",
@@ -211,11 +238,11 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Financial stats */}
+        {/* SaaS Revenue */}
         <div>
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Finances globales</h2>
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Revenus SaaS</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {financeCards.map((card) => (
+            {revenueCards.map((card) => (
               <Card key={card.title} className="border-border hover:shadow-md transition-shadow duration-200 bg-card">
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between mb-4">
@@ -231,32 +258,79 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Revenue chart + recent orgs */}
+        {/* Charts row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Chart */}
-          <Card className="border-border bg-card lg:col-span-2">
+          {/* Revenue by plan */}
+          <Card className="border-border bg-card">
             <CardContent className="p-0">
               <div className="px-5 py-4 border-b border-border">
-                <h2 className="text-sm font-semibold text-foreground">Recouvrement mensuel</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">Loyers attendus vs encaissés (6 derniers mois)</p>
+                <h2 className="text-sm font-semibold text-foreground">MRR par plan</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Répartition du revenu mensuel</p>
               </div>
               <div className="p-5">
-                {stats?.monthlyRevenue && stats.monthlyRevenue.length > 0 ? (
+                {stats?.revenueByPlan && stats.revenueByPlan.length > 0 ? (
+                  <>
+                    <ResponsiveContainer width="100%" height={180}>
+                      <PieChart>
+                        <Pie
+                          data={stats.revenueByPlan}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={75}
+                          paddingAngle={3}
+                          dataKey="value"
+                        >
+                          {stats.revenueByPlan.map((_, i) => (
+                            <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <ReTooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "8px",
+                            fontSize: 12,
+                          }}
+                          formatter={(value: number) => [`${fmt(value)} FCFA`]}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="space-y-2 mt-2">
+                      {stats.revenueByPlan.map((plan, i) => (
+                        <div key={plan.name} className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+                            <span className="text-muted-foreground">{plan.name}</span>
+                          </div>
+                          <span className="font-medium text-foreground">{plan.count} client{plan.count > 1 ? "s" : ""}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center h-[180px] text-sm text-muted-foreground">
+                    Aucun abonnement actif
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Subscriptions by status */}
+          <Card className="border-border bg-card">
+            <CardContent className="p-0">
+              <div className="px-5 py-4 border-b border-border">
+                <h2 className="text-sm font-semibold text-foreground">Abonnements par statut</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Répartition actuelle</p>
+              </div>
+              <div className="p-5">
+                {stats?.subsByStatus && stats.subsByStatus.length > 0 ? (
                   <ResponsiveContainer width="100%" height={260}>
-                    <BarChart data={stats.monthlyRevenue} barGap={4}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                      <XAxis
-                        dataKey="month"
-                        tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxis
-                        tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                        axisLine={false}
-                        tickLine={false}
-                        tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
-                      />
+                    <BarChart data={stats.subsByStatus} layout="vertical" barSize={20}>
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                      <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                      <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={60} />
                       <ReTooltip
                         contentStyle={{
                           backgroundColor: "hsl(var(--card))",
@@ -264,15 +338,13 @@ const AdminDashboard = () => {
                           borderRadius: "8px",
                           fontSize: 12,
                         }}
-                        formatter={(value: number) => [`${fmt(value)} FCFA`]}
                       />
-                      <Bar dataKey="expected" name="Attendu" fill="hsl(var(--muted-foreground) / 0.2)" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="collected" name="Encaissé" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="value" name="Nombre" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
                   <div className="flex items-center justify-center h-[260px] text-sm text-muted-foreground">
-                    Aucune donnée de loyer disponible
+                    Aucun abonnement
                   </div>
                 )}
               </div>
@@ -305,11 +377,7 @@ const AdminDashboard = () => {
                           </p>
                         </div>
                       </div>
-                      <div
-                        className={`h-2 w-2 rounded-full shrink-0 ${
-                          org.is_active ? "bg-emerald-500" : "bg-muted-foreground/30"
-                        }`}
-                      />
+                      <div className={`h-2 w-2 rounded-full shrink-0 ${org.is_active ? "bg-emerald-500" : "bg-muted-foreground/30"}`} />
                     </div>
                   ))
                 )}
@@ -317,6 +385,24 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Pricing reference */}
+        <Card className="border-border bg-card">
+          <CardContent className="p-0">
+            <div className="px-5 py-4 border-b border-border">
+              <h2 className="text-sm font-semibold text-foreground">Grille tarifaire</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Prix mensuels par plan utilisés pour le calcul du MRR</p>
+            </div>
+            <div className="grid grid-cols-3 divide-x divide-border">
+              {Object.entries(PLAN_PRICES).map(([plan, price]) => (
+                <div key={plan} className="px-5 py-4 text-center">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider">{plan}</p>
+                  <p className="text-lg font-bold text-foreground mt-1">{fmt(price)} <span className="text-xs font-normal text-muted-foreground">FCFA/mois</span></p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </SuperAdminLayout>
   );
