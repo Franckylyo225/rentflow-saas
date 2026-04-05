@@ -31,7 +31,7 @@ export function NotificationsTab() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testPhone, setTestPhone] = useState("");
-  const [testMessage, setTestMessage] = useState("Bonjour, ceci est un SMS de test envoyé depuis SCI Binieba.");
+  const [testMessage, setTestMessage] = useState("Bonjour, ceci est un SMS de test envoyé depuis RentFlow.");
   const [sendingTest, setSendingTest] = useState(false);
   const [expandedTemplate, setExpandedTemplate] = useState<string | null>(null);
 

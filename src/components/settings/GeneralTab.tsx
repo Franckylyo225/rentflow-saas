@@ -136,7 +136,7 @@ export function GeneralTab({ settings, onSave, onUploadLogo }: Props) {
             </div>
             <div className="space-y-2">
               <Label>Nom d'expéditeur SMS</Label>
-              <Input value={form.sms_sender_name} onChange={e => set("sms_sender_name", e.target.value)} placeholder="Ex: SCI Binieba" maxLength={11} />
+              <Input value={form.sms_sender_name} onChange={e => set("sms_sender_name", e.target.value)} placeholder="Ex: RentFlow" maxLength={11} />
               <p className="text-xs text-muted-foreground">Nom affiché comme expéditeur des SMS (max 11 caractères)</p>
             </div>
             <div className="space-y-2">
