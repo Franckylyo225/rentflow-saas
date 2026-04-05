@@ -9,6 +9,7 @@ import {
   FileText,
   Smartphone,
 } from "lucide-react";
+import { AnimatedSection, StaggerContainer, StaggerItem } from "./AnimatedSection";
 
 const FEATURES = [
   {
@@ -71,7 +72,7 @@ export function FeaturesSection() {
   return (
     <section id="features" className="py-20 sm:py-28 bg-muted/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="max-w-2xl mx-auto text-center mb-16">
+        <AnimatedSection className="max-w-2xl mx-auto text-center mb-16">
           <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-3">
             Fonctionnalités
           </p>
@@ -81,26 +82,25 @@ export function FeaturesSection() {
           <p className="mt-4 text-muted-foreground text-lg">
             Une suite complète d'outils conçue pour les gestionnaires immobiliers africains.
           </p>
-        </div>
+        </AnimatedSection>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" staggerDelay={0.08}>
           {FEATURES.map((feature) => (
-            <div
-              key={feature.title}
-              className="group p-6 rounded-2xl border border-border bg-card hover:shadow-md hover:border-primary/30 transition-all duration-300"
-            >
-              <div className="p-3 rounded-xl bg-primary/10 w-fit mb-4 group-hover:bg-primary/15 transition-colors">
-                <feature.icon className="h-6 w-6 text-primary" />
+            <StaggerItem key={feature.title}>
+              <div className="group p-6 rounded-2xl border border-border bg-card hover:shadow-md hover:border-primary/30 transition-all duration-300 h-full">
+                <div className="p-3 rounded-xl bg-primary/10 w-fit mb-4 group-hover:bg-primary/15 transition-colors">
+                  <feature.icon className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {feature.description}
+                </p>
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {feature.description}
-              </p>
-            </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </div>
     </section>
   );
