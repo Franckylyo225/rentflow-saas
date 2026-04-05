@@ -513,7 +513,7 @@ const AdminDashboard = () => {
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="space-y-2.5 mt-3">
-                      {stats.revenueByPlan.map((plan, i) => (
+                      {(stats.revenueByPlan || []).map((plan, i) => (
                         <div key={plan.name} className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
