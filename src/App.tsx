@@ -24,6 +24,7 @@ import MfaVerify from "./pages/MfaVerify";
 import ResetPassword from "./pages/ResetPassword";
 import Landing from "./pages/Landing";
 import Home from "./pages/Home";
+import Pricing from "./pages/Pricing";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrganizations from "./pages/admin/AdminOrganizations";
 import AdminOrganizationDetail from "./pages/admin/AdminOrganizationDetail";
@@ -48,6 +49,7 @@ const App = () => (
               {/* Public */}
               <Route path="/" element={<Home />} />
               <Route path="/landing" element={<Landing />} />
+              <Route path="/pricing" element={<Pricing />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/mfa-verify" element={<MfaVerify />} />
               <Route path="/reset-password" element={<ResetPassword />} />

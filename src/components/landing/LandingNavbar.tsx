@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 
 const NAV_LINKS = [
   { label: "Fonctionnalités", href: "#features" },
-  { label: "Tarifs", href: "#pricing" },
+  { label: "Tarifs", href: "/pricing" },
   { label: "Témoignages", href: "#testimonials" },
 ];
 
@@ -23,15 +23,25 @@ export function LandingNavbar() {
 
             {/* Desktop nav */}
             <div className="hidden md:flex items-center gap-7">
-              {NAV_LINKS.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
-                >
-                  {link.label}
-                </a>
-              ))}
+              {NAV_LINKS.map((link) =>
+                link.href.startsWith("/") ? (
+                  <Link
+                    key={link.href}
+                    to={link.href}
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
+                  >
+                    {link.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
+                  >
+                    {link.label}
+                  </a>
+                )
+              )}
             </div>
 
             <div className="hidden md:flex items-center gap-2.5">
@@ -63,16 +73,27 @@ export function LandingNavbar() {
         {/* Mobile menu */}
         {mobileOpen && (
           <div className="md:hidden border-t border-border/60 px-5 py-4 space-y-3">
-            {NAV_LINKS.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="block text-sm font-medium text-muted-foreground hover:text-foreground py-2"
-                onClick={() => setMobileOpen(false)}
-              >
-                {link.label}
-              </a>
-            ))}
+            {NAV_LINKS.map((link) =>
+              link.href.startsWith("/") ? (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className="block text-sm font-medium text-muted-foreground hover:text-foreground py-2"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="block text-sm font-medium text-muted-foreground hover:text-foreground py-2"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {link.label}
+                </a>
+              )
+            )}
             <div className="pt-3 border-t border-border/60 flex flex-col gap-2">
               <Button variant="outline" size="sm" asChild className="w-full rounded-xl">
                 <Link to="/auth">Se connecter</Link>
