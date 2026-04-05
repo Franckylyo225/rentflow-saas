@@ -104,11 +104,25 @@ export function NotificationsTab() {
     return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
 
+  const smsDisabled = true; // SMS temporairement désactivé — en attente d'un nouveau fournisseur
   const enabledSmsCount = templates.filter(t => t.sms_enabled).length;
   const enabledEmailCount = templates.filter(t => t.email_enabled).length;
 
   return (
     <div className="space-y-6">
+      {/* SMS disabled banner */}
+      {smsDisabled && (
+        <Card className="border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30">
+          <CardContent className="p-4 flex items-start gap-3">
+            <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-300">SMS temporairement désactivé</p>
+              <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">L'envoi de SMS est suspendu en attendant l'intégration d'un nouveau fournisseur. Les modèles Email restent fonctionnels.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header with stats */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -217,14 +231,14 @@ export function NotificationsTab() {
                       <Label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
                         <MessageSquare className="h-4 w-4 text-primary" /> SMS
                       </Label>
-                      <Switch checked={template.sms_enabled} onCheckedChange={v => updateTemplate(template.id, "sms_enabled", v)} />
+                      <Switch checked={template.sms_enabled} onCheckedChange={v => updateTemplate(template.id, "sms_enabled", v)} disabled={smsDisabled} />
                     </div>
                     <Textarea
                       value={template.sms_content}
                       onChange={e => updateTemplate(template.id, "sms_content", e.target.value)}
                       rows={4}
                       className="text-sm resize-none"
-                      disabled={!template.sms_enabled}
+                      disabled={!template.sms_enabled || smsDisabled}
                       placeholder="Contenu du SMS..."
                     />
                     {template.sms_enabled && (
@@ -256,79 +270,82 @@ export function NotificationsTab() {
         })}
       </div>
 
-      <Separator />
-
-      {/* Test SMS Section */}
-      <Card className="border-border">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Smartphone className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-base">Tester l'envoi SMS</CardTitle>
-              <CardDescription>Envoyez un SMS de test pour vérifier la configuration</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="test-phone" className="text-sm font-medium flex items-center gap-2">
-                <Phone className="h-3.5 w-3.5" /> Numéro de téléphone
-              </Label>
-              <Input
-                id="test-phone"
-                type="tel"
-                placeholder="+243 XXX XXX XXX"
-                value={testPhone}
-                onChange={e => setTestPhone(e.target.value)}
-                className="text-sm"
-              />
-              <p className="text-xs text-muted-foreground">Format international avec indicatif pays</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="test-template" className="text-sm font-medium">Modèle à tester</Label>
-              <select
-                id="test-template"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                onChange={e => {
-                  const t = templates.find(t => t.id === e.target.value);
-                  if (t) setTestMessage(t.sms_content);
-                }}
-              >
-                <option value="">Message personnalisé</option>
-                {templates.filter(t => t.sms_enabled).map(t => (
-                  <option key={t.id} value={t.id}>{t.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="test-message" className="text-sm font-medium">Message</Label>
-            <Textarea
-              id="test-message"
-              value={testMessage}
-              onChange={e => setTestMessage(e.target.value)}
-              rows={3}
-              className="text-sm resize-none"
-              placeholder="Saisissez votre message de test..."
-            />
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">{testMessage.length} / 160 caractères</p>
-              <Button
-                size="sm"
-                className="gap-2"
-                onClick={handleSendTest}
-                disabled={sendingTest || !testPhone.trim()}
-              >
-                {sendingTest ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                Envoyer le test
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Test SMS Section - hidden when SMS disabled */}
+      {!smsDisabled && (
+        <>
+          <Separator />
+          <Card className="border-border">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Smartphone className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Tester l'envoi SMS</CardTitle>
+                  <CardDescription>Envoyez un SMS de test pour vérifier la configuration</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="test-phone" className="text-sm font-medium flex items-center gap-2">
+                    <Phone className="h-3.5 w-3.5" /> Numéro de téléphone
+                  </Label>
+                  <Input
+                    id="test-phone"
+                    type="tel"
+                    placeholder="+243 XXX XXX XXX"
+                    value={testPhone}
+                    onChange={e => setTestPhone(e.target.value)}
+                    className="text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">Format international avec indicatif pays</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="test-template" className="text-sm font-medium">Modèle à tester</Label>
+                  <select
+                    id="test-template"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onChange={e => {
+                      const t = templates.find(t => t.id === e.target.value);
+                      if (t) setTestMessage(t.sms_content);
+                    }}
+                  >
+                    <option value="">Message personnalisé</option>
+                    {templates.filter(t => t.sms_enabled).map(t => (
+                      <option key={t.id} value={t.id}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="test-message" className="text-sm font-medium">Message</Label>
+                <Textarea
+                  id="test-message"
+                  value={testMessage}
+                  onChange={e => setTestMessage(e.target.value)}
+                  rows={3}
+                  className="text-sm resize-none"
+                  placeholder="Saisissez votre message de test..."
+                />
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">{testMessage.length} / 160 caractères</p>
+                  <Button
+                    size="sm"
+                    className="gap-2"
+                    onClick={handleSendTest}
+                    disabled={sendingTest || !testPhone.trim()}
+                  >
+                    {sendingTest ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    Envoyer le test
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       <Separator />
 
