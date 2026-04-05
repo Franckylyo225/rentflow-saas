@@ -61,6 +61,7 @@ export default function Properties() {
   const { data: countries, refetch: refetchCountries } = useCountries();
   const { data: allUnits } = useUnits();
   const { profile } = useProfile();
+  const { canAddProperty, propertyLimitLabel } = usePlanLimits();
 
   const filtered = properties.filter(p => {
     if (cityFilter !== "all" && p.city_id !== cityFilter) return false;
