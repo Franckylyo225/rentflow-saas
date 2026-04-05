@@ -75,6 +75,7 @@ const AdminOrganizationDetail = () => {
   const { user } = useAuth();
 
   const [org, setOrg] = useState<OrgDetail | null>(null);
+  const [plans, setPlans] = useState<PlanOption[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [usage, setUsage] = useState<UsageStats>({ properties: 0, units: 0, tenants: 0, users: 0 });
   const [notes, setNotes] = useState<AdminNote[]>([]);
