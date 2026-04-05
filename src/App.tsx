@@ -49,6 +49,7 @@ const App = () => (
               {/* Public */}
               <Route path="/" element={<Home />} />
               <Route path="/landing" element={<Landing />} />
+              <Route path="/pricing" element={<Pricing />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/mfa-verify" element={<MfaVerify />} />
               <Route path="/reset-password" element={<ResetPassword />} />
