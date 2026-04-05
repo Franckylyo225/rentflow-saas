@@ -70,7 +70,7 @@ export function GeneralTab({ settings, onSave, onUploadLogo }: Props) {
       legal_id: form.legal_id || null,
       legal_address: form.legal_address || null,
       salaries_enabled: form.salaries_enabled,
-      sms_sender_name: form.sms_sender_name || "SCI Binieba",
+      sms_sender_name: form.sms_sender_name || "RentFlow",
       sms_sender_number: form.sms_sender_number || null,
     } as any);
     setSaving(false);
