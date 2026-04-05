@@ -17,18 +17,27 @@ interface PlanLimits {
   userWarning: boolean;
   propertyRatio: number;
   userRatio: number;
+  subscriptionStatus: string;
+  trialEndsAt: string | null;
+  periodEndsAt: string | null;
+  daysUntilExpiry: number | null;
+  expiryWarning: boolean;
+  expired: boolean;
 }
 
 export function usePlanLimits(): PlanLimits {
   const { profile } = useProfile();
   const organizationId = profile?.organization_id;
-  const [state, setState] = useState<Omit<PlanLimits, "canAddProperty" | "canAddUser" | "propertyLimitLabel" | "userLimitLabel" | "propertyWarning" | "userWarning" | "propertyRatio" | "userRatio">>({
+  const [state, setState] = useState<Omit<PlanLimits, "canAddProperty" | "canAddUser" | "propertyLimitLabel" | "userLimitLabel" | "propertyWarning" | "userWarning" | "propertyRatio" | "userRatio" | "daysUntilExpiry" | "expiryWarning" | "expired">>({
     planName: "",
     maxProperties: null,
     maxUsers: null,
     currentProperties: 0,
     currentUsers: 0,
     loading: true,
+    subscriptionStatus: "",
+    trialEndsAt: null,
+    periodEndsAt: null,
   });
 
   useEffect(() => {
@@ -36,13 +45,16 @@ export function usePlanLimits(): PlanLimits {
 
     async function fetch() {
       const [subRes, propsRes, profilesRes, plansRes] = await Promise.all([
-        supabase.from("subscriptions").select("plan").eq("organization_id", organizationId).maybeSingle(),
+        supabase.from("subscriptions").select("plan, status, trial_ends_at, current_period_end").eq("organization_id", organizationId).maybeSingle(),
         supabase.from("properties").select("id").eq("organization_id", organizationId!),
         supabase.from("profiles").select("id").eq("organization_id", organizationId!),
         supabase.from("plans").select("slug, name, max_properties, max_users"),
       ]);
 
       const planSlug = subRes.data?.plan || "starter";
+      const subStatus = subRes.data?.status || "trial";
+      const trialEndsAt = subRes.data?.trial_ends_at || null;
+      const periodEndsAt = subRes.data?.current_period_end || null;
       const plans = (plansRes.data || []) as { slug: string; name: string; max_properties: number | null; max_users: number | null }[];
       const currentPlan = plans.find((p) => p.slug === planSlug);
 
@@ -53,6 +65,9 @@ export function usePlanLimits(): PlanLimits {
         currentProperties: propsRes.data?.length || 0,
         currentUsers: profilesRes.data?.length || 0,
         loading: false,
+        subscriptionStatus: subStatus,
+        trialEndsAt,
+        periodEndsAt,
       });
     }
 
@@ -80,11 +95,24 @@ export function usePlanLimits(): PlanLimits {
   const propertyWarning = state.maxProperties !== null && propertyRatio >= 0.8;
   const userWarning = state.maxUsers !== null && userRatio >= 0.8;
 
+  // Subscription expiry logic
+  const expiryDate = state.subscriptionStatus === "trial"
+    ? state.trialEndsAt
+    : state.periodEndsAt;
+
+  const daysUntilExpiry = expiryDate
+    ? Math.ceil((new Date(expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+
+  const expired = daysUntilExpiry !== null && daysUntilExpiry <= 0;
+  const expiryWarning = daysUntilExpiry !== null && daysUntilExpiry > 0 && daysUntilExpiry <= 7;
+
   return {
     ...state,
     canAddProperty, canAddUser,
     propertyLimitLabel, userLimitLabel,
     propertyWarning, userWarning,
     propertyRatio, userRatio,
+    daysUntilExpiry, expiryWarning, expired,
   };
 }
