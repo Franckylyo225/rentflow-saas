@@ -133,14 +133,37 @@ const AdminOrganizations = () => {
               {orgs.length} organisation{orgs.length > 1 ? "s" : ""} enregistrée{orgs.length > 1 ? "s" : ""}
             </p>
           </div>
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <div className="relative w-full sm:w-56">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={filterPlan} onValueChange={setFilterPlan}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Plan" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les plans</SelectItem>
+                <SelectItem value="starter">Starter</SelectItem>
+                <SelectItem value="pro">Pro</SelectItem>
+                <SelectItem value="enterprise">Enterprise</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="active">Actifs</SelectItem>
+                <SelectItem value="inactive">Inactifs</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
