@@ -20,13 +20,13 @@ const FOOTER_LINKS = {
 
 export function LandingFooter() {
   return (
-    <footer className="border-t border-border bg-card">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+    <footer className="border-t border-border">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8 py-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <img src="/logo-horizontal.png" alt="RentFlow" className="h-8 mb-4" />
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <img src="/logo-horizontal.png" alt="RentFlow" className="h-8 mb-5" />
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
               La plateforme de gestion locative conçue pour l'Afrique.
             </p>
           </div>
@@ -34,13 +34,15 @@ export function LandingFooter() {
           {/* Links */}
           {Object.entries(FOOTER_LINKS).map(([category, links]) => (
             <div key={category}>
-              <p className="text-sm font-semibold text-foreground mb-4">{category}</p>
+              <p className="text-xs font-semibold text-foreground uppercase tracking-wider mb-4">
+                {category}
+              </p>
               <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link.label}>
                     <a
                       href={link.href}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
                     >
                       {link.label}
                     </a>
@@ -51,7 +53,7 @@ export function LandingFooter() {
           ))}
         </div>
 
-        <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-14 pt-8 border-t border-border">
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} RentFlow. Tous droits réservés.
           </p>

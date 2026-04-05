@@ -34,7 +34,7 @@ const FEATURES = [
     icon: Bell,
     title: "Relances automatiques",
     description:
-      "Rappels par SMS et email avant et après l'échéance. Plus de loyers oubliés.",
+      "Rappels par email avant et après l'échéance. Plus de loyers oubliés.",
   },
   {
     icon: BarChart3,
@@ -70,28 +70,28 @@ const FEATURES = [
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-20 sm:py-28 bg-muted/30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="features" className="py-24 sm:py-32">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8">
         <AnimatedSection className="max-w-2xl mx-auto text-center mb-16">
-          <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-3">
+          <span className="inline-block px-4 py-1.5 rounded-full bg-secondary text-xs font-semibold text-foreground uppercase tracking-wider mb-4">
             Fonctionnalités
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground">
+          </span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight">
             Tout ce qu'il faut pour gérer vos biens
           </h2>
-          <p className="mt-4 text-muted-foreground text-lg">
+          <p className="mt-5 text-muted-foreground text-lg leading-relaxed">
             Une suite complète d'outils conçue pour les gestionnaires immobiliers africains.
           </p>
         </AnimatedSection>
 
-        <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" staggerDelay={0.08}>
+        <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" staggerDelay={0.06}>
           {FEATURES.map((feature) => (
             <StaggerItem key={feature.title}>
-              <div className="group p-6 rounded-2xl border border-border bg-card hover:shadow-md hover:border-primary/30 transition-all duration-300 h-full">
-                <div className="p-3 rounded-xl bg-primary/10 w-fit mb-4 group-hover:bg-primary/15 transition-colors">
+              <div className="group p-7 rounded-3xl bg-card border border-border hover:border-primary/20 hover:shadow-md transition-all duration-300 h-full">
+                <div className="p-3 rounded-2xl bg-primary/8 w-fit mb-5 group-hover:bg-primary/12 transition-colors">
                   <feature.icon className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">
+                <h3 className="text-lg font-bold text-foreground mb-2">
                   {feature.title}
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">

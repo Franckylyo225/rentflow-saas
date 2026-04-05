@@ -61,32 +61,35 @@ const PLANS = [
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="py-20 sm:py-28">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="pricing" className="py-24 sm:py-32 relative overflow-hidden">
+      {/* Blob background */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] landing-blob rounded-full -z-10 opacity-40" />
+
+      <div className="max-w-6xl mx-auto px-5 sm:px-8">
         <AnimatedSection className="max-w-2xl mx-auto text-center mb-16">
-          <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-3">
+          <span className="inline-block px-4 py-1.5 rounded-full bg-secondary text-xs font-semibold text-foreground uppercase tracking-wider mb-4">
             Tarifs
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground">
+          </span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight">
             Des tarifs adaptés à votre activité
           </h2>
-          <p className="mt-4 text-muted-foreground text-lg">
+          <p className="mt-5 text-muted-foreground text-lg leading-relaxed">
             14 jours d'essai gratuit sur tous les plans. Aucune carte requise.
           </p>
         </AnimatedSection>
 
-        <StaggerContainer className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto" staggerDelay={0.15}>
+        <StaggerContainer className="grid grid-cols-1 lg:grid-cols-3 gap-5 max-w-5xl mx-auto" staggerDelay={0.12}>
           {PLANS.map((plan) => (
             <StaggerItem key={plan.name}>
               <div
-                className={`relative flex flex-col rounded-2xl border p-8 h-full ${
+                className={`relative flex flex-col rounded-3xl border p-8 h-full transition-shadow duration-300 ${
                   plan.popular
-                    ? "border-primary bg-card shadow-lg scale-[1.02]"
-                    : "border-border bg-card"
+                    ? "border-primary bg-card shadow-lg"
+                    : "border-border bg-card hover:shadow-md"
                 }`}
               >
                 {plan.popular && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4">
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-5 py-1 rounded-full text-xs font-semibold">
                     Le plus populaire
                   </Badge>
                 )}
@@ -97,27 +100,29 @@ export function PricingSection() {
                 </div>
 
                 <div className="mb-8">
-                  <span className="text-4xl font-extrabold text-foreground">
+                  <span className="text-4xl font-extrabold text-foreground tracking-tight">
                     {plan.price}
                   </span>
                   {plan.period && (
-                    <span className="text-muted-foreground ml-1">
+                    <span className="text-muted-foreground ml-1 text-sm">
                       FCFA{plan.period}
                     </span>
                   )}
                 </div>
 
-                <ul className="space-y-3 mb-8 flex-1">
+                <ul className="space-y-3.5 mb-8 flex-1">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-3 text-sm">
-                      <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <div className="mt-0.5 p-0.5 rounded-full bg-primary/10">
+                        <Check className="h-3.5 w-3.5 text-primary" />
+                      </div>
                       <span className="text-foreground">{feature}</span>
                     </li>
                   ))}
                 </ul>
 
                 <Button
-                  className="w-full"
+                  className={`w-full rounded-full font-semibold ${plan.popular ? "" : ""}`}
                   variant={plan.popular ? "default" : "outline"}
                   size="lg"
                   asChild

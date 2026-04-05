@@ -5,27 +5,26 @@ import { AnimatedSection } from "./AnimatedSection";
 
 export function CtaSection() {
   return (
-    <section className="py-20 sm:py-28">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-24 sm:py-32">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8">
         <AnimatedSection>
-          <div className="relative rounded-3xl bg-primary p-10 sm:p-16 text-center overflow-hidden">
-            {/* Decorative shapes */}
-            <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-primary-foreground/5 -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-primary-foreground/5 translate-y-1/2 -translate-x-1/2" />
+          <div className="relative rounded-[2rem] bg-foreground p-12 sm:p-20 text-center overflow-hidden">
+            {/* Decorative blobs */}
+            <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-primary/15 -translate-y-1/3 translate-x-1/3 blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-60 h-60 rounded-full bg-secondary/20 translate-y-1/3 -translate-x-1/3 blur-3xl" />
 
             <div className="relative z-10">
-              <h2 className="text-3xl sm:text-4xl font-bold text-primary-foreground">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-background tracking-tight">
                 Prêt à simplifier votre gestion locative ?
               </h2>
-              <p className="mt-4 text-primary-foreground/80 text-lg max-w-xl mx-auto">
+              <p className="mt-5 text-background/60 text-lg max-w-xl mx-auto leading-relaxed">
                 Rejoignez des centaines de gestionnaires qui gagnent du temps et augmentent
                 leurs revenus grâce à notre plateforme.
               </p>
-              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Button
                   size="lg"
-                  variant="secondary"
-                  className="gap-2 text-base px-8 h-12 w-full sm:w-auto"
+                  className="gap-2 text-base px-8 h-13 rounded-full font-semibold bg-background text-foreground hover:bg-background/90"
                   asChild
                 >
                   <Link to="/auth">
@@ -34,7 +33,7 @@ export function CtaSection() {
                   </Link>
                 </Button>
               </div>
-              <p className="mt-4 text-xs text-primary-foreground/60">
+              <p className="mt-5 text-xs text-background/40">
                 14 jours gratuits · Aucune carte requise · Annulez à tout moment
               </p>
             </div>
