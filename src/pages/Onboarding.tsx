@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Check, ArrowRight, ArrowLeft, Building2, Sparkles, Rocket, Loader2 } from "lucide-react";
+import { PromoCodeInput } from "@/components/promo/PromoCodeInput";
 import { toast } from "sonner";
 
 interface Plan {
