@@ -666,7 +666,7 @@ const AdminDashboard = () => {
                     Aucune activité récente
                   </div>
                 ) : (
-                  stats.recentActivities.slice(0, 7).map((activity) => (
+                  (stats.recentActivities || []).slice(0, 7).map((activity) => (
                     <div key={activity.id} className="flex items-start gap-3 px-5 py-3 hover:bg-muted/30 transition-colors">
                       <div className={`p-1.5 rounded-lg ${activity.iconBg} mt-0.5 shrink-0`}>
                         <activity.icon className={`h-3.5 w-3.5 ${activity.iconColor}`} />
