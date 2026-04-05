@@ -49,6 +49,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
 };
 
 const AdminSubscriptions = () => {
+  const [plans, setPlans] = useState<PlanOption[]>([]);
   const [subs, setSubs] = useState<SubRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
