@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { computeTenantRiskScore, riskStyles, riskProgressColors, type TenantRiskScore } from "@/lib/riskScoring";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 
 const REASON_LABELS: Record<string, string> = {
   normal: "Fin normale",
