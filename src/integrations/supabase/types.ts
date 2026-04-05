@@ -990,6 +990,90 @@ export type Database = {
           },
         ]
       }
+      promo_code_usages: {
+        Row: {
+          created_at: string
+          discount_applied: number
+          id: string
+          organization_id: string
+          plan_slug: string
+          promo_code_id: string
+        }
+        Insert: {
+          created_at?: string
+          discount_applied?: number
+          id?: string
+          organization_id: string
+          plan_slug: string
+          promo_code_id: string
+        }
+        Update: {
+          created_at?: string
+          discount_applied?: number
+          id?: string
+          organization_id?: string
+          plan_slug?: string
+          promo_code_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_code_usages_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_code_usages_promo_code_id_fkey"
+            columns: ["promo_code_id"]
+            isOneToOne: false
+            referencedRelation: "promo_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promo_codes: {
+        Row: {
+          code: string
+          created_at: string
+          current_uses: number
+          description: string | null
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          current_uses?: number
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_uses?: number
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       properties: {
         Row: {
           address: string
@@ -1352,6 +1436,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_promo_code: {
+        Args: {
+          _code: string
+          _organization_id: string
+          _plan_price: number
+          _plan_slug: string
+        }
+        Returns: Json
+      }
       can_manage_payments: { Args: { _user_id: string }; Returns: boolean }
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
