@@ -23,6 +23,7 @@ import PatrimoineDetail from "./pages/PatrimoineDetail";
 import MfaVerify from "./pages/MfaVerify";
 import ResetPassword from "./pages/ResetPassword";
 import Landing from "./pages/Landing";
+import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
 import Pricing from "./pages/Pricing";
 import AdminDashboard from "./pages/admin/AdminDashboard";

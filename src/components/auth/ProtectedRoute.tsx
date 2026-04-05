@@ -52,6 +52,18 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (needsMfa) return <Navigate to="/mfa-verify" replace />;
 
+  // Redirect admins to onboarding if not completed (skip for invited users)
+  if (
+    profile &&
+    profile.is_approved &&
+    role?.role === "admin" &&
+    organization &&
+    organization.onboarding_completed === false &&
+    location.pathname !== "/onboarding"
+  ) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
   // Show pending approval screen
   if (profile && !profile.is_approved) {
     return (
