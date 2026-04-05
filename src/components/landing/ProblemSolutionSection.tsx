@@ -40,7 +40,7 @@ export function ProblemSolutionSection() {
                 <div className="p-2.5 rounded-2xl bg-destructive/10">
                   <X className="h-5 w-5 text-destructive" />
                 </div>
-                <h3 className="text-xl font-bold text-foreground">Sans SCI Binieba</h3>
+                <h3 className="text-xl font-bold text-foreground"><h3 className="text-xl font-bold text-foreground">Sans RentFlow</h3></h3>
               </div>
               <StaggerContainer staggerDelay={0.08} className="space-y-4">
                 {PROBLEMS.map((problem) => (
