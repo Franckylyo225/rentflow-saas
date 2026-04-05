@@ -16,7 +16,8 @@ interface PlanLimits {
 }
 
 export function usePlanLimits(): PlanLimits {
-  const { organizationId } = useProfile();
+  const { profile } = useProfile();
+  const organizationId = profile?.organization_id;
   const [state, setState] = useState<Omit<PlanLimits, "canAddProperty" | "canAddUser" | "propertyLimitLabel" | "userLimitLabel">>({
     planName: "",
     maxProperties: null,
