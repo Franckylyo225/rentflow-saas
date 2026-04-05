@@ -23,6 +23,7 @@ export interface Organization {
   phone: string | null;
   address: string | null;
   invite_token?: string;
+  onboarding_completed?: boolean;
 }
 
 export function useProfile() {

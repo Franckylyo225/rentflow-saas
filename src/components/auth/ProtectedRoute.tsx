@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading, signOut } = useAuth();
-  const { profile, loading: profileLoading } = useProfile();
+  const { profile, role, organization, loading: profileLoading } = useProfile();
   const location = useLocation();
   const [mfaChecking, setMfaChecking] = useState(true);
   const [needsMfa, setNeedsMfa] = useState(false);
