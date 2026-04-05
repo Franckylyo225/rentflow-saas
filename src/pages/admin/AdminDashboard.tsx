@@ -497,7 +497,7 @@ const AdminDashboard = () => {
                           paddingAngle={3}
                           dataKey="value"
                         >
-                          {stats.revenueByPlan.map((_, i) => (
+                          {(stats.revenueByPlan || []).map((_, i) => (
                             <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                           ))}
                         </Pie>
