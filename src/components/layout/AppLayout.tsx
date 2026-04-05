@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
+import { PlanLimitBanner } from "./PlanLimitBanner";
 import { useProfile } from "@/hooks/useProfile";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
@@ -16,6 +17,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           orgName={organization?.name}
           userName={profile?.full_name}
         />
+        <PlanLimitBanner />
         <main className="flex-1">
           <div className="p-4 sm:p-6 lg:p-8">
             {children}

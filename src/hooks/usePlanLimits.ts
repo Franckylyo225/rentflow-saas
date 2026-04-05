@@ -13,12 +13,16 @@ interface PlanLimits {
   canAddUser: boolean;
   propertyLimitLabel: string;
   userLimitLabel: string;
+  propertyWarning: boolean;
+  userWarning: boolean;
+  propertyRatio: number;
+  userRatio: number;
 }
 
 export function usePlanLimits(): PlanLimits {
   const { profile } = useProfile();
   const organizationId = profile?.organization_id;
-  const [state, setState] = useState<Omit<PlanLimits, "canAddProperty" | "canAddUser" | "propertyLimitLabel" | "userLimitLabel">>({
+  const [state, setState] = useState<Omit<PlanLimits, "canAddProperty" | "canAddUser" | "propertyLimitLabel" | "userLimitLabel" | "propertyWarning" | "userWarning" | "propertyRatio" | "userRatio">>({
     planName: "",
     maxProperties: null,
     maxUsers: null,
@@ -66,5 +70,21 @@ export function usePlanLimits(): PlanLimits {
     ? `${state.currentUsers}/${state.maxUsers} utilisateurs`
     : "";
 
-  return { ...state, canAddProperty, canAddUser, propertyLimitLabel, userLimitLabel };
+  const propertyRatio = state.maxProperties !== null && state.maxProperties > 0
+    ? state.currentProperties / state.maxProperties
+    : 0;
+  const userRatio = state.maxUsers !== null && state.maxUsers > 0
+    ? state.currentUsers / state.maxUsers
+    : 0;
+
+  const propertyWarning = state.maxProperties !== null && propertyRatio >= 0.8;
+  const userWarning = state.maxUsers !== null && userRatio >= 0.8;
+
+  return {
+    ...state,
+    canAddProperty, canAddUser,
+    propertyLimitLabel, userLimitLabel,
+    propertyWarning, userWarning,
+    propertyRatio, userRatio,
+  };
 }
