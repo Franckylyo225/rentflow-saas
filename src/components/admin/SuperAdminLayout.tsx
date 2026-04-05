@@ -33,6 +33,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 const NAV_ITEMS = [
   { label: "Vue d'ensemble", href: "/admin", icon: LayoutDashboard },
   { label: "Organisations", href: "/admin/organizations", icon: Building2 },
+  { label: "Plans tarifaires", href: "/admin/plans", icon: Layers },
   { label: "Abonnements", href: "/admin/subscriptions", icon: CreditCard },
   { label: "Super Admins", href: "/admin/admins", icon: Users },
 ];

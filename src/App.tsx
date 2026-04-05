@@ -28,6 +28,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrganizations from "./pages/admin/AdminOrganizations";
 import AdminOrganizationDetail from "./pages/admin/AdminOrganizationDetail";
 import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
+import AdminPlans from "./pages/admin/AdminPlans";
 import AdminAdmins from "./pages/admin/AdminAdmins";
 import AdminLogin from "./pages/admin/AdminLogin";
 import { SuperAdminRoute } from "./components/admin/SuperAdminRoute";
