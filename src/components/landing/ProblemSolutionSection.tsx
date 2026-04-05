@@ -71,7 +71,7 @@ export function ProblemSolutionSection() {
                   <div className="p-2.5 rounded-2xl bg-primary/15">
                     <Building2 className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="text-xl font-bold text-primary-foreground">Avec SCI Binieba</h3>
+                  <h3 className="text-xl font-bold text-primary-foreground"><h3 className="text-xl font-bold text-primary-foreground">Avec RentFlow</h3></h3>
                 </div>
                 <StaggerContainer staggerDelay={0.08} className="space-y-4">
                   {SOLUTIONS.map((solution) => (
