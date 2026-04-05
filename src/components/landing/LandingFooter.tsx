@@ -25,7 +25,7 @@ export function LandingFooter() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <img src="/logo-horizontal.png" alt="SCI Binieba" className="h-8 mb-4" />
+            <img src="/logo-horizontal.png" alt="RentFlow" className="h-8 mb-4" />
             <p className="text-sm text-muted-foreground leading-relaxed">
               La plateforme de gestion locative conçue pour l'Afrique.
             </p>
