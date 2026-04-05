@@ -150,6 +150,7 @@ export function UsersRolesTab() {
    MEMBERS SECTION
    ═══════════════════════════════════════════════════ */
 function MembersSection({ isAdmin, currentUserId, orgId }: { isAdmin: boolean; currentUserId?: string; orgId?: string }) {
+  const { canAddUser, userLimitLabel } = usePlanLimits();
   const [members, setMembers] = useState<OrgMember[]>([]);
   const [roles, setRoles] = useState<CustomRole[]>([]);
   const [cities, setCities] = useState<CityOption[]>([]);
