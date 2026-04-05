@@ -15,7 +15,7 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
   const location = useLocation();
   const { profile, role } = useProfile();
   const { settings } = useOrganizationSettings();
-  const { isSuperAdmin } = useSuperAdmin();
+  
 
   const initials = profile?.full_name
     ? profile.full_name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
