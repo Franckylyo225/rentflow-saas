@@ -17,7 +17,7 @@ export function LandingNavbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link to="/landing" className="flex items-center gap-2">
-            <img src="/logo-horizontal.png" alt="SCI Binieba" className="h-8" />
+            <img src="/logo-horizontal.png" alt="RentFlow" className="h-8" />
           </Link>
 
           {/* Desktop nav */}

@@ -25,13 +25,13 @@ export function NotificationsTab() {
   const { user } = useAuth();
   const { profile } = useProfile();
   const { settings: orgSettings } = useOrganizationSettings();
-  const senderName = orgSettings?.sms_sender_name || "SCI Binieba";
+  const senderName = orgSettings?.sms_sender_name || "RentFlow";
   const senderNumber = orgSettings?.sms_sender_number || null;
   const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testPhone, setTestPhone] = useState("");
-  const [testMessage, setTestMessage] = useState("Bonjour, ceci est un SMS de test envoyé depuis SCI Binieba.");
+  const [testMessage, setTestMessage] = useState("Bonjour, ceci est un SMS de test envoyé depuis RentFlow.");
   const [sendingTest, setSendingTest] = useState(false);
   const [expandedTemplate, setExpandedTemplate] = useState<string | null>(null);
 
