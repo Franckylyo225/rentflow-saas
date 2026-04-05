@@ -26,6 +26,7 @@ import Landing from "./pages/Landing";
 import Home from "./pages/Home";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrganizations from "./pages/admin/AdminOrganizations";
+import AdminOrganizationDetail from "./pages/admin/AdminOrganizationDetail";
 import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
 import AdminAdmins from "./pages/admin/AdminAdmins";
 import AdminLogin from "./pages/admin/AdminLogin";
