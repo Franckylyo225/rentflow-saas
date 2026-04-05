@@ -85,9 +85,15 @@ const AdminOrganizations = () => {
     setToggling(null);
   };
 
-  const filtered = orgs.filter((o) =>
-    o.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = orgs.filter((o) => {
+    if (!o.name.toLowerCase().includes(search.toLowerCase())) return false;
+    if (filterPlan !== "all" && (o.subscription?.plan || "") !== filterPlan) return false;
+    if (filterStatus !== "all") {
+      if (filterStatus === "active" && !o.is_active) return false;
+      if (filterStatus === "inactive" && o.is_active) return false;
+    }
+    return true;
+  });
 
   const statusBadge = (status: string) => {
     const map: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
