@@ -255,9 +255,15 @@ export default function Properties() {
             )}
             <Button
               className="gap-2 self-start"
-              onClick={() => { setForm({ city_id: "", name: "", address: "", description: "", type: "immeuble" }); setShowAdd(true); }}
-              disabled={!canAddProperty}
-              title={!canAddProperty ? "Limite du plan atteinte" : undefined}
+              onClick={() => {
+                if (expired) {
+                  toast.error("Abonnement expiré", { description: "Renouvelez votre abonnement pour continuer.", action: { label: "Renouveler", onClick: () => navigate("/settings") } });
+                  return;
+                }
+                setForm({ city_id: "", name: "", address: "", description: "", type: "immeuble" }); setShowAdd(true);
+              }}
+              disabled={!canAddProperty || expired}
+              title={expired ? "Abonnement expiré" : !canAddProperty ? "Limite du plan atteinte" : undefined}
             >
               <Plus className="h-4 w-4" /> Ajouter un bien
             </Button>
