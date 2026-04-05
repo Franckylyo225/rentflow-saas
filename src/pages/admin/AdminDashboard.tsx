@@ -87,6 +87,8 @@ interface DashboardStats {
   mrrGrowth: number;
   newOrgsThisMonth: number;
   newOrgsLastMonth: number;
+  planPrices: Record<string, number>;
+  planLabels: Record<string, string>;
 }
 
 const STATUS_COLORS: Record<string, string> = {
