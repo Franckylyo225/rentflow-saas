@@ -17,18 +17,27 @@ interface PlanLimits {
   userWarning: boolean;
   propertyRatio: number;
   userRatio: number;
+  subscriptionStatus: string;
+  trialEndsAt: string | null;
+  periodEndsAt: string | null;
+  daysUntilExpiry: number | null;
+  expiryWarning: boolean;
+  expired: boolean;
 }
 
 export function usePlanLimits(): PlanLimits {
   const { profile } = useProfile();
   const organizationId = profile?.organization_id;
-  const [state, setState] = useState<Omit<PlanLimits, "canAddProperty" | "canAddUser" | "propertyLimitLabel" | "userLimitLabel" | "propertyWarning" | "userWarning" | "propertyRatio" | "userRatio">>({
+  const [state, setState] = useState<Omit<PlanLimits, "canAddProperty" | "canAddUser" | "propertyLimitLabel" | "userLimitLabel" | "propertyWarning" | "userWarning" | "propertyRatio" | "userRatio" | "daysUntilExpiry" | "expiryWarning" | "expired">>({
     planName: "",
     maxProperties: null,
     maxUsers: null,
     currentProperties: 0,
     currentUsers: 0,
     loading: true,
+    subscriptionStatus: "",
+    trialEndsAt: null,
+    periodEndsAt: null,
   });
 
   useEffect(() => {
