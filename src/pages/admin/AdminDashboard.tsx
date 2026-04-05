@@ -661,7 +661,7 @@ const AdminDashboard = () => {
                 </h2>
               </div>
               <div className="divide-y divide-border">
-                {stats.recentActivities.length === 0 ? (
+                {(stats.recentActivities?.length ?? 0) === 0 ? (
                   <div className="px-5 py-8 text-center text-sm text-muted-foreground">
                     Aucune activité récente
                   </div>
