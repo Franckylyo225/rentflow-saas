@@ -22,11 +22,11 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
 
-const PLAN_OPTIONS = [
-  { value: "starter", label: "Starter" },
-  { value: "pro", label: "Pro" },
-  { value: "enterprise", label: "Enterprise" },
-];
+interface PlanOption {
+  slug: string;
+  name: string;
+  price_monthly: number;
+}
 
 const STATUS_OPTIONS = [
   { value: "trial", label: "Essai" },
