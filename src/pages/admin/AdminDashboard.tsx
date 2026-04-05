@@ -293,6 +293,8 @@ const AdminDashboard = () => {
         mrrGrowth,
         newOrgsThisMonth,
         newOrgsLastMonth,
+        planPrices: PLAN_PRICES,
+        planLabels: PLAN_LABELS,
       });
       setLoading(false);
     }
