@@ -86,13 +86,16 @@ const AdminOrganizationDetail = () => {
   const fetchAll = async () => {
     if (!id) return;
 
-    const [orgRes, subRes, notesRes, profilesRes, propsRes] = await Promise.all([
+    const [orgRes, subRes, notesRes, profilesRes, propsRes, plansRes] = await Promise.all([
       supabase.from("organizations").select("id, name, email, phone, address, is_active, created_at, currency").eq("id", id).single(),
       supabase.from("subscriptions").select("*").eq("organization_id", id).maybeSingle(),
       supabase.from("admin_notes").select("*").eq("organization_id", id).order("created_at", { ascending: false }),
       supabase.from("profiles").select("id").eq("organization_id", id),
       supabase.from("properties").select("id").eq("organization_id", id),
+      supabase.from("plans").select("slug, name, price_monthly").order("sort_order"),
     ]);
+
+    setPlans((plansRes.data || []) as PlanOption[]);
 
     if (orgRes.data) setOrg(orgRes.data);
     if (subRes.data) setSubscription(subRes.data);
