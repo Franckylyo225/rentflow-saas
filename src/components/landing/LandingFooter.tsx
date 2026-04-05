@@ -53,7 +53,7 @@ export function LandingFooter() {
 
         <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} SCI Binieba. Tous droits réservés.
+            © {new Date().getFullYear()} RentFlow. Tous droits réservés.
           </p>
         </div>
       </div>

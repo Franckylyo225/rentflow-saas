@@ -37,7 +37,7 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
       >
         {/* Logo */}
         <div className="flex items-center px-3 h-14 border-b border-border">
-          <img src="/logo-horizontal.png" alt="SCI Binieba" className="h-10 object-contain" />
+          <img src="/logo-horizontal.png" alt="RentFlow" className="h-10 object-contain" />
           <button onClick={onClose} className="ml-auto lg:hidden text-muted-foreground hover:text-foreground">
             <X className="h-5 w-5" />
           </button>
