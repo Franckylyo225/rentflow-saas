@@ -95,11 +95,24 @@ export function usePlanLimits(): PlanLimits {
   const propertyWarning = state.maxProperties !== null && propertyRatio >= 0.8;
   const userWarning = state.maxUsers !== null && userRatio >= 0.8;
 
+  // Subscription expiry logic
+  const expiryDate = state.subscriptionStatus === "trial"
+    ? state.trialEndsAt
+    : state.periodEndsAt;
+
+  const daysUntilExpiry = expiryDate
+    ? Math.ceil((new Date(expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+
+  const expired = daysUntilExpiry !== null && daysUntilExpiry <= 0;
+  const expiryWarning = daysUntilExpiry !== null && daysUntilExpiry > 0 && daysUntilExpiry <= 7;
+
   return {
     ...state,
     canAddProperty, canAddUser,
     propertyLimitLabel, userLimitLabel,
     propertyWarning, userWarning,
     propertyRatio, userRatio,
+    daysUntilExpiry, expiryWarning, expired,
   };
 }
