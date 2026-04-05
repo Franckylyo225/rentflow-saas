@@ -56,10 +56,13 @@ const AdminSubscriptions = () => {
 
   useEffect(() => {
     async function fetch() {
-      const [subsRes, orgsRes] = await Promise.all([
+      const [subsRes, orgsRes, plansRes] = await Promise.all([
         supabase.from("subscriptions").select("*"),
         supabase.from("organizations").select("id, name"),
+        supabase.from("plans").select("slug, name, price_monthly").order("sort_order"),
       ]);
+
+      setPlans((plansRes.data || []) as PlanOption[]);
 
       const orgs = orgsRes.data || [];
       const enriched: SubRow[] = (subsRes.data || []).map((s: any) => ({
