@@ -70,5 +70,21 @@ export function usePlanLimits(): PlanLimits {
     ? `${state.currentUsers}/${state.maxUsers} utilisateurs`
     : "";
 
-  return { ...state, canAddProperty, canAddUser, propertyLimitLabel, userLimitLabel };
+  const propertyRatio = state.maxProperties !== null && state.maxProperties > 0
+    ? state.currentProperties / state.maxProperties
+    : 0;
+  const userRatio = state.maxUsers !== null && state.maxUsers > 0
+    ? state.currentUsers / state.maxUsers
+    : 0;
+
+  const propertyWarning = state.maxProperties !== null && propertyRatio >= 0.8;
+  const userWarning = state.maxUsers !== null && userRatio >= 0.8;
+
+  return {
+    ...state,
+    canAddProperty, canAddUser,
+    propertyLimitLabel, userLimitLabel,
+    propertyWarning, userWarning,
+    propertyRatio, userRatio,
+  };
 }
