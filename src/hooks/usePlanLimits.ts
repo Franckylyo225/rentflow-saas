@@ -13,6 +13,10 @@ interface PlanLimits {
   canAddUser: boolean;
   propertyLimitLabel: string;
   userLimitLabel: string;
+  propertyWarning: boolean;
+  userWarning: boolean;
+  propertyRatio: number;
+  userRatio: number;
 }
 
 export function usePlanLimits(): PlanLimits {
