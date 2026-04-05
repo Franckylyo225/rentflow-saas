@@ -578,8 +578,8 @@ const AdminDashboard = () => {
               <div className="p-5">
                 {(stats.subsByStatus?.length ?? 0) > 0 ? (
                   <div className="space-y-4">
-                    {stats.subsByStatus.map((item) => {
-                      const total = stats.subsByStatus.reduce((s, i) => s + i.value, 0);
+                    {(stats.subsByStatus || []).map((item) => {
+                      const total = (stats.subsByStatus || []).reduce((s, i) => s + i.value, 0);
                       const pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
                       return (
                         <div key={item.name}>
