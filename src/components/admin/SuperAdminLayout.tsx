@@ -10,6 +10,7 @@ import {
   Users,
   ChevronLeft,
   Settings,
+  Layers,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
