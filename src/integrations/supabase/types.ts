@@ -638,6 +638,7 @@ export type Database = {
           legal_name: string | null
           logo_url: string | null
           name: string
+          onboarding_completed: boolean
           phone: string | null
           rent_due_day: number
           salaries_enabled: boolean
@@ -667,6 +668,7 @@ export type Database = {
           legal_name?: string | null
           logo_url?: string | null
           name: string
+          onboarding_completed?: boolean
           phone?: string | null
           rent_due_day?: number
           salaries_enabled?: boolean
@@ -696,6 +698,7 @@ export type Database = {
           legal_name?: string | null
           logo_url?: string | null
           name?: string
+          onboarding_completed?: boolean
           phone?: string | null
           rent_due_day?: number
           salaries_enabled?: boolean
