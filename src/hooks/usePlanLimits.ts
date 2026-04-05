@@ -22,7 +22,7 @@ interface PlanLimits {
 export function usePlanLimits(): PlanLimits {
   const { profile } = useProfile();
   const organizationId = profile?.organization_id;
-  const [state, setState] = useState<Omit<PlanLimits, "canAddProperty" | "canAddUser" | "propertyLimitLabel" | "userLimitLabel">>({
+  const [state, setState] = useState<Omit<PlanLimits, "canAddProperty" | "canAddUser" | "propertyLimitLabel" | "userLimitLabel" | "propertyWarning" | "userWarning" | "propertyRatio" | "userRatio">>({
     planName: "",
     maxProperties: null,
     maxUsers: null,
