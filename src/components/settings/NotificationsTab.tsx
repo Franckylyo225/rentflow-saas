@@ -104,6 +104,7 @@ export function NotificationsTab() {
     return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
 
+  const smsDisabled = true; // SMS temporairement désactivé — en attente d'un nouveau fournisseur
   const enabledSmsCount = templates.filter(t => t.sms_enabled).length;
   const enabledEmailCount = templates.filter(t => t.email_enabled).length;
 
