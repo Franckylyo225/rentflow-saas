@@ -1,10 +1,10 @@
-import { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
-import { useSuperAdmin } from "@/hooks/useSuperAdmin";
+import { useAuth } from "@/contexts/AuthContext";
+import Landing from "./Landing";
 import { Loader2 } from "lucide-react";
 
-export function SuperAdminRoute({ children }: { children: ReactNode }) {
-  const { isSuperAdmin, loading } = useSuperAdmin();
+const Home = () => {
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -14,9 +14,11 @@ export function SuperAdminRoute({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!isSuperAdmin) {
+  if (user) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <>{children}</>;
-}
+  return <Landing />;
+};
+
+export default Home;
