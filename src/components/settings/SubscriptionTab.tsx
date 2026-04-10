@@ -69,7 +69,7 @@ function formatPrice(price: number) {
 }
 
 export function SubscriptionTab() {
-  const { profile } = useProfile();
+  const { profile, organization } = useProfile();
   const organizationId = profile?.organization_id;
   const {
     planName, currentProperties, currentUsers,
