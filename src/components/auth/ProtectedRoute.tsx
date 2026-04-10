@@ -58,7 +58,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     profile.is_approved &&
     role?.role === "admin" &&
     organization &&
-    organization.onboarding_completed === false &&
+    !organization.onboarding_completed &&
     location.pathname !== "/onboarding"
   ) {
     return <Navigate to="/onboarding" replace />;
