@@ -4,6 +4,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { useProfile } from "@/hooks/useProfile";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { Building2, Users, AlertTriangle, TrendingUp, Home, Loader2, Wallet, TrendingDown, ChevronLeft, ChevronRight, Calendar, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { useProperties, useUnits, useTenants, useRentPayments } from "@/hooks/useData";
 import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
