@@ -69,9 +69,12 @@ export default function Dashboard() {
   const { data: tenants } = useTenants();
   const { data: payments } = useRentPayments();
   const { data: expenses } = useExpenses();
+  const { hasFeature, loading: featLoading } = useFeatureAccess();
 
-  const isMobile = useIsMobile();
-  const short = isMobile;
+  const canRents = featLoading || hasFeature("rents");
+  const canExpenses = featLoading || hasFeature("expenses");
+  const canReports = featLoading || hasFeature("reports");
+  const canProperties = featLoading || hasFeature("properties");
 
   const now = new Date().toISOString().slice(0, 7);
   const [selectedMonth, setSelectedMonth] = useState(now);
