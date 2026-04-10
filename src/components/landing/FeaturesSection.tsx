@@ -4,10 +4,7 @@ import {
   CreditCard,
   Bell,
   BarChart3,
-  Shield,
-  Globe,
   FileText,
-  Smartphone,
 } from "lucide-react";
 import { AnimatedSection, StaggerContainer, StaggerItem } from "./AnimatedSection";
 
@@ -43,28 +40,10 @@ const FEATURES = [
       "Tableau de bord avec revenus, dépenses, taux d'occupation et analyse comparative.",
   },
   {
-    icon: Shield,
-    title: "Sécurité & multi-tenant",
-    description:
-      "Isolation des données par entreprise, contrôle d'accès par rôle et chiffrement.",
-  },
-  {
-    icon: Globe,
-    title: "Multi-pays",
-    description:
-      "Support multi-devises, multi-villes et multi-pays pour accompagner votre croissance.",
-  },
-  {
     icon: FileText,
     title: "Documents & patrimoine",
     description:
       "Gestion de vos titres fonciers, documents juridiques et patrimoine immobilier.",
-  },
-  {
-    icon: Smartphone,
-    title: "Mobile-first",
-    description:
-      "Interface responsive optimisée pour une gestion efficace depuis n'importe quel appareil.",
   },
 ];
 
