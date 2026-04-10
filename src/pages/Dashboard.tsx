@@ -6,6 +6,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Building2, Users, AlertTriangle, TrendingUp, Home, Loader2, Wallet, TrendingDown, ChevronLeft, ChevronRight, Calendar, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { useProperties, useUnits, useTenants, useRentPayments } from "@/hooks/useData";
+import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
 import { useExpenses } from "@/hooks/useExpenses";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
