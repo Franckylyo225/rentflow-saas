@@ -478,6 +478,8 @@ export default function Dashboard() {
                 )}
               </CardContent>
             </Card>
+            {/* Onboarding checklist */}
+            <OnboardingChecklist />
           </>
         )}
       </div>
