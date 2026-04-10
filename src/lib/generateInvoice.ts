@@ -10,6 +10,7 @@ export interface InvoiceData {
   organizationEmail?: string;
   organizationLegalName?: string;
   organizationLegalId?: string;
+  organizationLogoUrl?: string;
   // Client
   clientName: string;
   clientAddress?: string;
