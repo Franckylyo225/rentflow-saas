@@ -225,7 +225,7 @@ async function buildQuittancePDF(data: QuittanceData): Promise<jsPDF> {
   doc.setFont("helvetica", "italic");
   doc.setTextColor(150);
   doc.text("Cette quittance annule tous les reçus qui auraient pu être établis précédemment.", pageWidth / 2, 275, { align: "center" });
-  doc.text("Document généré automatiquement — SCI Binieba", pageWidth / 2, 280, { align: "center" });
+  doc.text("Document généré automatiquement — RentFlow", pageWidth / 2, 280, { align: "center" });
 
   // Bottom accent bar
   doc.setFillColor(15, 82, 55);
