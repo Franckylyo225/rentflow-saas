@@ -251,18 +251,18 @@ function formatDate(dateStr: string): string {
   }
 }
 
-export function downloadInvoice(data: InvoiceData) {
-  const doc = buildInvoicePDF(data);
+export async function downloadInvoice(data: InvoiceData) {
+  const doc = await buildInvoicePDF(data);
   doc.save(`facture-${data.invoiceNumber}.pdf`);
 }
 
-export function getInvoiceBlob(data: InvoiceData): Blob {
-  const doc = buildInvoicePDF(data);
+export async function getInvoiceBlob(data: InvoiceData): Promise<Blob> {
+  const doc = await buildInvoicePDF(data);
   return doc.output("blob");
 }
 
-export function getInvoiceDataUrl(data: InvoiceData): string {
-  const doc = buildInvoicePDF(data);
+export async function getInvoiceDataUrl(data: InvoiceData): Promise<string> {
+  const doc = await buildInvoicePDF(data);
   return doc.output("datauristring");
 }
 
