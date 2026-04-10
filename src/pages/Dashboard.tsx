@@ -306,15 +306,22 @@ export default function Dashboard() {
         </div>
 
         {properties.length === 0 ? (
-          <Card className="border-border">
-            <CardContent className="py-16 text-center">
-              <Building2 className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-1">Bienvenue sur RentFlow</h3>
-              <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                Commencez par ajouter vos biens immobiliers dans la section "Biens" pour voir apparaître vos données ici.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2">
+              <Card className="border-border">
+                <CardContent className="py-16 text-center">
+                  <Building2 className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-1">Bienvenue sur SCI Binieba</h3>
+                  <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                    Commencez par ajouter vos biens immobiliers pour voir apparaître vos données ici.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+            <div>
+              <OnboardingChecklist />
+            </div>
+          </div>
         ) : (
           <>
             {/* Charts row - Status Analysis & Revenue */}
