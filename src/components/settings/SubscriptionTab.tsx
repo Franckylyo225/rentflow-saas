@@ -149,6 +149,8 @@ export function SubscriptionTab() {
       toast.success("Plan mis à jour", {
         description: `Vous êtes maintenant sur le plan ${plan.name}.`,
       });
+      // Refresh history
+      fetchData();
     }
     setSelectedPlan(null);
     setUpgrading(false);
@@ -379,6 +381,65 @@ export function SubscriptionTab() {
           </CardContent>
         </Card>
       )}
+
+      {/* History */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <History className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-base">Historique</CardTitle>
+              <CardDescription>Changements de plan et événements récents</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {history.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">Aucun événement enregistré</p>
+          ) : (
+            <div className="space-y-3">
+              {history.map((entry) => {
+                const eventConfig: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
+                  plan_change: { label: "Changement de plan", variant: "default" },
+                  status_change: { label: "Changement de statut", variant: "secondary" },
+                  trial_start: { label: "Début d'essai", variant: "outline" },
+                  payment: { label: "Paiement", variant: "default" },
+                };
+                const config = eventConfig[entry.event_type] || { label: entry.event_type, variant: "secondary" as const };
+
+                return (
+                  <div key={entry.id} className="flex items-center justify-between gap-4 rounded-lg border border-border p-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Badge variant={config.variant} className="text-xs shrink-0">
+                        {config.label}
+                      </Badge>
+                      <div className="min-w-0">
+                        <p className="text-sm text-foreground truncate">
+                          {entry.event_type === "plan_change" && entry.previous_plan && entry.new_plan
+                            ? `${entry.previous_plan} → ${entry.new_plan}`
+                            : entry.event_type === "trial_start"
+                              ? `Plan ${entry.new_plan || "starter"}`
+                              : entry.event_type === "status_change"
+                                ? `${entry.previous_plan || "?"} → ${entry.new_plan || "?"}`
+                                : entry.notes || "—"}
+                        </p>
+                        {entry.amount > 0 && (
+                          <p className="text-xs text-muted-foreground">{formatPrice(entry.amount)} FCFA</p>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {format(new Date(entry.created_at), "d MMM yyyy, HH:mm", { locale: fr })}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
