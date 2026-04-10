@@ -16,8 +16,8 @@ export function HeroSection() {
   return (
     <section className="relative pt-32 pb-20 sm:pt-40 sm:pb-28 overflow-hidden">
       {/* Hero background image */}
-      <div className="absolute inset-0 -z-20">
-        <img src={heroBg} alt="" className="w-full h-full object-cover opacity-35" />
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <img src={heroBg} alt="" className="w-full h-full object-cover opacity-30" />
       </div>
       {/* Soft gradient blobs */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
