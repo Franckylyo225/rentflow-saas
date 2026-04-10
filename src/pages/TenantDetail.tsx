@@ -19,6 +19,7 @@ import { toast } from "sonner";
 export default function TenantDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { settings: orgSettings } = useOrganizationSettings();
   const [tenant, setTenant] = useState<any>(null);
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
