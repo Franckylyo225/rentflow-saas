@@ -271,6 +271,7 @@ export default function Dashboard() {
         </div>
 
         {/* Financial summary banner */}
+        {canRents && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="border-border overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-transparent" />
@@ -315,6 +316,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+        )}
 
         {properties.length === 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
