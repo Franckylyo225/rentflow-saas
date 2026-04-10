@@ -61,14 +61,14 @@ const App = () => (
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/properties" element={<ProtectedRoute><Properties /></ProtectedRoute>} />
               <Route path="/properties/:id" element={<ProtectedRoute><PropertyDetail /></ProtectedRoute>} />
-              <Route path="/patrimoine" element={<ProtectedRoute><Patrimoine /></ProtectedRoute>} />
-              <Route path="/patrimoine/:id" element={<ProtectedRoute><PatrimoineDetail /></ProtectedRoute>} />
-              <Route path="/tenants" element={<ProtectedRoute><Tenants /></ProtectedRoute>} />
-              <Route path="/tenants/:id" element={<ProtectedRoute><TenantDetail /></ProtectedRoute>} />
-              <Route path="/rents" element={<ProtectedRoute><Rents /></ProtectedRoute>} />
-              <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
-              <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
-              <Route path="/financial-reports" element={<ProtectedRoute><FinancialReports /></ProtectedRoute>} />
+              <Route path="/patrimoine" element={<ProtectedRoute><FeatureGate featureKey="patrimoine"><Patrimoine /></FeatureGate></ProtectedRoute>} />
+              <Route path="/patrimoine/:id" element={<ProtectedRoute><FeatureGate featureKey="patrimoine"><PatrimoineDetail /></FeatureGate></ProtectedRoute>} />
+              <Route path="/tenants" element={<ProtectedRoute><FeatureGate featureKey="tenants"><Tenants /></FeatureGate></ProtectedRoute>} />
+              <Route path="/tenants/:id" element={<ProtectedRoute><FeatureGate featureKey="tenants"><TenantDetail /></FeatureGate></ProtectedRoute>} />
+              <Route path="/rents" element={<ProtectedRoute><FeatureGate featureKey="rents"><Rents /></FeatureGate></ProtectedRoute>} />
+              <Route path="/expenses" element={<ProtectedRoute><FeatureGate featureKey="expenses"><Expenses /></FeatureGate></ProtectedRoute>} />
+              <Route path="/employees" element={<ProtectedRoute><FeatureGate featureKey="employees"><Employees /></FeatureGate></ProtectedRoute>} />
+              <Route path="/financial-reports" element={<ProtectedRoute><FeatureGate featureKey="reports"><FinancialReports /></FeatureGate></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 
