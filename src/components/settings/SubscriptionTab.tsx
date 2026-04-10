@@ -21,6 +21,9 @@ interface Plan {
   max_properties: number | null;
   max_users: number | null;
   feature_flags: string[];
+  display_features: string[];
+  status: string;
+  cta_label: string;
   sort_order: number;
 }
 
