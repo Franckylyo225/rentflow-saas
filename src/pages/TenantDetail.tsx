@@ -226,6 +226,12 @@ export default function TenantDetail() {
           </Card>
         )}
 
+        <LeaseDocumentsSection
+          tenant={tenant}
+          organizationSettings={orgSettings}
+          onRefresh={fetchData}
+        />
+
         {tenant.is_active && (
           <LeaseTerminationDialog
             open={showTermination}
