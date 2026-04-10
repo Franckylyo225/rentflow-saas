@@ -255,7 +255,7 @@ async function buildInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   doc.setFontSize(7);
   doc.setTextColor(160);
   doc.setFont("helvetica", "italic");
-  doc.text("Document généré automatiquement — SCI Binieba", pageWidth / 2, 275, { align: "center" });
+  doc.text("Document généré automatiquement — RentFlow", pageWidth / 2, 275, { align: "center" });
 
   // Bottom accent bar
   doc.setFillColor(...BRAND_COLOR);

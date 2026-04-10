@@ -230,7 +230,7 @@ function buildContratBailPDF(data: ContratBailData): jsPDF {
     doc.setFontSize(7);
     doc.setFont("helvetica", "italic");
     doc.setTextColor(150);
-    doc.text("Document genere automatiquement — SCI Binieba", pageWidth / 2, 287, { align: "center" });
+    doc.text("Document genere automatiquement — RentFlow", pageWidth / 2, 287, { align: "center" });
     doc.text(`Page ${i}/${pageCount}`, pageWidth - marginRight, 287, { align: "right" });
     doc.setTextColor(0);
   }

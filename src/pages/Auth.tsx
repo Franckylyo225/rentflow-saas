@@ -126,7 +126,7 @@ export default function AuthPage() {
         />
         {/* Logo top-left */}
         <div className="absolute top-8 left-12 xl:left-16 z-30">
-          <img src="/logo-horizontal.png" alt="SCI Binieba" className="h-10 brightness-0 invert drop-shadow-lg" />
+          <img src="/logo-horizontal.png" alt="RentFlow" className="h-10 brightness-0 invert drop-shadow-lg" />
         </div>
 
         <div className="absolute inset-0 z-20 flex flex-col justify-end p-12 xl:p-16">
@@ -165,7 +165,7 @@ export default function AuthPage() {
       >
         {/* Logo on mobile only (hidden on lg since it's on the left panel) */}
         <div className="lg:hidden absolute top-8 left-6 sm:left-12 flex items-center gap-3">
-          <img src="/logo-horizontal.png" alt="SCI Binieba" className="h-10" />
+          <img src="/logo-horizontal.png" alt="RentFlow" className="h-10" />
         </div>
 
         <AnimatePresence mode="wait">
@@ -428,7 +428,7 @@ export default function AuthPage() {
         </AnimatePresence>
 
         <p className="absolute bottom-6 left-6 sm:left-12 lg:left-16 xl:left-24 text-xs text-muted-foreground">
-          © {new Date().getFullYear()} SCI Binieba. Tous droits réservés.
+          © {new Date().getFullYear()} RentFlow. Tous droits réservés.
         </p>
       </motion.div>
     </div>
