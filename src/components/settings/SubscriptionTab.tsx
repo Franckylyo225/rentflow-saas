@@ -447,6 +447,7 @@ export function SubscriptionTab() {
                               organizationAddress: organization?.address || undefined,
                               organizationPhone: organization?.phone || undefined,
                               organizationEmail: organization?.email || undefined,
+                              organizationLogoUrl: organization?.logo_url || undefined,
                               clientName: organization?.name || "Mon entreprise",
                               clientEmail: organization?.email || undefined,
                               items: [{
