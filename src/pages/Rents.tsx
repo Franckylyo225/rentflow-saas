@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, AlertTriangle, CheckCircle2, Clock, Loader2, ListTodo, Plus, Check, FileText } from "lucide-react";
+import { CreditCard, AlertTriangle, CheckCircle2, Clock, Loader2, ListTodo, Plus, Check, FileText, Download } from "lucide-react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -20,6 +20,7 @@ import { getEscalationInfo, defaultTasksByLevel, type EscalationInfo } from "@/l
 import { generateMiseEnDemeure } from "@/lib/generateMiseEnDemeure";
 import { QuittanceDialog } from "@/components/rent/QuittanceDialog";
 import type { QuittanceData } from "@/lib/generateQuittance";
+import { downloadInvoice, generateInvoiceNumber, type InvoiceData } from "@/lib/generateInvoice";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useProfile } from "@/hooks/useProfile";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
