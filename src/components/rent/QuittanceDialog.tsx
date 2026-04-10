@@ -16,8 +16,8 @@ export function QuittanceDialog({ open, onOpenChange, data }: QuittanceDialogPro
 
   if (!data) return null;
 
-  const handlePreview = () => {
-    const url = getQuittanceDataUrl(data);
+  const handlePreview = async () => {
+    const url = await getQuittanceDataUrl(data);
     setPreviewUrl(url);
   };
 
