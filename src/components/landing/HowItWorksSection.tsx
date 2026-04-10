@@ -1,5 +1,8 @@
 import { Building2, Users, BarChart3, ArrowRight } from "lucide-react";
 import { AnimatedSection, StaggerContainer, StaggerItem } from "./AnimatedSection";
+import stepAddImg from "@/assets/step-add-properties.jpg";
+import stepTenantsImg from "@/assets/step-manage-tenants.jpg";
+import stepDashboardImg from "@/assets/step-dashboard.jpg";
 
 const STEPS = [
   {
@@ -8,7 +11,7 @@ const STEPS = [
     description:
       "Enregistrez vos immeubles, villas et unités locatives en quelques clics. Importez vos données existantes via Excel.",
     icon: Building2,
-    color: "primary",
+    image: stepAddImg,
   },
   {
     number: "02",
@@ -16,7 +19,7 @@ const STEPS = [
     description:
       "Créez les fiches locataires, générez les échéances automatiquement et suivez les paiements en temps réel.",
     icon: Users,
-    color: "primary",
+    image: stepTenantsImg,
   },
   {
     number: "03",
@@ -24,7 +27,7 @@ const STEPS = [
     description:
       "Consultez vos revenus, dépenses et taux d'occupation depuis un tableau de bord clair et actionnable.",
     icon: BarChart3,
-    color: "primary",
+    image: stepDashboardImg,
   },
 ];
 
@@ -48,7 +51,6 @@ export function HowItWorksSection() {
           {STEPS.map((step, index) => (
             <StaggerItem key={step.number}>
               <div className="relative group h-full">
-                {/* Connector arrow — hidden on last card and on mobile */}
                 {index < STEPS.length - 1 && (
                   <div className="hidden md:flex absolute -right-5 lg:-right-5 top-1/3 z-10 text-muted-foreground/30">
                     <ArrowRight className="h-6 w-6" />
@@ -56,17 +58,22 @@ export function HowItWorksSection() {
                 )}
 
                 <div className="rounded-3xl border border-border bg-background p-8 sm:p-10 h-full transition-shadow duration-300 hover:shadow-lg hover:shadow-primary/5">
-                  {/* Step number */}
                   <span className="text-5xl font-black text-primary/15 select-none leading-none">
                     {step.number}
                   </span>
 
-                  {/* Icon */}
-                  <div className="mt-5 mb-5 inline-flex items-center justify-center p-3.5 rounded-2xl bg-primary/10 text-primary">
-                    <step.icon className="h-6 w-6" />
+                  {/* Illustration */}
+                  <div className="mt-4 mb-5 rounded-2xl overflow-hidden bg-secondary/50">
+                    <img
+                      src={step.image}
+                      alt={step.title}
+                      loading="lazy"
+                      width={640}
+                      height={512}
+                      className="w-full h-36 object-cover object-center"
+                    />
                   </div>
 
-                  {/* Content */}
                   <h3 className="text-xl font-bold text-foreground mb-3">{step.title}</h3>
                   <p className="text-muted-foreground leading-relaxed text-[0.95rem]">
                     {step.description}
