@@ -522,6 +522,33 @@ export type Database = {
           },
         ]
       }
+      features: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       lease_documents: {
         Row: {
           created_at: string
@@ -948,7 +975,9 @@ export type Database = {
       plans: {
         Row: {
           created_at: string
+          cta_label: string
           description: string | null
+          display_features: string[]
           feature_flags: string[]
           id: string
           is_visible: boolean
@@ -958,11 +987,15 @@ export type Database = {
           price_monthly: number
           slug: string
           sort_order: number
+          status: string
+          trial_eligible: boolean
           updated_at: string
         }
         Insert: {
           created_at?: string
+          cta_label?: string
           description?: string | null
+          display_features?: string[]
           feature_flags?: string[]
           id?: string
           is_visible?: boolean
@@ -972,11 +1005,15 @@ export type Database = {
           price_monthly?: number
           slug: string
           sort_order?: number
+          status?: string
+          trial_eligible?: boolean
           updated_at?: string
         }
         Update: {
           created_at?: string
+          cta_label?: string
           description?: string | null
+          display_features?: string[]
           feature_flags?: string[]
           id?: string
           is_visible?: boolean
@@ -986,6 +1023,8 @@ export type Database = {
           price_monthly?: number
           slug?: string
           sort_order?: number
+          status?: string
+          trial_eligible?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -1515,6 +1554,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      waitlist: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          plan_slug: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          plan_slug: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          plan_slug?: string
+        }
+        Relationships: []
       }
     }
     Views: {
