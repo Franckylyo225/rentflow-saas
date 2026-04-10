@@ -12,7 +12,7 @@ export function CtaSection() {
           <div className="relative rounded-[2rem] p-12 sm:p-20 text-center overflow-hidden">
             {/* Background image */}
             <div className="absolute inset-0 z-0">
-              <img src={ctaBg} alt="" className="w-full h-full object-cover" />
+              <img src={ctaBg} alt="" className="w-full h-full object-cover object-bottom" />
             </div>
             {/* Dark overlay with gradient */}
             <div className="absolute inset-0 z-[1] bg-gradient-to-br from-foreground/85 via-foreground/75 to-primary/60" />
