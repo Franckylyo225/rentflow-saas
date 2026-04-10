@@ -39,7 +39,22 @@ export interface InvoiceData {
 const formatNumber = (num: number) =>
   num.toLocaleString("fr-FR").replace(/[\u00A0\u202F\u2009]/g, " ");
 
-function buildInvoicePDF(data: InvoiceData): jsPDF {
+async function loadImageAsDataUrl(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function buildInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   const doc = new jsPDF();
   const marginLeft = 20;
   const marginRight = 20;
@@ -48,11 +63,25 @@ function buildInvoicePDF(data: InvoiceData): jsPDF {
   const currency = data.currency || "FCFA";
   let y = 20;
 
+  // --- Logo ---
+  let logoOffset = 0;
+  if (data.organizationLogoUrl) {
+    const logoDataUrl = await loadImageAsDataUrl(data.organizationLogoUrl);
+    if (logoDataUrl) {
+      try {
+        doc.addImage(logoDataUrl, "PNG", marginLeft, y - 5, 18, 18);
+        logoOffset = 22;
+      } catch {
+        // ignore if image format unsupported
+      }
+    }
+  }
+
   // --- Header: org info left, invoice info right ---
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(30, 64, 175);
-  doc.text(data.organizationName, marginLeft, y);
+  doc.text(data.organizationName, marginLeft + logoOffset, y);
   doc.setTextColor(0);
 
   // Invoice title right
