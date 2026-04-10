@@ -32,7 +32,7 @@ export default function TenantDetail() {
     if (!id) return;
     setLoading(true);
     Promise.all([
-      supabase.from("tenants").select("*, units(name, property_id, properties(name, city_id, cities(name)))").eq("id", id).single(),
+      supabase.from("tenants").select("*, units(name, property_id, properties(name, address, city_id, cities(name)))").eq("id", id).single(),
       supabase.from("rent_payments").select("*").eq("tenant_id", id).order("due_date", { ascending: false }),
     ]).then(([tRes, pRes]) => {
       setTenant(tRes.data);
