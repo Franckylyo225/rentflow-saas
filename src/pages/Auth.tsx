@@ -124,6 +124,11 @@ export default function AuthPage() {
           alt="Gestion immobilière"
           className="absolute inset-0 w-full h-full object-cover"
         />
+        {/* Logo top-left */}
+        <div className="absolute top-8 left-12 xl:left-16 z-30">
+          <img src="/logo-horizontal.png" alt="SCI Binieba" className="h-10 brightness-0 invert drop-shadow-lg" />
+        </div>
+
         <div className="absolute inset-0 z-20 flex flex-col justify-end p-12 xl:p-16">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -158,7 +163,8 @@ export default function AuthPage() {
         transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
         className="flex-1 flex flex-col justify-center px-6 sm:px-12 lg:px-16 xl:px-24 bg-background relative"
       >
-        <div className="absolute top-8 left-6 sm:left-12 lg:left-16 xl:left-24 flex items-center gap-3">
+        {/* Logo on mobile only (hidden on lg since it's on the left panel) */}
+        <div className="lg:hidden absolute top-8 left-6 sm:left-12 flex items-center gap-3">
           <img src="/logo-horizontal.png" alt="SCI Binieba" className="h-10" />
         </div>
 
