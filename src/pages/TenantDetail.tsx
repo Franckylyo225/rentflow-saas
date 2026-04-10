@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LeaseTerminationDialog } from "@/components/tenant/LeaseTerminationDialog";
+import { LeaseDocumentsSection } from "@/components/tenant/LeaseDocumentsSection";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
