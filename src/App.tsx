@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { FeatureGate } from "@/components/auth/FeatureGate";
 import AuthPage from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Properties from "./pages/Properties";
