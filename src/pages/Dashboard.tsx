@@ -268,7 +268,6 @@ export default function Dashboard() {
             variant="default"
             subtitle={`${totalUnits} unités · ${tenants.length} locataires`}
           />
-          />
         </div>
 
         {/* Financial summary banner */}
