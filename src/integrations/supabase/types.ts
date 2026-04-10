@@ -1263,6 +1263,47 @@ export type Database = {
           },
         ]
       }
+      subscription_history: {
+        Row: {
+          amount: number | null
+          created_at: string
+          event_type: string
+          id: string
+          new_plan: string | null
+          notes: string | null
+          organization_id: string
+          previous_plan: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          new_plan?: string | null
+          notes?: string | null
+          organization_id: string
+          previous_plan?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          new_plan?: string | null
+          notes?: string | null
+          organization_id?: string
+          previous_plan?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           created_at: string
