@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Building2, Users, CreditCard, Star, BarChart3, Shield, Globe } from "lucide-react";
 import { AnimatedSection } from "./AnimatedSection";
 import { motion } from "framer-motion";
+import heroBg from "@/assets/hero-bg.jpg";
 
 const FLOATING_CARDS = [
   { label: "Taux d'occupation", value: "97%", icon: BarChart3, position: "top-32 left-[8%]", rotation: "-6deg", delay: 0.3 },
