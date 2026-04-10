@@ -4,6 +4,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { useProfile } from "@/hooks/useProfile";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { Building2, Users, AlertTriangle, TrendingUp, Home, Loader2, Wallet, TrendingDown, ChevronLeft, ChevronRight, Calendar, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { useProperties, useUnits, useTenants, useRentPayments } from "@/hooks/useData";
 import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
@@ -68,6 +69,12 @@ export default function Dashboard() {
   const { data: tenants } = useTenants();
   const { data: payments } = useRentPayments();
   const { data: expenses } = useExpenses();
+  const { hasFeature, loading: featLoading } = useFeatureAccess();
+
+  const canRents = featLoading || hasFeature("rents");
+  const canExpenses = featLoading || hasFeature("expenses");
+  const canReports = featLoading || hasFeature("reports");
+  const canProperties = featLoading || hasFeature("properties");
 
   const isMobile = useIsMobile();
   const short = isMobile;
@@ -223,25 +230,29 @@ export default function Dashboard() {
         </div>
 
         {/* KPI Cards - Databrain style */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            title="CA du mois"
-            value={`${formatAmount(monthCA, short)} FCFA`}
-            icon={TrendingUp}
-            variant="success"
-            trend={caChange.direction !== "flat" ? { value: `${caChange.pct}%`, positive: caChange.direction === "up" } : undefined}
-            subtitle="vs mois précédent"
-            sparkData={sparklineData}
-          />
-          <StatCard
-            title="Dépenses"
-            value={`${formatAmount(monthExpenses, short)} FCFA`}
-            icon={TrendingDown}
-            variant="destructive"
-            trend={expChange.direction !== "flat" ? { value: `${expChange.pct}%`, positive: expChange.direction === "down" } : undefined}
-            subtitle="vs mois précédent"
-            sparkData={sparklineExpenses}
-          />
+        <div className={cn("grid gap-4", canRents && canExpenses ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" : "grid-cols-1 sm:grid-cols-2")}>
+          {canRents && (
+            <StatCard
+              title="CA du mois"
+              value={`${formatAmount(monthCA, short)} FCFA`}
+              icon={TrendingUp}
+              variant="success"
+              trend={caChange.direction !== "flat" ? { value: `${caChange.pct}%`, positive: caChange.direction === "up" } : undefined}
+              subtitle="vs mois précédent"
+              sparkData={sparklineData}
+            />
+          )}
+          {canExpenses && (
+            <StatCard
+              title="Dépenses"
+              value={`${formatAmount(monthExpenses, short)} FCFA`}
+              icon={TrendingDown}
+              variant="destructive"
+              trend={expChange.direction !== "flat" ? { value: `${expChange.pct}%`, positive: expChange.direction === "down" } : undefined}
+              subtitle="vs mois précédent"
+              sparkData={sparklineExpenses}
+            />
+          )}
           <StatCard
             title="Taux d'occupation"
             value={`${occupancyRate}%`}
@@ -260,6 +271,7 @@ export default function Dashboard() {
         </div>
 
         {/* Financial summary banner */}
+        {canRents && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="border-border overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-transparent" />
@@ -304,6 +316,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+        )}
 
         {properties.length === 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -325,8 +338,9 @@ export default function Dashboard() {
         ) : (
           <>
             {/* Charts row - Status Analysis & Revenue */}
+            {canRents && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Payment status donut - Databrain style */}
+              {/* Payment status donut */}
               <Card className="border-border">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -360,7 +374,6 @@ export default function Dashboard() {
                             <Tooltip formatter={(v: number, name: string) => [`${v} loyer(s)`, name]} contentStyle={{ borderRadius: 12, border: "1px solid hsl(220, 13%, 90%)", fontSize: 13, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }} />
                           </PieChart>
                         </ResponsiveContainer>
-                        {/* Center label */}
                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                           <span className="text-2xl font-bold text-card-foreground">{totalStatusCount}</span>
                           <span className="text-xs text-muted-foreground">Loyers</span>
@@ -393,7 +406,7 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              {/* Monthly revenue bar chart - Databrain style */}
+              {/* Monthly revenue bar chart */}
               <Card className="border-border">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
@@ -431,8 +444,10 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             </div>
+            )}
 
             {/* Transactions */}
+            {canRents && (
             <Card className="border-border">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold">Paiements du mois</CardTitle>
@@ -478,6 +493,7 @@ export default function Dashboard() {
                 )}
               </CardContent>
             </Card>
+            )}
             {/* Onboarding checklist */}
             <OnboardingChecklist />
           </>
