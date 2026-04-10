@@ -30,7 +30,7 @@ const STEPS = [
 
 export function HowItWorksSection() {
   return (
-    <section className="py-24 sm:py-32 bg-secondary/30">
+    <section className="py-24 sm:py-32 bg-foreground/[0.03] dark:bg-foreground/[0.06]">
       <div className="max-w-6xl mx-auto px-5 sm:px-8">
         <AnimatedSection className="text-center mb-16">
           <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-xs font-semibold text-primary uppercase tracking-wider mb-4">
