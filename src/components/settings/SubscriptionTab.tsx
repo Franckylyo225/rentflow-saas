@@ -89,16 +89,54 @@ export function SubscriptionTab() {
   const currentPlan = plans.find(p => p.slug === currentSlug);
   const isTrial = subscriptionStatus === "trial";
 
+  const [upgrading, setUpgrading] = useState(false);
+
   const handleSelectPlan = (slug: string) => {
     if (slug === currentSlug && !expired) return;
     setSelectedPlan(slug);
   };
 
-  const handleConfirmUpgrade = () => {
-    toast.info("Demande envoyée", {
-      description: `Votre demande de passage au plan ${plans.find(p => p.slug === selectedPlan)?.name} a été enregistrée. Notre équipe vous contactera sous peu.`,
-    });
+  const handleConfirmUpgrade = async () => {
+    if (!selectedPlan || !organizationId) return;
+    const plan = plans.find(p => p.slug === selectedPlan);
+    if (!plan) return;
+
+    // Custom/enterprise plan → contact request only
+    if (plan.price_monthly === 0 && plan.max_properties === null) {
+      toast.info("Demande envoyée", {
+        description: `Notre équipe vous contactera pour un devis personnalisé du plan ${plan.name}.`,
+      });
+      setSelectedPlan(null);
+      return;
+    }
+
+    setUpgrading(true);
+    const { error } = await supabase
+      .from("subscriptions")
+      .update({
+        plan: selectedPlan,
+        status: "active",
+        current_period_start: new Date().toISOString(),
+        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      })
+      .eq("organization_id", organizationId);
+
+    if (error) {
+      toast.error("Erreur lors du changement de plan", { description: error.message });
+    } else {
+      setSubscription(prev => prev ? {
+        ...prev,
+        plan: selectedPlan,
+        status: "active",
+        current_period_start: new Date().toISOString(),
+        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      } : prev);
+      toast.success("Plan mis à jour", {
+        description: `Vous êtes maintenant sur le plan ${plan.name}.`,
+      });
+    }
     setSelectedPlan(null);
+    setUpgrading(false);
   };
 
   if (loading) {
