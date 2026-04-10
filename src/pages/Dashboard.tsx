@@ -230,25 +230,29 @@ export default function Dashboard() {
         </div>
 
         {/* KPI Cards - Databrain style */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            title="CA du mois"
-            value={`${formatAmount(monthCA, short)} FCFA`}
-            icon={TrendingUp}
-            variant="success"
-            trend={caChange.direction !== "flat" ? { value: `${caChange.pct}%`, positive: caChange.direction === "up" } : undefined}
-            subtitle="vs mois précédent"
-            sparkData={sparklineData}
-          />
-          <StatCard
-            title="Dépenses"
-            value={`${formatAmount(monthExpenses, short)} FCFA`}
-            icon={TrendingDown}
-            variant="destructive"
-            trend={expChange.direction !== "flat" ? { value: `${expChange.pct}%`, positive: expChange.direction === "down" } : undefined}
-            subtitle="vs mois précédent"
-            sparkData={sparklineExpenses}
-          />
+        <div className={cn("grid gap-4", canRents && canExpenses ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" : "grid-cols-1 sm:grid-cols-2")}>
+          {canRents && (
+            <StatCard
+              title="CA du mois"
+              value={`${formatAmount(monthCA, short)} FCFA`}
+              icon={TrendingUp}
+              variant="success"
+              trend={caChange.direction !== "flat" ? { value: `${caChange.pct}%`, positive: caChange.direction === "up" } : undefined}
+              subtitle="vs mois précédent"
+              sparkData={sparklineData}
+            />
+          )}
+          {canExpenses && (
+            <StatCard
+              title="Dépenses"
+              value={`${formatAmount(monthExpenses, short)} FCFA`}
+              icon={TrendingDown}
+              variant="destructive"
+              trend={expChange.direction !== "flat" ? { value: `${expChange.pct}%`, positive: expChange.direction === "down" } : undefined}
+              subtitle="vs mois précédent"
+              sparkData={sparklineExpenses}
+            />
+          )}
           <StatCard
             title="Taux d'occupation"
             value={`${occupancyRate}%`}
@@ -263,6 +267,7 @@ export default function Dashboard() {
             icon={Building2}
             variant="default"
             subtitle={`${totalUnits} unités · ${tenants.length} locataires`}
+          />
           />
         </div>
 
