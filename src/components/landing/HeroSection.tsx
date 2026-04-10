@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Building2, Users, CreditCard, Star, BarChart3, Shield, Globe } from "lucide-react";
 import { AnimatedSection } from "./AnimatedSection";
 import { motion } from "framer-motion";
+import heroBg from "@/assets/hero-bg.jpg";
 
 const FLOATING_CARDS = [
   { label: "Taux d'occupation", value: "97%", icon: BarChart3, position: "top-32 left-[8%]", rotation: "-6deg", delay: 0.3 },
@@ -14,6 +15,10 @@ const FLOATING_CARDS = [
 export function HeroSection() {
   return (
     <section className="relative pt-32 pb-20 sm:pt-40 sm:pb-28 overflow-hidden">
+      {/* Hero background image */}
+      <div className="absolute inset-0 -z-20">
+        <img src={heroBg} alt="" className="w-full h-full object-cover opacity-15" />
+      </div>
       {/* Soft gradient blobs */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[600px] landing-blob rounded-full opacity-50" />
