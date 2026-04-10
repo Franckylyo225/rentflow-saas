@@ -19,9 +19,28 @@ export interface QuittanceData {
   organizationAddress?: string;
   organizationPhone?: string;
   organizationEmail?: string;
+  organizationLogoUrl?: string;
 }
 
-function buildQuittancePDF(data: QuittanceData): jsPDF {
+const formatNumber = (num: number) =>
+  num.toLocaleString("fr-FR").replace(/[\u00A0\u202F\u2009]/g, " ");
+
+async function loadImageAsDataUrl(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function buildQuittancePDF(data: QuittanceData): Promise<jsPDF> {
   const doc = new jsPDF();
   const today = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
   const dueDateFormatted = new Date(data.dueDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
@@ -29,92 +48,128 @@ function buildQuittancePDF(data: QuittanceData): jsPDF {
     ? new Date(data.paymentDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
     : today;
 
-  // Helper to format numbers with regular space as thousand separator (jsPDF doesn't handle nbsp well)
-  const formatNumber = (num: number) => num.toLocaleString("fr-FR").replace(/[\u00A0\u202F\u2009]/g, " ");
-
-  const marginLeft = 25;
+  const marginLeft = 20;
   const pageWidth = 210;
   const contentWidth = pageWidth - marginLeft * 2;
-  const maxTextWidth = contentWidth - 16; // inner padding for boxes
-  let y = 25;
+  const maxTextWidth = contentWidth - 16;
 
-  // Header - Organization
-  doc.setFontSize(14);
+  // === Top accent bar ===
+  doc.setFillColor(15, 82, 55);
+  doc.rect(0, 0, pageWidth, 4, "F");
+
+  let y = 18;
+
+  // === Logo ===
+  let logoOffset = 0;
+  if (data.organizationLogoUrl) {
+    const logoDataUrl = await loadImageAsDataUrl(data.organizationLogoUrl);
+    if (logoDataUrl) {
+      try {
+        doc.addImage(logoDataUrl, "PNG", marginLeft, y - 5, 18, 18);
+        logoOffset = 22;
+      } catch {
+        // ignore if image format unsupported
+      }
+    }
+  }
+
+  // === Header: org info left ===
+  doc.setFontSize(15);
   doc.setFont("helvetica", "bold");
-  doc.text(data.organizationName || "Agence Immobilière", marginLeft, y);
+  doc.setTextColor(15, 82, 55);
+  doc.text(data.organizationName || "Agence Immobilière", marginLeft + logoOffset, y);
+  doc.setTextColor(0);
+
   y += 6;
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(100);
-  if (data.organizationAddress) { doc.text(data.organizationAddress, marginLeft, y); y += 4; }
-  if (data.organizationPhone) { doc.text(`Tél : ${data.organizationPhone}`, marginLeft, y); y += 4; }
-  if (data.organizationEmail) { doc.text(data.organizationEmail, marginLeft, y); y += 4; }
+  if (data.organizationAddress) { doc.text(data.organizationAddress, marginLeft + logoOffset, y); y += 4; }
+  if (data.organizationPhone) { doc.text(`Tél : ${data.organizationPhone}`, marginLeft + logoOffset, y); y += 4; }
+  if (data.organizationEmail) { doc.text(data.organizationEmail, marginLeft + logoOffset, y); y += 4; }
   doc.setTextColor(0);
 
   // Date & quittance number aligned right
-  y = 25;
-  doc.setFontSize(9);
-  doc.text(`Fait le ${today}`, pageWidth - marginLeft, y, { align: "right" });
+  let metaY = 18;
+  doc.setFontSize(8.5);
+  doc.text(`Fait le ${today}`, pageWidth - marginLeft, metaY, { align: "right" });
   if (data.quittanceNumber) {
-    y += 5;
+    metaY += 5;
     doc.setFont("helvetica", "bold");
-    doc.text(`N° ${data.quittanceNumber}`, pageWidth - marginLeft, y, { align: "right" });
+    doc.setTextColor(15, 82, 55);
+    doc.text(`N° ${data.quittanceNumber}`, pageWidth - marginLeft, metaY, { align: "right" });
     doc.setFont("helvetica", "normal");
+    doc.setTextColor(0);
   }
 
-  y = 55;
+  y = Math.max(y, metaY) + 12;
 
-  // Title
+  // === Separator ===
+  doc.setDrawColor(200, 220, 210);
+  doc.setLineWidth(0.4);
+  doc.line(marginLeft, y, pageWidth - marginLeft, y);
+  y += 12;
+
+  // === Title ===
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(0, 100, 60);
+  doc.setTextColor(15, 82, 55);
   doc.text("QUITTANCE DE LOYER", pageWidth / 2, y, { align: "center" });
   y += 4;
-  doc.setDrawColor(0, 150, 80);
+  doc.setDrawColor(15, 82, 55);
   doc.setLineWidth(0.8);
-  doc.line(marginLeft + 25, y, pageWidth - marginLeft - 25, y);
+  doc.line(marginLeft + 30, y, pageWidth - marginLeft - 30, y);
   doc.setTextColor(0);
   y += 5;
 
   // Period
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
+  doc.setTextColor(80);
   doc.text(`Période : ${data.month}`, pageWidth / 2, y, { align: "center" });
+  doc.setTextColor(0);
   y += 15;
 
-  // Tenant info box
-  doc.setFillColor(245, 250, 248);
-  doc.setDrawColor(200, 220, 210);
+  // === Tenant info box ===
+  doc.setFillColor(240, 248, 244);
+  doc.setDrawColor(180, 210, 195);
   doc.roundedRect(marginLeft, y - 5, contentWidth, 30, 3, 3, "FD");
 
-  doc.setFontSize(10);
+  doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
-  doc.text("Locataire", marginLeft + 8, y + 2);
+  doc.setTextColor(15, 82, 55);
+  doc.text("LOCATAIRE", marginLeft + 8, y + 1);
+  doc.setTextColor(0);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(data.tenantName, marginLeft + 8, y + 9);
+  doc.text(data.tenantName, marginLeft + 8, y + 8);
   const logementText = `Logement : ${data.unitName} — ${data.propertyName}`;
   const logementLines = doc.splitTextToSize(logementText, maxTextWidth);
-  doc.text(logementLines, marginLeft + 8, y + 16);
+  doc.setFontSize(9);
+  doc.text(logementLines, marginLeft + 8, y + 15);
   if (data.propertyAddress) {
     doc.text(data.propertyAddress, marginLeft + 8, y + 22);
   }
   y += 38;
 
-  // Payment details box - calculate height dynamically
-  let boxLines = 3; // loyer, montant réglé, échéance
+  // === Payment details box ===
+  let boxLines = 3;
   if (data.paymentDate) boxLines++;
   if (data.paymentMethod) boxLines++;
   const boxHeight = 18 + boxLines * 7;
 
-  doc.setFillColor(240, 248, 255);
-  doc.setDrawColor(180, 200, 220);
+  doc.setFillColor(245, 248, 255);
+  doc.setDrawColor(190, 200, 220);
   doc.roundedRect(marginLeft, y - 5, contentWidth, boxHeight, 3, 3, "FD");
 
-  doc.setFontSize(10);
+  doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
-  doc.text("Détails du paiement", marginLeft + 8, y + 2);
+  doc.setTextColor(15, 82, 55);
+  doc.text("DÉTAILS DU PAIEMENT", marginLeft + 8, y + 1);
+  doc.setTextColor(0);
 
   y += 10;
+  doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text("Loyer mensuel :", marginLeft + 8, y);
   doc.text(`${formatNumber(data.amount)} FCFA`, marginLeft + contentWidth - 8, y, { align: "right" });
@@ -122,7 +177,7 @@ function buildQuittancePDF(data: QuittanceData): jsPDF {
   y += 7;
   doc.text("Montant réglé :", marginLeft + 8, y);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(0, 120, 60);
+  doc.setTextColor(15, 82, 55);
   doc.text(`${formatNumber(data.paidAmount)} FCFA`, marginLeft + contentWidth - 8, y, { align: "right" });
   doc.setTextColor(0);
 
@@ -145,7 +200,7 @@ function buildQuittancePDF(data: QuittanceData): jsPDF {
 
   y += 20;
 
-  // Confirmation text - use splitTextToSize to avoid overflow
+  // === Confirmation text ===
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   const signataire = data.agentName || data.organizationName || "l'agence immobilière";
@@ -155,34 +210,41 @@ function buildQuittancePDF(data: QuittanceData): jsPDF {
   doc.text(wrappedLines, marginLeft, y);
   y += wrappedLines.length * 5 + 15;
 
-  // Signature
+  // === Signature ===
   doc.setFont("helvetica", "bold");
   doc.text("Le bailleur,", marginLeft, y);
   y += 7;
   doc.setFont("helvetica", "normal");
   doc.text(data.organizationName || "La Direction", marginLeft, y);
 
-  // Footer
-  doc.setFontSize(8);
+  // === Footer ===
+  doc.setDrawColor(200, 220, 210);
+  doc.setLineWidth(0.3);
+  doc.line(marginLeft, 270, pageWidth - marginLeft, 270);
+  doc.setFontSize(7);
   doc.setFont("helvetica", "italic");
   doc.setTextColor(150);
   doc.text("Cette quittance annule tous les reçus qui auraient pu être établis précédemment.", pageWidth / 2, 275, { align: "center" });
-  doc.text("Document généré automatiquement", pageWidth / 2, 280, { align: "center" });
+  doc.text("Document généré automatiquement — SCI Binieba", pageWidth / 2, 280, { align: "center" });
+
+  // Bottom accent bar
+  doc.setFillColor(15, 82, 55);
+  doc.rect(0, 293, pageWidth, 4, "F");
 
   return doc;
 }
 
-export function downloadQuittance(data: QuittanceData) {
-  const doc = buildQuittancePDF(data);
+export async function downloadQuittance(data: QuittanceData) {
+  const doc = await buildQuittancePDF(data);
   doc.save(`quittance-${data.quittanceNumber || data.month}-${data.tenantName.replace(/\s+/g, "-").toLowerCase()}.pdf`);
 }
 
-export function getQuittanceBlob(data: QuittanceData): Blob {
-  const doc = buildQuittancePDF(data);
+export async function getQuittanceBlob(data: QuittanceData): Promise<Blob> {
+  const doc = await buildQuittancePDF(data);
   return doc.output("blob");
 }
 
-export function getQuittanceDataUrl(data: QuittanceData): string {
-  const doc = buildQuittancePDF(data);
+export async function getQuittanceDataUrl(data: QuittanceData): Promise<string> {
+  const doc = await buildQuittancePDF(data);
   return doc.output("datauristring");
 }
