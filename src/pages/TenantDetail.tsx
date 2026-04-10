@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LeaseTerminationDialog } from "@/components/tenant/LeaseTerminationDialog";
+import { LeaseDocumentsSection } from "@/components/tenant/LeaseDocumentsSection";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +19,7 @@ import { toast } from "sonner";
 export default function TenantDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { settings: orgSettings } = useOrganizationSettings();
   const [tenant, setTenant] = useState<any>(null);
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +32,7 @@ export default function TenantDetail() {
     if (!id) return;
     setLoading(true);
     Promise.all([
-      supabase.from("tenants").select("*, units(name, property_id, properties(name, city_id, cities(name)))").eq("id", id).single(),
+      supabase.from("tenants").select("*, units(name, property_id, properties(name, address, city_id, cities(name)))").eq("id", id).single(),
       supabase.from("rent_payments").select("*").eq("tenant_id", id).order("due_date", { ascending: false }),
     ]).then(([tRes, pRes]) => {
       setTenant(tRes.data);
@@ -222,6 +225,12 @@ export default function TenantDetail() {
             </CardContent>
           </Card>
         )}
+
+        <LeaseDocumentsSection
+          tenant={tenant}
+          organizationSettings={orgSettings}
+          onRefresh={fetchData}
+        />
 
         {tenant.is_active && (
           <LeaseTerminationDialog
