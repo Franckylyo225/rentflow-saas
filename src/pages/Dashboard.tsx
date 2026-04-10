@@ -338,8 +338,9 @@ export default function Dashboard() {
         ) : (
           <>
             {/* Charts row - Status Analysis & Revenue */}
+            {canRents && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Payment status donut - Databrain style */}
+              {/* Payment status donut */}
               <Card className="border-border">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -373,7 +374,6 @@ export default function Dashboard() {
                             <Tooltip formatter={(v: number, name: string) => [`${v} loyer(s)`, name]} contentStyle={{ borderRadius: 12, border: "1px solid hsl(220, 13%, 90%)", fontSize: 13, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }} />
                           </PieChart>
                         </ResponsiveContainer>
-                        {/* Center label */}
                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                           <span className="text-2xl font-bold text-card-foreground">{totalStatusCount}</span>
                           <span className="text-xs text-muted-foreground">Loyers</span>
@@ -406,7 +406,7 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              {/* Monthly revenue bar chart - Databrain style */}
+              {/* Monthly revenue bar chart */}
               <Card className="border-border">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
@@ -444,8 +444,10 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             </div>
+            )}
 
             {/* Transactions */}
+            {canRents && (
             <Card className="border-border">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold">Paiements du mois</CardTitle>
@@ -491,6 +493,7 @@ export default function Dashboard() {
                 )}
               </CardContent>
             </Card>
+            )}
             {/* Onboarding checklist */}
             <OnboardingChecklist />
           </>
