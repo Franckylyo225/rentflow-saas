@@ -76,6 +76,9 @@ export default function Dashboard() {
   const canReports = featLoading || hasFeature("reports");
   const canProperties = featLoading || hasFeature("properties");
 
+  const isMobile = useIsMobile();
+  const short = isMobile;
+
   const now = new Date().toISOString().slice(0, 7);
   const [selectedMonth, setSelectedMonth] = useState(now);
   const isCurrentMonth = selectedMonth === now;
