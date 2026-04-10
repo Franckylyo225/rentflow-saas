@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, AlertTriangle, CheckCircle2, Clock, Loader2, ListTodo, Plus, Check, FileText } from "lucide-react";
+import { CreditCard, AlertTriangle, CheckCircle2, Clock, Loader2, ListTodo, Plus, Check, FileText, Download } from "lucide-react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -20,6 +20,7 @@ import { getEscalationInfo, defaultTasksByLevel, type EscalationInfo } from "@/l
 import { generateMiseEnDemeure } from "@/lib/generateMiseEnDemeure";
 import { QuittanceDialog } from "@/components/rent/QuittanceDialog";
 import type { QuittanceData } from "@/lib/generateQuittance";
+import { downloadInvoice, generateInvoiceNumber, type InvoiceData } from "@/lib/generateInvoice";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useProfile } from "@/hooks/useProfile";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
@@ -132,6 +133,35 @@ export default function Rents() {
       organizationEmail: orgSettings?.email ?? undefined,
     });
     setShowQuittance(true);
+  };
+
+  const downloadRentInvoice = (payment: any) => {
+    const invoiceData: InvoiceData = {
+      invoiceNumber: generateInvoiceNumber("rent", payment.id),
+      invoiceDate: payment.updated_at || new Date().toISOString(),
+      organizationName: orgSettings?.name || "Mon entreprise",
+      organizationAddress: orgSettings?.address || undefined,
+      organizationPhone: orgSettings?.phone || undefined,
+      organizationEmail: orgSettings?.email || undefined,
+      organizationLegalName: (orgSettings as any)?.legal_name || undefined,
+      organizationLegalId: (orgSettings as any)?.legal_id || undefined,
+      clientName: payment.tenants?.full_name || "Locataire",
+      clientPhone: payment.tenants?.phone || undefined,
+      clientEmail: payment.tenants?.email || undefined,
+      items: [{
+        description: `Loyer - ${payment.month} — ${payment.tenants?.units?.name || ""} (${payment.tenants?.units?.properties?.name || ""})`,
+        quantity: 1,
+        unitPrice: payment.amount,
+        total: payment.amount,
+      }],
+      subtotal: payment.amount,
+      total: payment.paid_amount,
+      currency: orgSettings?.currency || "FCFA",
+      paymentDate: payment.updated_at || undefined,
+      status: payment.status === "paid" ? "paid" : payment.status === "partial" ? "partial" : "pending",
+      notes: payment.status === "partial" ? `Paiement partiel : ${payment.paid_amount.toLocaleString()} / ${payment.amount.toLocaleString()} FCFA` : undefined,
+    };
+    downloadInvoice(invoiceData);
   };
 
   const handleRecordPayment = async () => {
@@ -294,6 +324,11 @@ export default function Rents() {
                             </td>
                             <td className="py-3 px-4 text-center">
                               <div className="flex items-center justify-center gap-1">
+                                {(payment.status === "paid" || payment.status === "partial") && (
+                                  <Button variant="ghost" size="sm" onClick={() => downloadRentInvoice(payment)} title="Télécharger la facture">
+                                    <Download className="h-4 w-4" />
+                                  </Button>
+                                )}
                                 {payment.status === "paid" && (
                                   <Button variant="ghost" size="sm" onClick={() => openQuittance(payment)} title="Voir la quittance">
                                     <FileText className="h-4 w-4 mr-1" />

@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Check, ArrowRight, Loader2, Crown, Clock, AlertTriangle, History } from "lucide-react";
+import { Check, ArrowRight, Loader2, Crown, Clock, AlertTriangle, History, Download } from "lucide-react";
+import { downloadInvoice, generateInvoiceNumber, type InvoiceData } from "@/lib/generateInvoice";
 import { PromoCodeInput } from "@/components/promo/PromoCodeInput";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
@@ -68,7 +69,7 @@ function formatPrice(price: number) {
 }
 
 export function SubscriptionTab() {
-  const { profile } = useProfile();
+  const { profile, organization } = useProfile();
   const organizationId = profile?.organization_id;
   const {
     planName, currentProperties, currentUsers,
@@ -430,9 +431,46 @@ export function SubscriptionTab() {
                         )}
                       </div>
                     </div>
-                    <span className="text-xs text-muted-foreground shrink-0">
-                      {format(new Date(entry.created_at), "d MMM yyyy, HH:mm", { locale: fr })}
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {(entry.event_type === "plan_change" || entry.event_type === "payment") && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0"
+                          title="Télécharger la facture"
+                          onClick={() => {
+                            const plan = plans.find(p => p.slug === entry.new_plan);
+                            const invoiceData: InvoiceData = {
+                              invoiceNumber: generateInvoiceNumber("sub", entry.id),
+                              invoiceDate: entry.created_at,
+                              organizationName: organization?.name || "Mon entreprise",
+                              organizationAddress: organization?.address || undefined,
+                              organizationPhone: organization?.phone || undefined,
+                              organizationEmail: organization?.email || undefined,
+                              clientName: organization?.name || "Mon entreprise",
+                              clientEmail: organization?.email || undefined,
+                              items: [{
+                                description: `Abonnement ${plan?.name || entry.new_plan || "—"}${entry.previous_plan ? ` (depuis ${entry.previous_plan})` : ""}`,
+                                quantity: 1,
+                                unitPrice: plan?.price_monthly || entry.amount || 0,
+                                total: plan?.price_monthly || entry.amount || 0,
+                              }],
+                              subtotal: plan?.price_monthly || entry.amount || 0,
+                              total: plan?.price_monthly || entry.amount || 0,
+                              currency: "FCFA",
+                              status: "paid",
+                              notes: entry.notes || undefined,
+                            };
+                            downloadInvoice(invoiceData);
+                          }}
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(entry.created_at), "d MMM yyyy, HH:mm", { locale: fr })}
+                      </span>
+                    </div>
                   </div>
                 );
               })}
