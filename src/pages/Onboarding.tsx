@@ -8,7 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Check, ArrowRight, ArrowLeft, Building2, Sparkles, Rocket, Loader2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import {
+  Check, ArrowRight, ArrowLeft, Building2, Sparkles, Rocket, Loader2,
+  MapPin, Home, Users, Briefcase, Tag, Gift, CreditCard,
+} from "lucide-react";
 import { PromoCodeInput } from "@/components/promo/PromoCodeInput";
 import { toast } from "sonner";
 
@@ -38,10 +42,16 @@ const FEATURE_LABELS: Record<string, string> = {
   rent_tracking: "Suivi des loyers",
 };
 
+const ACTIVITY_TYPES = [
+  { value: "agency", label: "Agence immobilière", icon: Building2, desc: "Gestion pour le compte de tiers" },
+  { value: "owner", label: "Propriétaire", icon: Home, desc: "Gestion de mes propres biens" },
+  { value: "manager", label: "Gestionnaire", icon: Users, desc: "Administration de patrimoine" },
+];
+
 const STEPS = [
-  { label: "Bienvenue", icon: Sparkles },
+  { label: "Votre activité", icon: Briefcase },
   { label: "Votre plan", icon: Rocket },
-  { label: "Organisation", icon: Building2 },
+  { label: "Code promo", icon: Gift },
   { label: "C'est parti !", icon: Check },
 ];
 
@@ -61,11 +71,10 @@ export default function Onboarding() {
   const [saving, setSaving] = useState(false);
   const [promoApplied, setPromoApplied] = useState<{ discount: number; final_price: number } | null>(null);
 
-  // Org config form
+  // Company form
   const [orgName, setOrgName] = useState("");
-  const [orgPhone, setOrgPhone] = useState("");
-  const [orgAddress, setOrgAddress] = useState("");
-  const [orgLegalName, setOrgLegalName] = useState("");
+  const [orgCity, setOrgCity] = useState("");
+  const [activityType, setActivityType] = useState("");
 
   // Redirect if already onboarded
   useEffect(() => {
@@ -74,12 +83,10 @@ export default function Onboarding() {
     }
   }, [profileLoading, organization, navigate]);
 
-  // Pre-fill org form
+  // Pre-fill
   useEffect(() => {
     if (organization) {
       setOrgName(organization.name || "");
-      setOrgPhone(organization.phone || "");
-      setOrgAddress(organization.address || "");
     }
   }, [organization]);
 
@@ -97,10 +104,34 @@ export default function Onboarding() {
     fetchPlans();
   }, []);
 
+  const handleSaveCompany = async () => {
+    if (!organization) return;
+    if (!orgName.trim()) {
+      toast.error("Le nom de l'agence est requis");
+      return;
+    }
+    if (!activityType) {
+      toast.error("Veuillez choisir votre type d'activité");
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase
+      .from("organizations")
+      .update({
+        name: orgName.trim(),
+        address: orgCity.trim() || null,
+      })
+      .eq("id", organization.id);
+    if (error) {
+      toast.error("Erreur lors de la sauvegarde");
+    }
+    setSaving(false);
+    setStep(1);
+  };
+
   const handleSelectPlan = async () => {
     if (!organization) return;
     setSaving(true);
-    // Upsert subscription
     const { error } = await supabase
       .from("subscriptions")
       .upsert(
@@ -114,46 +145,35 @@ export default function Onboarding() {
       );
     if (error) {
       toast.error("Erreur lors de la sélection du plan");
-      console.error(error);
     }
     setSaving(false);
     setStep(2);
   };
 
-  const handleSaveOrg = async () => {
-    if (!organization) return;
-    if (!orgName.trim()) {
-      toast.error("Le nom de l'organisation est requis");
-      return;
-    }
-    setSaving(true);
-    const { error } = await supabase
-      .from("organizations")
-      .update({
-        name: orgName.trim(),
-        phone: orgPhone.trim() || null,
-        address: orgAddress.trim() || null,
-        legal_name: orgLegalName.trim() || null,
-      })
-      .eq("id", organization.id);
-    if (error) {
-      toast.error("Erreur lors de la sauvegarde");
-      console.error(error);
-    }
-    setSaving(false);
+  const handlePromoStep = () => {
     setStep(3);
   };
 
   const handleFinish = async () => {
     if (!organization) return;
     setSaving(true);
+
+    // If promo applied, extend trial to 30 days
+    if (promoApplied) {
+      await supabase
+        .from("subscriptions")
+        .update({
+          trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        })
+        .eq("organization_id", organization.id);
+    }
+
     const { error } = await supabase
       .from("organizations")
       .update({ onboarding_completed: true })
       .eq("id", organization.id);
     if (error) {
       toast.error("Erreur lors de la finalisation");
-      console.error(error);
     } else {
       navigate("/dashboard", { replace: true });
     }
@@ -170,12 +190,21 @@ export default function Onboarding() {
 
   const selectedPlanData = plans.find((p) => p.slug === selectedPlan);
   const popularSlug = plans.length >= 2 ? plans[Math.floor(plans.length / 2)]?.slug : null;
+  const progressPct = ((step + 1) / STEPS.length) * 100;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Stepper */}
-      <div className="w-full border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 py-4">
+      {/* Top progress bar */}
+      <div className="w-full bg-card/50 backdrop-blur-sm sticky top-0 z-10 border-b">
+        <div className="max-w-3xl mx-auto px-4 py-4 space-y-3">
+          {/* Progress */}
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>Étape {step + 1} sur {STEPS.length}</span>
+            <span>{Math.round(progressPct)}%</span>
+          </div>
+          <Progress value={progressPct} className="h-1.5" />
+          
+          {/* Step indicators */}
           <div className="flex items-center justify-between">
             {STEPS.map((s, i) => {
               const Icon = s.icon;
@@ -184,7 +213,7 @@ export default function Onboarding() {
               return (
                 <div key={i} className="flex items-center gap-2 flex-1">
                   <div
-                    className={`flex items-center justify-center h-9 w-9 rounded-full text-sm font-semibold transition-all ${
+                    className={`flex items-center justify-center h-8 w-8 rounded-full text-xs font-semibold transition-all ${
                       isDone
                         ? "bg-primary text-primary-foreground"
                         : isActive
@@ -192,19 +221,17 @@ export default function Onboarding() {
                         : "bg-muted text-muted-foreground"
                     }`}
                   >
-                    {isDone ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
+                    {isDone ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
                   </div>
                   <span
-                    className={`text-sm font-medium hidden sm:block ${
+                    className={`text-xs font-medium hidden sm:block ${
                       isActive ? "text-foreground" : "text-muted-foreground"
                     }`}
                   >
                     {s.label}
                   </span>
                   {i < STEPS.length - 1 && (
-                    <div
-                      className={`flex-1 h-px mx-2 ${isDone ? "bg-primary" : "bg-border"}`}
-                    />
+                    <div className={`flex-1 h-px mx-2 ${isDone ? "bg-primary" : "bg-border"}`} />
                   )}
                 </div>
               );
@@ -214,42 +241,109 @@ export default function Onboarding() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex items-center justify-center px-4 py-12">
+      <div className="flex-1 flex items-center justify-center px-4 py-8 sm:py-12">
         <AnimatePresence mode="wait">
-          {/* Step 0: Welcome */}
+          {/* Step 0: Company info */}
           {step === 0 && (
             <motion.div
-              key="welcome"
+              key="company"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="max-w-lg w-full text-center space-y-8"
+              transition={{ duration: 0.3 }}
+              className="max-w-lg w-full space-y-8"
             >
-              <div className="mx-auto h-20 w-20 rounded-3xl bg-primary/10 flex items-center justify-center">
-                <Sparkles className="h-10 w-10 text-primary" />
-              </div>
-              <div className="space-y-3">
-                <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">
-                  Bienvenue{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""} !
-                </h1>
-                <p className="text-muted-foreground text-lg leading-relaxed max-w-md mx-auto">
-                  Configurons votre espace de gestion locative en quelques étapes simples.
+              <div className="text-center space-y-2">
+                <div className="mx-auto h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <Briefcase className="h-8 w-8 text-primary" />
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+                  Parlez-nous de votre activité
+                </h2>
+                <p className="text-muted-foreground text-sm">
+                  Ces informations nous aident à personnaliser votre expérience.
                 </p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
-                {[
-                  { title: "Gérez vos biens", desc: "Immeubles, villas, appartements" },
-                  { title: "Suivez les loyers", desc: "Paiements, quittances, relances" },
-                  { title: "Pilotez vos finances", desc: "Dépenses, rapports, analyses" },
-                ].map((item) => (
-                  <div key={item.title} className="rounded-2xl bg-muted/50 p-4 space-y-1">
-                    <p className="font-semibold text-sm text-foreground">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">{item.desc}</p>
+
+              <div className="space-y-5">
+                {/* Agency name */}
+                <div className="space-y-2">
+                  <Label htmlFor="orgName">Nom de l'agence / entreprise *</Label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="orgName"
+                      value={orgName}
+                      onChange={(e) => setOrgName(e.target.value)}
+                      placeholder="Ex: Immobilière Ivoire"
+                      className="pl-10 h-12"
+                      autoFocus
+                    />
                   </div>
-                ))}
+                </div>
+
+                {/* City */}
+                <div className="space-y-2">
+                  <Label htmlFor="orgCity">Ville <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="orgCity"
+                      value={orgCity}
+                      onChange={(e) => setOrgCity(e.target.value)}
+                      placeholder="Ex: Abidjan"
+                      className="pl-10 h-12"
+                    />
+                  </div>
+                </div>
+
+                {/* Activity type - icon cards */}
+                <div className="space-y-2">
+                  <Label>Type d'activité *</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {ACTIVITY_TYPES.map((type) => {
+                      const Icon = type.icon;
+                      const selected = activityType === type.value;
+                      return (
+                        <button
+                          key={type.value}
+                          type="button"
+                          onClick={() => setActivityType(type.value)}
+                          className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all text-center ${
+                            selected
+                              ? "border-primary bg-primary/5 shadow-sm"
+                              : "border-border bg-card hover:border-primary/30"
+                          }`}
+                        >
+                          <div className={`p-2.5 rounded-xl ${selected ? "bg-primary/10" : "bg-muted"}`}>
+                            <Icon className={`h-5 w-5 ${selected ? "text-primary" : "text-muted-foreground"}`} />
+                          </div>
+                          <div>
+                            <p className={`text-sm font-semibold ${selected ? "text-foreground" : "text-foreground"}`}>
+                              {type.label}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{type.desc}</p>
+                          </div>
+                          {selected && (
+                            <div className="absolute top-2 right-2">
+                              <Check className="h-3.5 w-3.5 text-primary" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-              <Button size="lg" className="rounded-full gap-2 font-semibold" onClick={() => setStep(1)}>
-                Commencer <ArrowRight className="h-4 w-4" />
+
+              <Button
+                size="lg"
+                className="w-full rounded-full gap-2 font-semibold h-12"
+                onClick={handleSaveCompany}
+                disabled={saving || !orgName.trim() || !activityType}
+              >
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                Continuer <ArrowRight className="h-4 w-4" />
               </Button>
             </motion.div>
           )}
@@ -261,6 +355,7 @@ export default function Onboarding() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
               className="max-w-4xl w-full space-y-8"
             >
               <div className="text-center space-y-2">
@@ -268,7 +363,7 @@ export default function Onboarding() {
                   Choisissez votre formule
                 </h2>
                 <p className="text-muted-foreground">
-                  7 jours d'essai gratuit sur tous les plans. Changez à tout moment.
+                  Essai gratuit sur tous les plans. <span className="font-medium text-primary">Aucun paiement requis.</span>
                 </p>
               </div>
 
@@ -305,6 +400,8 @@ export default function Onboarding() {
                         className={`relative flex flex-col rounded-2xl border-2 p-6 cursor-pointer transition-all ${
                           isSelected
                             ? "border-primary bg-primary/5 shadow-md"
+                            : isPopular
+                            ? "border-primary/30 bg-card hover:shadow-md"
                             : "border-border bg-card hover:border-primary/30 hover:shadow-sm"
                         }`}
                       >
@@ -345,29 +442,19 @@ export default function Onboarding() {
                           ))}
                         </ul>
 
-                        {isSelected && (
-                          <div className="mt-4 text-center">
-                            <Badge variant="outline" className="text-primary border-primary">
-                              ✓ Sélectionné
-                            </Badge>
-                          </div>
-                        )}
+                        <div className="mt-4">
+                          <Button
+                            variant={isSelected ? "default" : "outline"}
+                            size="sm"
+                            className="w-full rounded-full"
+                            onClick={(e) => { e.stopPropagation(); setSelectedPlan(plan.slug); }}
+                          >
+                            {isSelected ? "✓ Sélectionné" : "Choisir cette offre"}
+                          </Button>
+                        </div>
                       </div>
                     );
                   })}
-                </div>
-              )}
-
-              {/* Promo code */}
-              {organization && selectedPlanData && (
-                <div className="max-w-md mx-auto">
-                  <PromoCodeInput
-                    organizationId={organization.id}
-                    planSlug={selectedPlan}
-                    planPrice={selectedPlanData.price_monthly}
-                    onApplied={(r) => setPromoApplied({ discount: r.discount!, final_price: r.final_price! })}
-                    onRemoved={() => setPromoApplied(null)}
-                  />
                 </div>
               )}
 
@@ -388,64 +475,59 @@ export default function Onboarding() {
             </motion.div>
           )}
 
-          {/* Step 2: Organization config */}
+          {/* Step 2: Promo code */}
           {step === 2 && (
             <motion.div
-              key="org"
+              key="promo"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="max-w-lg w-full space-y-8"
+              transition={{ duration: 0.3 }}
+              className="max-w-md w-full space-y-8"
             >
-              <div className="text-center space-y-2">
+              <div className="text-center space-y-3">
                 <div className="mx-auto h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                  <Building2 className="h-8 w-8 text-primary" />
+                  <Gift className="h-8 w-8 text-primary" />
                 </div>
-                <h2 className="text-2xl font-extrabold text-foreground tracking-tight">
-                  Votre organisation
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+                  Avez-vous un code promo ?
                 </h2>
                 <p className="text-muted-foreground text-sm">
-                  Ces informations apparaîtront sur vos documents (quittances, contrats…)
+                  Entrez votre code pour activer un essai gratuit prolongé.
                 </p>
               </div>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="orgName">Nom de l'entreprise *</Label>
-                  <Input
-                    id="orgName"
-                    value={orgName}
-                    onChange={(e) => setOrgName(e.target.value)}
-                    placeholder="Ex: SCI Binieba"
+              {/* Promo input */}
+              {organization && selectedPlanData && (
+                <div className="space-y-4">
+                  <PromoCodeInput
+                    organizationId={organization.id}
+                    planSlug={selectedPlan}
+                    planPrice={selectedPlanData.price_monthly}
+                    onApplied={(r) => setPromoApplied({ discount: r.discount!, final_price: r.final_price! })}
+                    onRemoved={() => setPromoApplied(null)}
                   />
+
+                  {promoApplied && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="rounded-2xl bg-primary/5 border border-primary/20 p-5 text-center space-y-2"
+                    >
+                      <span className="text-3xl">🎉</span>
+                      <p className="font-bold text-foreground text-lg">Essai gratuit activé !</p>
+                      <p className="text-sm text-muted-foreground">
+                        Profitez de 30 jours d'accès complet sans aucun paiement.
+                      </p>
+                    </motion.div>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="orgLegalName">Raison sociale</Label>
-                  <Input
-                    id="orgLegalName"
-                    value={orgLegalName}
-                    onChange={(e) => setOrgLegalName(e.target.value)}
-                    placeholder="Ex: SCI Binieba SARL"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="orgPhone">Téléphone</Label>
-                  <Input
-                    id="orgPhone"
-                    value={orgPhone}
-                    onChange={(e) => setOrgPhone(e.target.value)}
-                    placeholder="+225 XX XX XX XX"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="orgAddress">Adresse</Label>
-                  <Input
-                    id="orgAddress"
-                    value={orgAddress}
-                    onChange={(e) => setOrgAddress(e.target.value)}
-                    placeholder="Abidjan, Cocody..."
-                  />
-                </div>
+              )}
+
+              {/* No credit card */}
+              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                <CreditCard className="h-3.5 w-3.5" />
+                <span>Aucune carte bancaire requise</span>
               </div>
 
               <div className="flex justify-between">
@@ -455,11 +537,9 @@ export default function Onboarding() {
                 <Button
                   size="lg"
                   className="rounded-full gap-2 font-semibold"
-                  onClick={handleSaveOrg}
-                  disabled={saving}
+                  onClick={handlePromoStep}
                 >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                  Continuer <ArrowRight className="h-4 w-4" />
+                  {promoApplied ? "Continuer" : "Passer cette étape"} <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
             </motion.div>
@@ -472,22 +552,33 @@ export default function Onboarding() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
               className="max-w-lg w-full text-center space-y-8"
             >
-              <div className="mx-auto h-20 w-20 rounded-3xl bg-primary/10 flex items-center justify-center">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
+                className="mx-auto h-20 w-20 rounded-3xl bg-primary/10 flex items-center justify-center"
+              >
                 <Rocket className="h-10 w-10 text-primary" />
-              </div>
+              </motion.div>
+
               <div className="space-y-3">
                 <h2 className="text-3xl font-extrabold text-foreground tracking-tight">
-                  Tout est prêt !
+                  Votre compte est prêt ! 🎉
                 </h2>
                 <p className="text-muted-foreground text-lg">
-                  Votre espace de gestion locative est configuré.
+                  Tout est configuré. Commencez dès maintenant.
                 </p>
               </div>
 
               {/* Recap */}
               <div className="rounded-2xl bg-muted/50 p-6 text-left space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Entreprise</span>
+                  <span className="font-semibold text-foreground">{orgName}</span>
+                </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Formule</span>
                   <span className="font-semibold text-foreground">
@@ -495,18 +586,40 @@ export default function Onboarding() {
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Organisation</span>
-                  <span className="font-semibold text-foreground">{orgName}</span>
+                  <span className="text-sm text-muted-foreground">Période d'essai</span>
+                  <Badge variant="secondary" className="gap-1">
+                    <Sparkles className="h-3 w-3" />
+                    {promoApplied ? "30 jours gratuits" : "7 jours gratuits"}
+                  </Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Période d'essai</span>
-                  <Badge variant="secondary">7 jours gratuits</Badge>
+                  <span className="text-sm text-muted-foreground">Paiement</span>
+                  <span className="text-sm font-medium text-primary">Aucun paiement requis</span>
+                </div>
+              </div>
+
+              {/* Quick wins */}
+              <div className="text-left space-y-3">
+                <p className="text-sm font-semibold text-foreground">Prochaines étapes :</p>
+                <div className="space-y-2">
+                  {[
+                    "Ajouter votre premier bien immobilier",
+                    "Enregistrer votre premier locataire",
+                    "Créer un contrat de bail",
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-foreground">
+                        {i + 1}
+                      </div>
+                      {item}
+                    </div>
+                  ))}
                 </div>
               </div>
 
               <Button
                 size="lg"
-                className="rounded-full gap-2 font-semibold"
+                className="w-full rounded-full gap-2 font-semibold h-12 shadow-lg shadow-primary/25"
                 onClick={handleFinish}
                 disabled={saving}
               >
