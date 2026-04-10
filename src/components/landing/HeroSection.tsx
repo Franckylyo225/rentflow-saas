@@ -20,7 +20,7 @@ export function HeroSection() {
         <img src={heroBg} alt="" className="w-full h-full object-cover opacity-30" />
       </div>
       {/* Soft gradient blobs */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
+      <div className="absolute inset-0 z-[1] overflow-hidden pointer-events-none">
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[600px] landing-blob rounded-full opacity-50" />
         <div className="absolute top-1/3 -right-40 w-[400px] h-[400px] landing-blob rounded-full opacity-30" />
         <div className="absolute bottom-0 -left-40 w-[350px] h-[350px] landing-blob rounded-full opacity-25" />
