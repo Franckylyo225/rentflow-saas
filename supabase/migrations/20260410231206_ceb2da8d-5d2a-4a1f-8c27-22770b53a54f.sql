@@ -1,0 +1,1 @@
+ALTER TABLE public.organizations ALTER COLUMN sms_sender_name SET DEFAULT 'RentFlow';
