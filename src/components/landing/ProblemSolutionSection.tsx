@@ -1,7 +1,5 @@
 import { X, Check, Building2 } from "lucide-react";
 import { AnimatedSection, StaggerContainer, StaggerItem } from "./AnimatedSection";
-import problemImg from "@/assets/problem-illustration.jpg";
-import solutionImg from "@/assets/solution-illustration.jpg";
 
 const PROBLEMS = [
   "Fichiers Excel dispersés et non fiables",
@@ -38,24 +36,12 @@ export function ProblemSolutionSection() {
           {/* Problems column */}
           <AnimatedSection direction="left" delay={0.1}>
             <div className="rounded-3xl border border-destructive/15 bg-destructive/[0.03] p-8 sm:p-10 h-full">
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3 mb-8">
                 <div className="p-2.5 rounded-2xl bg-destructive/10">
                   <X className="h-5 w-5 text-destructive" />
                 </div>
-                <h3 className="text-xl font-bold text-foreground">Sans RentFlow</h3>
+                <h3 className="text-xl font-bold text-foreground"><h3 className="text-xl font-bold text-foreground">Sans RentFlow</h3></h3>
               </div>
-
-              <div className="mb-6 rounded-2xl overflow-hidden">
-                <img
-                  src={problemImg}
-                  alt="Gestion manuelle chaotique"
-                  loading="lazy"
-                  width={800}
-                  height={640}
-                  className="w-full h-40 object-cover object-center"
-                />
-              </div>
-
               <StaggerContainer staggerDelay={0.08} className="space-y-4">
                 {PROBLEMS.map((problem) => (
                   <StaggerItem key={problem}>
@@ -76,28 +62,17 @@ export function ProblemSolutionSection() {
           {/* Solutions column */}
           <AnimatedSection direction="right" delay={0.2}>
             <div className="rounded-3xl border border-primary/20 bg-foreground p-8 sm:p-10 h-full relative overflow-hidden">
+              {/* Decorative blobs */}
               <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-primary/10 blur-3xl" />
               <div className="absolute -bottom-20 -left-20 w-40 h-40 rounded-full bg-primary/10 blur-3xl" />
 
               <div className="relative z-10">
-                <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center gap-3 mb-8">
                   <div className="p-2.5 rounded-2xl bg-primary/15">
                     <Building2 className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="text-xl font-bold text-primary-foreground">Avec RentFlow</h3>
+                  <h3 className="text-xl font-bold text-primary-foreground"><h3 className="text-xl font-bold text-primary-foreground">Avec RentFlow</h3></h3>
                 </div>
-
-                <div className="mb-6 rounded-2xl overflow-hidden">
-                  <img
-                    src={solutionImg}
-                    alt="Gestion digitale simplifiée"
-                    loading="lazy"
-                    width={800}
-                    height={640}
-                    className="w-full h-40 object-cover object-center"
-                  />
-                </div>
-
                 <StaggerContainer staggerDelay={0.08} className="space-y-4">
                   {SOLUTIONS.map((solution) => (
                     <StaggerItem key={solution}>
