@@ -22,6 +22,7 @@ export interface Organization {
   email: string | null;
   phone: string | null;
   address: string | null;
+  logo_url: string | null;
   invite_token?: string;
   onboarding_completed?: boolean;
 }
