@@ -131,6 +131,7 @@ export default function Rents() {
       organizationAddress: orgSettings?.address ?? undefined,
       organizationPhone: orgSettings?.phone ?? undefined,
       organizationEmail: orgSettings?.email ?? undefined,
+      organizationLogoUrl: orgSettings?.logo_url ?? undefined,
     });
     setShowQuittance(true);
   };
