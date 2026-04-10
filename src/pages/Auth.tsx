@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Building2, Mail, Lock, User, Briefcase, ArrowRight, UserPlus, ArrowLeft } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, UserPlus, ArrowLeft, Phone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,12 +20,19 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [companyName, setCompanyName] = useState("");
+  const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // If invite link, default to signup mode
+  const firstInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (inviteToken) setIsSignUp(true);
   }, [inviteToken]);
+
+  // Autofocus first input on mode change
+  useEffect(() => {
+    setTimeout(() => firstInputRef.current?.focus(), 350);
+  }, [isSignUp, isForgotPassword]);
 
   if (loading) {
     return (
@@ -64,12 +71,12 @@ export default function AuthPage() {
 
     if (isSignUp) {
       if (!fullName.trim()) {
-        toast.error("Veuillez remplir tous les champs");
+        toast.error("Veuillez remplir votre nom complet");
         setSubmitting(false);
         return;
       }
-      if (!inviteToken && !companyName.trim()) {
-        toast.error("Veuillez remplir le nom de l'entreprise");
+      if (!email.trim()) {
+        toast.error("Veuillez remplir votre adresse email");
         setSubmitting(false);
         return;
       }
@@ -82,11 +89,12 @@ export default function AuthPage() {
           toast.success("Inscription réussie ! Un administrateur doit approuver votre accès.");
         }
       } else {
-        const { error } = await signUp(email, password, fullName, companyName);
+        // Use a default company name - will be updated in onboarding
+        const { error } = await signUp(email, password, fullName, companyName.trim() || "Mon agence");
         if (error) {
           toast.error(error.message);
         } else {
-          toast.success("Vérifiez votre email pour confirmer votre inscription");
+          toast.success("Compte créé avec succès !");
         }
       }
     } else {
@@ -100,7 +108,7 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left panel — hero image */}
+      {/* Left panel — hero */}
       <motion.div
         initial={{ opacity: 0, x: -40 }}
         animate={{ opacity: 1, x: 0 }}
@@ -125,17 +133,18 @@ export default function AuthPage() {
               Gérez vos biens<br />en toute simplicité
             </h2>
             <p className="text-lg text-white/85 leading-relaxed drop-shadow-md">
-              Suivi des loyers, gestion des locataires, rapports financiers — tout ce dont vous avez besoin, au même endroit.
+              Suivi des loyers, gestion des locataires, rapports financiers — tout ce dont vous avez besoin.
             </p>
-            <motion.div
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: "auto" }}
-              transition={{ duration: 0.5, delay: 0.8 }}
-              className="flex items-center gap-3 pt-2"
-            >
-              <div className="h-1 w-12 rounded-full bg-primary" />
-              <span className="text-sm font-medium text-white/70">Plateforme de gestion locative</span>
-            </motion.div>
+
+            {/* Trust badges */}
+            <div className="flex flex-wrap gap-3 pt-4">
+              {["Essai gratuit", "Aucune CB requise", "Prêt en 2 min"].map((badge) => (
+                <span key={badge} className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-3 py-1.5 text-xs font-medium text-white">
+                  <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                  {badge}
+                </span>
+              ))}
+            </div>
           </motion.div>
         </div>
       </motion.div>
@@ -148,7 +157,7 @@ export default function AuthPage() {
         className="flex-1 flex flex-col justify-center px-6 sm:px-12 lg:px-16 xl:px-24 bg-background relative"
       >
         <div className="absolute top-8 left-6 sm:left-12 lg:left-16 xl:left-24 flex items-center gap-3">
-          <img src="/logo-horizontal.png" alt="RentFlow" className="h-10" />
+          <img src="/logo-horizontal.png" alt="SCI Binieba" className="h-10" />
         </div>
 
         <AnimatePresence mode="wait">
@@ -160,214 +169,221 @@ export default function AuthPage() {
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="w-full max-w-md mx-auto space-y-8"
           >
-          {/* Forgot password view */}
-          {isForgotPassword ? (
-            <>
-              <div className="space-y-2">
-                <button
-                  type="button"
-                  onClick={() => setIsForgotPassword(false)}
-                  className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors mb-2"
-                >
-                  <ArrowLeft className="h-4 w-4" /> Retour
-                </button>
-                <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                  Mot de passe oublié
-                </h1>
-                <p className="text-muted-foreground">
-                  Entrez votre adresse email pour recevoir un lien de réinitialisation
-                </p>
-              </div>
-
-              <form onSubmit={handleForgotPassword} className="space-y-5">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-foreground">Adresse email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="email"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      placeholder="vous@entreprise.com"
-                      className="pl-10 h-12 bg-muted/50 border-border/60 focus:bg-background transition-colors"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
-                  disabled={submitting}
-                >
-                  {submitting ? (
-                    <div className="animate-spin h-5 w-5 border-2 border-primary-foreground border-t-transparent rounded-full" />
-                  ) : (
-                    <>
-                      Envoyer le lien
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </form>
-            </>
-          ) : (
-            <>
-          {/* Title */}
-          <div className="space-y-2">
-            {inviteToken && isSignUp ? (
+            {/* Forgot password */}
+            {isForgotPassword ? (
               <>
-                <div className="flex items-center gap-2 text-primary mb-2">
-                  <UserPlus className="h-5 w-5" />
-                  <span className="text-sm font-medium">Invitation</span>
-                </div>
-                <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                  Rejoindre l'équipe
-                </h1>
-                <p className="text-muted-foreground">
-                  Créez votre compte pour rejoindre l'organisation. Un administrateur validera votre accès.
-                </p>
-              </>
-            ) : (
-              <>
-                <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                  {isSignUp ? "Créer votre compte" : "Bon retour parmi nous"}
-                </h1>
-                <p className="text-muted-foreground">
-                  {isSignUp
-                    ? "Inscrivez-vous pour commencer à gérer vos biens immobiliers"
-                    : "Connectez-vous pour accéder à votre espace de gestion"}
-                </p>
-              </>
-            )}
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {isSignUp && (
-              <div className={inviteToken ? "space-y-4" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-foreground">Nom complet</Label>
-                  <div className="relative">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      value={fullName}
-                      onChange={e => setFullName(e.target.value)}
-                      placeholder="Ex: Kouadio Jean"
-                      className="pl-10 h-12 bg-muted/50 border-border/60 focus:bg-background transition-colors"
-                      required
-                    />
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsForgotPassword(false)}
+                    className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors mb-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" /> Retour
+                  </button>
+                  <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                    Mot de passe oublié
+                  </h1>
+                  <p className="text-muted-foreground">
+                    Entrez votre adresse email pour recevoir un lien de réinitialisation
+                  </p>
                 </div>
-                {!inviteToken && (
+
+                <form onSubmit={handleForgotPassword} className="space-y-5">
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-foreground">Nom de l'entreprise</Label>
+                    <Label className="text-sm font-medium text-foreground">Adresse email</Label>
                     <div className="relative">
-                      <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
-                        value={companyName}
-                        onChange={e => setCompanyName(e.target.value)}
-                        placeholder="Ex: Immobilière Ivoire"
+                        ref={firstInputRef}
+                        type="email"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        placeholder="vous@entreprise.com"
                         className="pl-10 h-12 bg-muted/50 border-border/60 focus:bg-background transition-colors"
                         required
                       />
                     </div>
                   </div>
-                )}
-              </div>
-            )}
 
-            <div className={isSignUp && !inviteToken ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "space-y-5"}>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-foreground">Adresse email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="vous@entreprise.com"
-                    className="pl-10 h-12 bg-muted/50 border-border/60 focus:bg-background transition-colors"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium text-foreground">Mot de passe</Label>
-                  {!isSignUp && (
-                    <button
-                      type="button"
-                      onClick={() => setIsForgotPassword(true)}
-                      className="text-xs text-primary hover:text-primary/80 transition-colors"
-                    >
-                      Mot de passe oublié ?
-                    </button>
+                  <Button
+                    type="submit"
+                    className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
+                    disabled={submitting}
+                  >
+                    {submitting ? (
+                      <div className="animate-spin h-5 w-5 border-2 border-primary-foreground border-t-transparent rounded-full" />
+                    ) : (
+                      <>Envoyer le lien <ArrowRight className="ml-2 h-4 w-4" /></>
+                    )}
+                  </Button>
+                </form>
+              </>
+            ) : (
+              <>
+                {/* Title */}
+                <div className="space-y-2">
+                  {inviteToken && isSignUp ? (
+                    <>
+                      <div className="flex items-center gap-2 text-primary mb-2">
+                        <UserPlus className="h-5 w-5" />
+                        <span className="text-sm font-medium">Invitation</span>
+                      </div>
+                      <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                        Rejoindre l'équipe
+                      </h1>
+                      <p className="text-muted-foreground">
+                        Créez votre compte pour rejoindre l'organisation.
+                      </p>
+                    </>
+                  ) : isSignUp ? (
+                    <>
+                      <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                        Commencer gratuitement
+                      </h1>
+                      <p className="text-muted-foreground">
+                        Créez votre compte en 30 secondes. Aucune carte bancaire requise.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                        Bon retour parmi nous
+                      </h1>
+                      <p className="text-muted-foreground">
+                        Connectez-vous pour accéder à votre espace de gestion
+                      </p>
+                    </>
                   )}
                 </div>
+
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {isSignUp && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium text-foreground">Nom complet</Label>
+                        <div className="relative">
+                          <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            ref={firstInputRef}
+                            value={fullName}
+                            onChange={e => setFullName(e.target.value)}
+                            placeholder="Ex: Kouadio Jean"
+                            className="pl-10 h-12 bg-muted/50 border-border/60 focus:bg-background transition-colors"
+                            required
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+
+                      {!inviteToken && (
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-foreground">Téléphone <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
+                          <div className="relative">
+                            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              type="tel"
+                              value={phone}
+                              onChange={e => setPhone(e.target.value)}
+                              placeholder="+225 XX XX XX XX"
+                              className="pl-10 h-12 bg-muted/50 border-border/60 focus:bg-background transition-colors"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-foreground">Adresse email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        ref={!isSignUp ? firstInputRef : undefined}
+                        type="email"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        placeholder="vous@entreprise.com"
+                        className="pl-10 h-12 bg-muted/50 border-border/60 focus:bg-background transition-colors"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium text-foreground">Mot de passe</Label>
+                      {!isSignUp && (
+                        <button
+                          type="button"
+                          onClick={() => setIsForgotPassword(true)}
+                          className="text-xs text-primary hover:text-primary/80 transition-colors"
+                        >
+                          Mot de passe oublié ?
+                        </button>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="password"
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="pl-10 h-12 bg-muted/50 border-border/60 focus:bg-background transition-colors"
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
+                    disabled={submitting}
+                  >
+                    {submitting ? (
+                      <div className="animate-spin h-5 w-5 border-2 border-primary-foreground border-t-transparent rounded-full" />
+                    ) : (
+                      <>
+                        {isSignUp ? (inviteToken ? "Demander l'accès" : "Commencer gratuitement") : "Se connecter"}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                </form>
+
+                {/* Separator */}
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="password"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="pl-10 h-12 bg-muted/50 border-border/60 focus:bg-background transition-colors"
-                    required
-                    minLength={6}
-                  />
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-3 text-muted-foreground">ou</span>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <Button
-              type="submit"
-              className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
-              disabled={submitting}
-            >
-              {submitting ? (
-                <div className="animate-spin h-5 w-5 border-2 border-primary-foreground border-t-transparent rounded-full" />
-              ) : (
-                <>
-                  {isSignUp ? (inviteToken ? "Demander l'accès" : "Créer mon compte") : "Se connecter"}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </>
-              )}
-            </Button>
-          </form>
-
-          {/* Separator */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-3 text-muted-foreground">ou</span>
-            </div>
-          </div>
-
-          {/* Toggle */}
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              {isSignUp ? (
-                <>Déjà un compte ? <span className="font-semibold text-primary">Se connecter</span></>
-              ) : (
-                <>Pas encore de compte ? <span className="font-semibold text-primary">S'inscrire</span></>
-              )}
-            </button>
-          </div>
-            </>
-          )}
+                {/* Toggle */}
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => setIsSignUp(!isSignUp)}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {isSignUp ? (
+                      <>Déjà un compte ? <span className="font-semibold text-primary">Se connecter</span></>
+                    ) : (
+                      <>Pas encore de compte ? <span className="font-semibold text-primary">S'inscrire gratuitement</span></>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
           </motion.div>
         </AnimatePresence>
 
         <p className="absolute bottom-6 left-6 sm:left-12 lg:left-16 xl:left-24 text-xs text-muted-foreground">
-          © {new Date().getFullYear()} RentFlow. Développé avec ❤️ à Abidjan. Tous droits réservés.
+          © {new Date().getFullYear()} SCI Binieba. Tous droits réservés.
         </p>
       </motion.div>
     </div>

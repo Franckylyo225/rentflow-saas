@@ -6,6 +6,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Building2, Users, AlertTriangle, TrendingUp, Home, Loader2, Wallet, TrendingDown, ChevronLeft, ChevronRight, Calendar, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { useProperties, useUnits, useTenants, useRentPayments } from "@/hooks/useData";
+import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
 import { useExpenses } from "@/hooks/useExpenses";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -305,15 +306,22 @@ export default function Dashboard() {
         </div>
 
         {properties.length === 0 ? (
-          <Card className="border-border">
-            <CardContent className="py-16 text-center">
-              <Building2 className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-1">Bienvenue sur RentFlow</h3>
-              <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                Commencez par ajouter vos biens immobiliers dans la section "Biens" pour voir apparaître vos données ici.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2">
+              <Card className="border-border">
+                <CardContent className="py-16 text-center">
+                  <Building2 className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-1">Bienvenue sur SCI Binieba</h3>
+                  <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                    Commencez par ajouter vos biens immobiliers pour voir apparaître vos données ici.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+            <div>
+              <OnboardingChecklist />
+            </div>
+          </div>
         ) : (
           <>
             {/* Charts row - Status Analysis & Revenue */}
@@ -470,6 +478,8 @@ export default function Dashboard() {
                 )}
               </CardContent>
             </Card>
+            {/* Onboarding checklist */}
+            <OnboardingChecklist />
           </>
         )}
       </div>
