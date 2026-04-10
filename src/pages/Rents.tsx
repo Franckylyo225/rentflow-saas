@@ -135,6 +135,35 @@ export default function Rents() {
     setShowQuittance(true);
   };
 
+  const downloadRentInvoice = (payment: any) => {
+    const invoiceData: InvoiceData = {
+      invoiceNumber: generateInvoiceNumber("rent", payment.id),
+      invoiceDate: payment.updated_at || new Date().toISOString(),
+      organizationName: orgSettings?.name || "Mon entreprise",
+      organizationAddress: orgSettings?.address || undefined,
+      organizationPhone: orgSettings?.phone || undefined,
+      organizationEmail: orgSettings?.email || undefined,
+      organizationLegalName: (orgSettings as any)?.legal_name || undefined,
+      organizationLegalId: (orgSettings as any)?.legal_id || undefined,
+      clientName: payment.tenants?.full_name || "Locataire",
+      clientPhone: payment.tenants?.phone || undefined,
+      clientEmail: payment.tenants?.email || undefined,
+      items: [{
+        description: `Loyer - ${payment.month} — ${payment.tenants?.units?.name || ""} (${payment.tenants?.units?.properties?.name || ""})`,
+        quantity: 1,
+        unitPrice: payment.amount,
+        total: payment.amount,
+      }],
+      subtotal: payment.amount,
+      total: payment.paid_amount,
+      currency: orgSettings?.currency || "FCFA",
+      paymentDate: payment.updated_at || undefined,
+      status: payment.status === "paid" ? "paid" : payment.status === "partial" ? "partial" : "pending",
+      notes: payment.status === "partial" ? `Paiement partiel : ${payment.paid_amount.toLocaleString()} / ${payment.amount.toLocaleString()} FCFA` : undefined,
+    };
+    downloadInvoice(invoiceData);
+  };
+
   const handleRecordPayment = async () => {
     if (!selectedPayment || !payForm.amount || !payForm.method) return;
     setSaving(true);
