@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Check, ArrowRight, Loader2, Crown, Clock, AlertTriangle } from "lucide-react";
+import { Check, ArrowRight, Loader2, Crown, Clock, AlertTriangle, History } from "lucide-react";
 import { PromoCodeInput } from "@/components/promo/PromoCodeInput";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
@@ -29,6 +29,16 @@ interface Subscription {
   trial_ends_at: string | null;
   current_period_start: string | null;
   current_period_end: string | null;
+}
+
+interface HistoryEntry {
+  id: string;
+  event_type: string;
+  previous_plan: string | null;
+  new_plan: string | null;
+  amount: number;
+  notes: string | null;
+  created_at: string;
 }
 
 const FEATURE_LABELS: Record<string, string> = {
@@ -68,21 +78,26 @@ export function SubscriptionTab() {
 
   const [plans, setPlans] = useState<Plan[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchData = async () => {
     if (!organizationId) return;
-    async function fetch() {
-      const [plansRes, subRes] = await Promise.all([
-        supabase.from("plans").select("slug, name, description, price_monthly, max_properties, max_users, feature_flags, sort_order").eq("is_visible", true).order("sort_order"),
-        supabase.from("subscriptions").select("plan, status, trial_ends_at, current_period_start, current_period_end").eq("organization_id", organizationId).maybeSingle(),
-      ]);
-      setPlans((plansRes.data as Plan[]) || []);
-      setSubscription(subRes.data as Subscription | null);
-      setLoading(false);
-    }
-    fetch();
+    setLoading(true);
+    const [plansRes, subRes, historyRes] = await Promise.all([
+      supabase.from("plans").select("slug, name, description, price_monthly, max_properties, max_users, feature_flags, sort_order").eq("is_visible", true).order("sort_order"),
+      supabase.from("subscriptions").select("plan, status, trial_ends_at, current_period_start, current_period_end").eq("organization_id", organizationId).maybeSingle(),
+      supabase.from("subscription_history").select("*").eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(20),
+    ]);
+    setPlans((plansRes.data as Plan[]) || []);
+    setSubscription(subRes.data as Subscription | null);
+    setHistory((historyRes.data as HistoryEntry[]) || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchData();
   }, [organizationId]);
 
   const currentSlug = subscription?.plan || "starter";
