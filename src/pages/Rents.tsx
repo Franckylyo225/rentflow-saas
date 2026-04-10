@@ -145,6 +145,7 @@ export default function Rents() {
       organizationEmail: orgSettings?.email || undefined,
       organizationLegalName: (orgSettings as any)?.legal_name || undefined,
       organizationLegalId: (orgSettings as any)?.legal_id || undefined,
+      organizationLogoUrl: orgSettings?.logo_url || undefined,
       clientName: payment.tenants?.full_name || "Locataire",
       clientPhone: payment.tenants?.phone || undefined,
       clientEmail: payment.tenants?.email || undefined,
