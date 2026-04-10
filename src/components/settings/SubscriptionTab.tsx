@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Check, ArrowRight, Loader2, Crown, Clock, AlertTriangle, History } from "lucide-react";
+import { Check, ArrowRight, Loader2, Crown, Clock, AlertTriangle, History, Download } from "lucide-react";
+import { downloadInvoice, generateInvoiceNumber, type InvoiceData } from "@/lib/generateInvoice";
 import { PromoCodeInput } from "@/components/promo/PromoCodeInput";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
