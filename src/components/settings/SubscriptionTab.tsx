@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Check, ArrowRight, Loader2, Crown, Clock, AlertTriangle } from "lucide-react";
+import { Check, ArrowRight, Loader2, Crown, Clock, AlertTriangle, History } from "lucide-react";
 import { PromoCodeInput } from "@/components/promo/PromoCodeInput";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
@@ -29,6 +29,16 @@ interface Subscription {
   trial_ends_at: string | null;
   current_period_start: string | null;
   current_period_end: string | null;
+}
+
+interface HistoryEntry {
+  id: string;
+  event_type: string;
+  previous_plan: string | null;
+  new_plan: string | null;
+  amount: number;
+  notes: string | null;
+  created_at: string;
 }
 
 const FEATURE_LABELS: Record<string, string> = {
@@ -68,21 +78,26 @@ export function SubscriptionTab() {
 
   const [plans, setPlans] = useState<Plan[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchData = async () => {
     if (!organizationId) return;
-    async function fetch() {
-      const [plansRes, subRes] = await Promise.all([
-        supabase.from("plans").select("slug, name, description, price_monthly, max_properties, max_users, feature_flags, sort_order").eq("is_visible", true).order("sort_order"),
-        supabase.from("subscriptions").select("plan, status, trial_ends_at, current_period_start, current_period_end").eq("organization_id", organizationId).maybeSingle(),
-      ]);
-      setPlans((plansRes.data as Plan[]) || []);
-      setSubscription(subRes.data as Subscription | null);
-      setLoading(false);
-    }
-    fetch();
+    setLoading(true);
+    const [plansRes, subRes, historyRes] = await Promise.all([
+      supabase.from("plans").select("slug, name, description, price_monthly, max_properties, max_users, feature_flags, sort_order").eq("is_visible", true).order("sort_order"),
+      supabase.from("subscriptions").select("plan, status, trial_ends_at, current_period_start, current_period_end").eq("organization_id", organizationId).maybeSingle(),
+      supabase.from("subscription_history").select("*").eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(20),
+    ]);
+    setPlans((plansRes.data as Plan[]) || []);
+    setSubscription(subRes.data as Subscription | null);
+    setHistory((historyRes.data as HistoryEntry[]) || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchData();
   }, [organizationId]);
 
   const currentSlug = subscription?.plan || "starter";
@@ -134,6 +149,8 @@ export function SubscriptionTab() {
       toast.success("Plan mis à jour", {
         description: `Vous êtes maintenant sur le plan ${plan.name}.`,
       });
+      // Refresh history
+      fetchData();
     }
     setSelectedPlan(null);
     setUpgrading(false);
@@ -364,6 +381,65 @@ export function SubscriptionTab() {
           </CardContent>
         </Card>
       )}
+
+      {/* History */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <History className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-base">Historique</CardTitle>
+              <CardDescription>Changements de plan et événements récents</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {history.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">Aucun événement enregistré</p>
+          ) : (
+            <div className="space-y-3">
+              {history.map((entry) => {
+                const eventConfig: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
+                  plan_change: { label: "Changement de plan", variant: "default" },
+                  status_change: { label: "Changement de statut", variant: "secondary" },
+                  trial_start: { label: "Début d'essai", variant: "outline" },
+                  payment: { label: "Paiement", variant: "default" },
+                };
+                const config = eventConfig[entry.event_type] || { label: entry.event_type, variant: "secondary" as const };
+
+                return (
+                  <div key={entry.id} className="flex items-center justify-between gap-4 rounded-lg border border-border p-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Badge variant={config.variant} className="text-xs shrink-0">
+                        {config.label}
+                      </Badge>
+                      <div className="min-w-0">
+                        <p className="text-sm text-foreground truncate">
+                          {entry.event_type === "plan_change" && entry.previous_plan && entry.new_plan
+                            ? `${entry.previous_plan} → ${entry.new_plan}`
+                            : entry.event_type === "trial_start"
+                              ? `Plan ${entry.new_plan || "starter"}`
+                              : entry.event_type === "status_change"
+                                ? `${entry.previous_plan || "?"} → ${entry.new_plan || "?"}`
+                                : entry.notes || "—"}
+                        </p>
+                        {entry.amount > 0 && (
+                          <p className="text-xs text-muted-foreground">{formatPrice(entry.amount)} FCFA</p>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {format(new Date(entry.created_at), "d MMM yyyy, HH:mm", { locale: fr })}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
