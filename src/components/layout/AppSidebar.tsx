@@ -1,10 +1,11 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { navItems } from "@/data/mockData";
 import { cn } from "@/lib/utils";
-import { X } from "lucide-react";
+import { X, Lock } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
-
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface AppSidebarProps {
   open: boolean;
@@ -15,7 +16,7 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
   const location = useLocation();
   const { profile, role } = useProfile();
   const { settings } = useOrganizationSettings();
-  
+  const { hasFeature, loading: featuresLoading } = useFeatureAccess();
 
   const initials = profile?.full_name
     ? profile.full_name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
@@ -49,6 +50,29 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
             .filter(item => item.path !== "/employees" || settings?.salaries_enabled === true)
             .map((item) => {
             const isActive = location.pathname === item.path;
+            const isLocked = !featuresLoading && item.featureKey !== null && !hasFeature(item.featureKey);
+
+            if (isLocked) {
+              return (
+                <Tooltip key={item.path}>
+                  <TooltipTrigger asChild>
+                    <NavLink
+                      to={item.path}
+                      onClick={onClose}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground/50 cursor-pointer transition-all duration-150"
+                    >
+                      <item.icon className="h-4 w-4 flex-shrink-0" />
+                      <span className="flex-1">{item.label}</span>
+                      <Lock className="h-3.5 w-3.5 text-muted-foreground/40" />
+                    </NavLink>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p className="text-xs">Non inclus dans votre offre</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            }
+
             return (
               <NavLink
                 key={item.path}
