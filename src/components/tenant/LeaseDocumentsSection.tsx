@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,10 +21,9 @@ export function LeaseDocumentsSection({ tenant, organizationSettings, onRefresh 
   const [generating, setGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch documents on mount
-  useState(() => {
+  useEffect(() => {
     fetchDocuments();
-  });
+  }, [tenant.id]);
 
   async function fetchDocuments() {
     setLoading(true);
