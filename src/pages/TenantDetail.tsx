@@ -214,14 +214,20 @@ export default function TenantDetail() {
                     </tr>
                   </thead>
                   <tbody>
-                    {payments.map((p: any) => (
-                      <tr key={p.id} className="border-b border-border/50">
-                        <td className="py-3 px-4 text-card-foreground">{new Date(p.due_date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}</td>
-                        <td className="py-3 px-4 text-right font-medium text-card-foreground">{p.amount.toLocaleString()} FCFA</td>
-                        <td className="py-3 px-4 text-right text-muted-foreground hidden sm:table-cell">{p.paid_amount.toLocaleString()} FCFA</td>
-                        <td className="py-3 px-4 text-center"><PaymentStatusBadge status={p.status} /></td>
-                      </tr>
-                    ))}
+                    {payments.map((p: any, index: number) => {
+                      const isAdvance = tenant.advance_months > 0 && index >= payments.length - tenant.advance_months;
+                      return (
+                        <tr key={p.id} className="border-b border-border/50">
+                          <td className="py-3 px-4 text-card-foreground">
+                            {new Date(p.due_date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
+                            {isAdvance && <Badge variant="secondary" className="ml-2 text-[10px] py-0">Avance</Badge>}
+                          </td>
+                          <td className="py-3 px-4 text-right font-medium text-card-foreground">{p.amount.toLocaleString()} FCFA</td>
+                          <td className="py-3 px-4 text-right text-muted-foreground hidden sm:table-cell">{p.paid_amount.toLocaleString()} FCFA</td>
+                          <td className="py-3 px-4 text-center"><PaymentStatusBadge status={p.status} /></td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
