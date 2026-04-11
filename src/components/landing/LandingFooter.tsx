@@ -61,9 +61,12 @@ export function LandingFooter() {
           ))}
         </div>
 
-        <div className="mt-14 pt-8 border-t border-border">
+        <div className="mt-14 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} RentFlow. Tous droits réservés.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Développé avec ❤️ à Abidjan
           </p>
         </div>
       </div>
