@@ -4,11 +4,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, Pencil, Loader2, Check } from "lucide-react";
+import { Download, Pencil, Loader2, Check, RefreshCw, Archive } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ContractEditor } from "@/components/contracts/ContractEditor";
-import jsPDF from "jspdf";
+import { generateContractPdf } from "@/lib/generateContractPdf";
 
 interface ContractViewDialogProps {
   contract: any;
@@ -21,6 +21,7 @@ export function ContractViewDialog({ contract, open, onOpenChange, onRefresh }: 
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState(contract.content);
   const [saving, setSaving] = useState(false);
+  const [renewing, setRenewing] = useState(false);
 
   const statusLabels: Record<string, string> = {
     draft: "Brouillon",
@@ -55,55 +56,47 @@ export function ContractViewDialog({ contract, open, onOpenChange, onRefresh }: 
     else { toast.success("Contrat marqué comme signé"); onRefresh(); onOpenChange(false); }
   }
 
-  function handleDownloadPDF() {
-    const doc = new jsPDF();
-    const marginLeft = 20;
-    const contentWidth = 170;
-    let y = 20;
+  async function handleArchive() {
+    const { error } = await supabase
+      .from("contracts")
+      .update({ status: "archived" })
+      .eq("id", contract.id);
 
-    // Strip HTML and convert to plain text sections
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = contract.content;
+    if (error) toast.error("Erreur : " + error.message);
+    else { toast.success("Contrat archivé"); onRefresh(); onOpenChange(false); }
+  }
 
-    const elements = tempDiv.querySelectorAll("h1, h2, h3, p, li, hr");
-    elements.forEach((el) => {
-      if (y > 270) { doc.addPage(); y = 20; }
-
-      const tag = el.tagName.toLowerCase();
-      const text = el.textContent?.trim() || "";
-
-      if (tag === "hr") {
-        doc.setDrawColor(200);
-        doc.line(marginLeft, y, marginLeft + contentWidth, y);
-        y += 6;
-      } else if (tag === "h1") {
-        doc.setFontSize(16);
-        doc.setFont("helvetica", "bold");
-        const lines = doc.splitTextToSize(text, contentWidth);
-        doc.text(lines, marginLeft, y);
-        y += lines.length * 7 + 4;
-      } else if (tag === "h2") {
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
-        const lines = doc.splitTextToSize(text, contentWidth);
-        doc.text(lines, marginLeft, y);
-        y += lines.length * 6 + 3;
-      } else if (tag === "h3") {
-        doc.setFontSize(11);
-        doc.setFont("helvetica", "bold");
-        const lines = doc.splitTextToSize(text, contentWidth);
-        doc.text(lines, marginLeft, y);
-        y += lines.length * 5.5 + 2;
-      } else if (text) {
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        const lines = doc.splitTextToSize(text, contentWidth);
-        doc.text(lines, marginLeft, y);
-        y += lines.length * 5 + 2;
-      }
+  async function handleRenew() {
+    setRenewing(true);
+    // Duplicate the contract as a new draft with updated dates
+    const now = new Date();
+    let newContent = contract.content;
+    
+    // Replace date patterns (dd month yyyy format) with indication to update
+    const { error } = await supabase.from("contracts").insert({
+      tenant_id: contract.tenant_id,
+      template_id: contract.template_id,
+      content: newContent,
+      status: "draft",
     });
 
-    doc.save(`contrat-${contract.id.slice(0, 8)}.pdf`);
+    if (error) {
+      toast.error("Erreur : " + error.message);
+    } else {
+      toast.success("Contrat renouvelé (brouillon créé)");
+      onRefresh();
+      onOpenChange(false);
+    }
+    setRenewing(false);
+  }
+
+  function handleDownloadPDF() {
+    generateContractPdf({
+      content: contract.content,
+      contractId: contract.id,
+      agencyName: contract.contract_templates?.name || "Contrat",
+      tenantName: undefined,
+    });
   }
 
   return (
@@ -133,6 +126,17 @@ export function ContractViewDialog({ contract, open, onOpenChange, onRefresh }: 
                 <Check className="h-4 w-4 mr-1" /> Marquer signé
               </Button>
             )}
+            {contract.status === "signed" && (
+              <>
+                <Button variant="outline" size="sm" onClick={handleRenew} disabled={renewing}>
+                  {renewing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+                  Renouveler
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleArchive}>
+                  <Archive className="h-4 w-4 mr-1" /> Archiver
+                </Button>
+              </>
+            )}
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={handleDownloadPDF}>
@@ -149,9 +153,11 @@ export function ContractViewDialog({ contract, open, onOpenChange, onRefresh }: 
                 </Button>
               </>
             ) : (
-              <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-                <Pencil className="h-4 w-4 mr-1" /> Modifier
-              </Button>
+              contract.status !== "archived" && (
+                <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                  <Pencil className="h-4 w-4 mr-1" /> Modifier
+                </Button>
+              )
             )}
           </div>
         </DialogFooter>
