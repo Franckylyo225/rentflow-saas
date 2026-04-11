@@ -177,6 +177,7 @@ export default function Tenants() {
       lease_duration: parseInt(form.lease_duration) || 12, rent: unit.rent,
       deposit: parseInt(form.deposit) || unit.rent * 2,
       tenant_type: form.tenant_type,
+      advance_months: parseInt(form.advance_months) || 0,
     };
     if (form.tenant_type === "company") {
       insertData.company_name = form.company_name;
@@ -188,7 +189,7 @@ export default function Tenants() {
     await supabase.from("units").update({ status: "occupied" as const }).eq("id", form.unit_id);
     toast.success("Locataire ajouté et unité mise à jour");
     setShowAdd(false);
-    setForm({ unit_id: "", full_name: "", phone: "", email: "", id_number: "", lease_start: new Date().toISOString().split("T")[0], lease_duration: "12", deposit: "", tenant_type: "individual", company_name: "", contact_person: "", rccm: "" });
+    setForm({ unit_id: "", full_name: "", phone: "", email: "", id_number: "", lease_start: new Date().toISOString().split("T")[0], lease_duration: "12", deposit: "", tenant_type: "individual", company_name: "", contact_person: "", rccm: "", advance_months: "0" });
     setSelectedProperty("");
     setSaving(false);
     refetch();
