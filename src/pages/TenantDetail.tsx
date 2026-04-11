@@ -197,6 +197,12 @@ export default function TenantDetail() {
           </Card>
         </div>
 
+        <LeaseDocumentsSection
+          tenant={tenant}
+          organizationSettings={orgSettings}
+          onRefresh={fetchData}
+        />
+
         {payments.length > 0 && (
           <Card className="border-border">
             <CardHeader className="pb-3">
@@ -234,12 +240,6 @@ export default function TenantDetail() {
             </CardContent>
           </Card>
         )}
-
-        <LeaseDocumentsSection
-          tenant={tenant}
-          organizationSettings={orgSettings}
-          onRefresh={fetchData}
-        />
 
         {tenant.is_active && (
           <LeaseTerminationDialog
