@@ -1,0 +1,1 @@
+ALTER TABLE public.tenants ADD COLUMN advance_months integer NOT NULL DEFAULT 0;
