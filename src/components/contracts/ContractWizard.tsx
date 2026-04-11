@@ -5,8 +5,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { Loader2, FileText, ArrowRight, ArrowLeft, Check, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -40,7 +38,7 @@ export function ContractWizard({ open, onOpenChange, tenant, organizationSetting
   const [filledContent, setFilledContent] = useState("");
   const [editedContent, setEditedContent] = useState("");
   const [saving, setSaving] = useState(false);
-  const [generateSchedule, setGenerateSchedule] = useState(true);
+  
 
   useEffect(() => {
     if (open) {
@@ -48,7 +46,7 @@ export function ContractWizard({ open, onOpenChange, tenant, organizationSetting
       setSelectedTemplate(null);
       setFilledContent("");
       setEditedContent("");
-      setGenerateSchedule(true);
+      
       fetchTemplates();
     }
   }, [open]);
@@ -107,58 +105,10 @@ export function ContractWizard({ open, onOpenChange, tenant, organizationSetting
       return;
     }
 
-    // Auto-generate rent schedule if opted in
-    if (generateSchedule) {
-      await generateRentSchedule();
-    }
-
     toast.success("Contrat créé avec succès");
     onComplete();
     onOpenChange(false);
     setSaving(false);
-  }
-
-  async function generateRentSchedule() {
-    // Check existing payments to avoid duplicates
-    const { data: existing } = await supabase
-      .from("rent_payments")
-      .select("month")
-      .eq("tenant_id", tenant.id);
-
-    const existingMonths = new Set((existing || []).map((p: any) => p.month));
-
-    const leaseStart = new Date(tenant.lease_start);
-    const rentDueDay = organizationSettings?.rent_due_day || 5;
-    const payments: any[] = [];
-
-    for (let i = 0; i < tenant.lease_duration; i++) {
-      const date = new Date(leaseStart);
-      date.setMonth(date.getMonth() + i);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-
-      if (existingMonths.has(monthKey)) continue;
-
-      const dueDate = new Date(date.getFullYear(), date.getMonth(), rentDueDay);
-      const isAdvance = i < (tenant.advance_months || 0);
-
-      payments.push({
-        tenant_id: tenant.id,
-        month: monthKey,
-        amount: tenant.rent,
-        due_date: dueDate.toISOString().split("T")[0],
-        status: isAdvance ? "paid" : "pending",
-        paid_amount: isAdvance ? tenant.rent : 0,
-      });
-    }
-
-    if (payments.length > 0) {
-      const { error } = await supabase.from("rent_payments").insert(payments);
-      if (error) {
-        toast.error("Échéancier: " + error.message);
-      } else {
-        toast.success(`${payments.length} échéances générées`);
-      }
-    }
   }
 
   return (
@@ -262,16 +212,6 @@ export function ContractWizard({ open, onOpenChange, tenant, organizationSetting
               content={editedContent}
               onChange={setEditedContent}
             />
-            <div className="flex items-center gap-2 p-3 rounded-lg border border-border bg-muted/30">
-              <Checkbox
-                id="generate-schedule"
-                checked={generateSchedule}
-                onCheckedChange={(v) => setGenerateSchedule(!!v)}
-              />
-              <Label htmlFor="generate-schedule" className="text-sm cursor-pointer">
-                Générer automatiquement l'échéancier de loyer ({tenant.lease_duration} mois × {tenant.rent?.toLocaleString()} FCFA)
-              </Label>
-            </div>
           </div>
         )}
 
