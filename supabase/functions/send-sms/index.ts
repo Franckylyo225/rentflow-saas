@@ -38,14 +38,26 @@ serve(async (req) => {
       );
     }
 
+    // Resolve sender name from organization settings if not provided
+    let resolvedSenderName = senderName;
+    if (!resolvedSenderName && organizationId) {
+      const { data: org } = await supabaseAdmin
+        .from("organizations")
+        .select("sms_sender_name")
+        .eq("id", organizationId)
+        .single();
+      resolvedSenderName = org?.sms_sender_name || "RentFlow";
+    }
+    if (!resolvedSenderName) resolvedSenderName = "RentFlow";
+
     const recipientPhone = formatPhoneNumber(to);
 
-    console.log(`Sending SMS via MonSMS Pro: to=${recipientPhone}`);
+    console.log(`Sending SMS via MonSMS Pro: to=${recipientPhone}, sender=${resolvedSenderName}`);
 
     const smsPayload = {
       apiKey: MONSMS_API_KEY,
       companyId: MONSMS_COMPANY_ID,
-      senderId: senderName || "SCIBinieba",
+      senderId: resolvedSenderName,
       contacts: [{ phone: recipientPhone }],
       text: message,
       type: "SMS",
