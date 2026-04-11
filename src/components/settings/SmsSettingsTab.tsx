@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, Save, Loader2, Info, Clock, AlertTriangle, Send, TestTube, Phone, Settings2 } from "lucide-react";
+import { MessageSquare, Save, Loader2, Info, Clock, AlertTriangle, Send, TestTube, Phone, Settings2, Wallet, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,13 +28,35 @@ export function SmsSettingsTab() {
   const [savingSender, setSavingSender] = useState(false);
   const [orgId, setOrgId] = useState<string | null>(null);
 
+  // Credits state
+  const [creditAvailable, setCreditAvailable] = useState<number | null>(null);
+  const [creditUsed, setCreditUsed] = useState<number | null>(null);
+  const [loadingCredits, setLoadingCredits] = useState(false);
+
   // Test SMS state
   const [testPhone, setTestPhone] = useState("");
   const [testTemplateKey, setTestTemplateKey] = useState("before_5");
   const [sendingTest, setSendingTest] = useState(false);
 
+  const fetchCredits = async () => {
+    setLoadingCredits(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sms-credits", { body: {} });
+      if (!error && data?.success) {
+        setCreditAvailable(data.creditAvailable);
+        setCreditUsed(data.creditUsed);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setLoadingCredits(false);
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
+
+    fetchCredits();
 
     // Load org settings
     supabase
@@ -161,6 +183,45 @@ export function SmsSettingsTab() {
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Sauvegarder
         </Button>
       </div>
+
+      {/* Credits card */}
+      <Card className="border-border">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                <Wallet className="h-4 w-4 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Crédits SMS</p>
+                {loadingCredits ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mt-1" />
+                ) : creditAvailable !== null ? (
+                  <div className="flex items-center gap-3 mt-0.5">
+                    <span className={`text-2xl font-bold ${creditAvailable <= 10 ? "text-destructive" : creditAvailable <= 50 ? "text-amber-600" : "text-emerald-600"}`}>
+                      {creditAvailable}
+                    </span>
+                    <span className="text-xs text-muted-foreground">disponibles</span>
+                    {creditUsed !== null && (
+                      <Badge variant="outline" className="text-[10px] font-normal gap-1">
+                        {creditUsed} utilisés
+                      </Badge>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-0.5">Impossible de récupérer le solde</p>
+                )}
+                {creditAvailable !== null && creditAvailable <= 10 && (
+                  <p className="text-xs text-destructive mt-1">⚠️ Solde faible — pensez à recharger vos crédits</p>
+                )}
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fetchCredits} disabled={loadingCredits}>
+              <RefreshCw className={`h-4 w-4 ${loadingCredits ? "animate-spin" : ""}`} />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Sender config */}
       <Card className="border-border">
