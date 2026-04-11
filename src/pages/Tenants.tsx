@@ -184,9 +184,35 @@ export default function Tenants() {
       insertData.contact_person = form.contact_person;
       insertData.rccm = form.rccm;
     }
-    const { error: tenantError } = await supabase.from("tenants").insert(insertData);
-    if (tenantError) { toast.error("Erreur : " + tenantError.message); setSaving(false); return; }
+    const { data: newTenant, error: tenantError } = await supabase.from("tenants").insert(insertData).select("id").single();
+    if (tenantError || !newTenant) { toast.error("Erreur : " + (tenantError?.message || "Locataire non créé")); setSaving(false); return; }
     await supabase.from("units").update({ status: "occupied" as const }).eq("id", form.unit_id);
+
+    // Générer les échéances pour les mois d'avance et les marquer comme payés
+    const advanceMonths = parseInt(form.advance_months) || 0;
+    if (advanceMonths > 0) {
+      const leaseStart = new Date(form.lease_start);
+      const rentPayments = [];
+      for (let i = 0; i < advanceMonths; i++) {
+        const paymentDate = new Date(leaseStart);
+        paymentDate.setMonth(paymentDate.getMonth() + i);
+        const monthLabel = paymentDate.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+        const dueDate = new Date(paymentDate.getFullYear(), paymentDate.getMonth(), 5);
+        rentPayments.push({
+          tenant_id: newTenant.id,
+          amount: unit.rent,
+          paid_amount: unit.rent,
+          due_date: dueDate.toISOString().split("T")[0],
+          month: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1),
+          status: "paid" as const,
+        });
+      }
+      const { error: rpError } = await supabase.from("rent_payments").insert(rentPayments);
+      if (rpError) {
+        console.error("Erreur création paiements d'avance:", rpError);
+        toast.error("Locataire créé mais erreur lors de la création des paiements d'avance");
+      }
+    }
     toast.success("Locataire ajouté et unité mise à jour");
     setShowAdd(false);
     setForm({ unit_id: "", full_name: "", phone: "", email: "", id_number: "", lease_start: new Date().toISOString().split("T")[0], lease_duration: "12", deposit: "", tenant_type: "individual", company_name: "", contact_person: "", rccm: "", advance_months: "0" });
