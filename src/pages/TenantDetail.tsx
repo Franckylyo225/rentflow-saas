@@ -56,6 +56,7 @@ export default function TenantDetail() {
       rccm: tenant.rccm || "",
       lease_duration: String(tenant.lease_duration || 12),
       deposit: String(tenant.deposit || 0),
+      advance_months: String(tenant.advance_months || 0),
     });
     setShowEdit(true);
   };
