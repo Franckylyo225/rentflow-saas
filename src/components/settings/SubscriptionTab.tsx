@@ -153,6 +153,23 @@ export function SubscriptionTab() {
       toast.success("Plan mis à jour", {
         description: `Vous êtes maintenant sur le plan ${plan.name}.`,
       });
+
+      // Send payment/plan change confirmation email (fire-and-forget)
+      if (profile?.email) {
+        supabase.functions.invoke("send-email", {
+          body: {
+            templateName: "payment-confirmation",
+            recipientEmail: profile.email,
+            templateData: {
+              name: profile.full_name || "",
+              plan: plan.name,
+              amount: String(plan.price_monthly),
+            },
+            adminEmail: "admin@rent-flow.net",
+          },
+        }).catch(() => {});
+      }
+
       // Refresh history
       fetchData();
     }
