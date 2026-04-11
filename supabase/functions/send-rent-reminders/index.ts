@@ -131,12 +131,13 @@ Deno.serve(async (req) => {
             .replace(/\{\{montant\}\}/g, payment.amount.toLocaleString("fr-FR"))
             .replace(/\{\{date_echeance\}\}/g, formattedDate);
 
-          // Build HTML email
+          // Build HTML email — handle both real newlines and literal \n from DB
+          const lines = emailContent.split(/\\n|\n/).map((l: string) => l.trim()).filter(Boolean);
           const htmlContent = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
               <div style="background: #f8f9fa; border-radius: 8px; padding: 24px;">
-                ${emailContent.split("\n").map((line: string) =>
-                  line.trim() ? `<p style="margin: 0 0 12px; color: #333; line-height: 1.6;">${line}</p>` : ""
+                ${lines.map((line: string) =>
+                  `<p style="margin: 0 0 12px; color: #333; line-height: 1.6;">${line}</p>`
                 ).join("")}
               </div>
               <p style="font-size: 12px; color: #999; margin-top: 20px; text-align: center;">
