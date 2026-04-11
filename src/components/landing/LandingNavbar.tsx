@@ -13,7 +13,7 @@ export function LandingNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 px-4 pt-4">
+    <div className="fixed top-0 left-0 right-0 z-40 px-4 pt-12">
       <nav className="max-w-5xl mx-auto bg-card/80 backdrop-blur-xl border border-border/60 rounded-2xl shadow-sm">
         <div className="px-5 sm:px-6">
           <div className="flex items-center justify-between h-[60px]">

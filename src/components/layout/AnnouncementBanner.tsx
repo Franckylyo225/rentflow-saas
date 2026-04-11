@@ -47,7 +47,7 @@ export function AnnouncementBanner() {
 
   return (
     <div
-      className="relative flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium"
+      className="relative flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium sticky top-0 z-50"
       style={{ backgroundColor: announcement.bg_color, color: announcement.text_color }}
     >
       <span className="text-center">{announcement.message}</span>
