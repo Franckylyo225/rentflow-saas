@@ -37,6 +37,7 @@ const NAV_ITEMS = [
   { label: "Abonnements", href: "/admin/subscriptions", icon: CreditCard },
   { label: "Codes Promo", href: "/admin/promo-codes", icon: Settings },
   { label: "Super Admins", href: "/admin/admins", icon: Users },
+  { label: "Utilisateurs", href: "/admin/users", icon: Shield },
 ];
 
 function AdminSidebar() {
