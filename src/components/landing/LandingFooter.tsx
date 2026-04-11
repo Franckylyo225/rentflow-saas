@@ -7,7 +7,7 @@ const FOOTER_LINKS = {
     { label: "Témoignages", href: "#testimonials" },
   ],
   Entreprise: [
-    { label: "À propos", href: "#" },
+    { label: "À propos", href: "/about", isRoute: true },
     { label: "Contact", href: "/contact", isRoute: true },
   ],
   Légal: [
