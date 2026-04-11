@@ -37,6 +37,7 @@ import AdminPlans from "./pages/admin/AdminPlans";
 import AdminAdmins from "./pages/admin/AdminAdmins";
 import AdminPromoCodes from "./pages/admin/AdminPromoCodes";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminTransactions from "./pages/admin/AdminTransactions";
 import AdminLogin from "./pages/admin/AdminLogin";
 import { SuperAdminRoute } from "./components/admin/SuperAdminRoute";
 import NotFound from "./pages/NotFound";
