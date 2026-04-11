@@ -9,12 +9,11 @@ const FOOTER_LINKS = {
   Entreprise: [
     { label: "À propos", href: "#" },
     { label: "Contact", href: "#" },
-    { label: "Carrières", href: "#" },
   ],
   Légal: [
-    { label: "Conditions d'utilisation", href: "#" },
-    { label: "Politique de confidentialité", href: "#" },
-    { label: "Mentions légales", href: "#" },
+    { label: "Conditions d'utilisation", href: "/terms", isRoute: true },
+    { label: "Politique de confidentialité", href: "/privacy", isRoute: true },
+    { label: "Mentions légales", href: "/legal", isRoute: true },
   ],
 };
 
@@ -38,14 +37,23 @@ export function LandingFooter() {
                 {category}
               </p>
               <ul className="space-y-3">
-                {links.map((link) => (
+                {links.map((link: any) => (
                   <li key={link.label}>
-                    <a
-                      href={link.href}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
-                    >
-                      {link.label}
-                    </a>
+                    {link.isRoute ? (
+                      <Link
+                        to={link.href}
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
+                      >
+                        {link.label}
+                      </Link>
+                    ) : (
+                      <a
+                        href={link.href}
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
+                      >
+                        {link.label}
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>
