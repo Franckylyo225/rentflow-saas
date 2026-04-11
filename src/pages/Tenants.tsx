@@ -505,9 +505,15 @@ export default function Tenants() {
                 <Input type="number" value={form.lease_duration} onChange={e => setForm(f => ({ ...f, lease_duration: e.target.value }))} placeholder="12" />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Dépôt de garantie (FCFA)</Label>
-              <Input type="number" value={form.deposit} onChange={e => setForm(f => ({ ...f, deposit: e.target.value }))} placeholder={selectedUnit ? (selectedUnit.rent * 2).toString() : "Ex: 700000"} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Dépôt de garantie (FCFA)</Label>
+                <Input type="number" value={form.deposit} onChange={e => setForm(f => ({ ...f, deposit: e.target.value }))} placeholder={selectedUnit ? (selectedUnit.rent * 2).toString() : "Ex: 700000"} />
+              </div>
+              <div className="space-y-2">
+                <Label>Mois d'avance</Label>
+                <Input type="number" min="0" value={form.advance_months} onChange={e => setForm(f => ({ ...f, advance_months: e.target.value }))} placeholder="2" />
+              </div>
             </div>
             <div className="p-3 rounded-lg bg-accent/30 text-xs text-accent-foreground">
               <strong>Règle métier :</strong> Dès validation, l'unité passera en statut "Occupé".
