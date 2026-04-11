@@ -18,20 +18,6 @@ serve(async (req) => {
     const MONSMS_COMPANY_ID = Deno.env.get("MONSMS_COMPANY_ID");
     if (!MONSMS_COMPANY_ID) throw new Error("MONSMS_COMPANY_ID is not configured");
 
-    // Try to get company credit balance
-    const creditRes = await fetch(`${MONSMS_BASE_URL}/company/credit`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        apiKey: MONSMS_API_KEY,
-        companyId: MONSMS_COMPANY_ID,
-      }),
-    });
-
-    const creditData = await creditRes.json();
-    console.log(`MonSMS credit response: ${JSON.stringify(creditData)}`);
-
-    // Try transaction stats too
     const statsRes = await fetch(`${MONSMS_BASE_URL}/transaction/stats`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -42,10 +28,22 @@ serve(async (req) => {
     });
 
     const statsData = await statsRes.json();
-    console.log(`MonSMS stats response: ${JSON.stringify(statsData)}`);
+
+    if (!statsData?.success || !statsData?.data?.length) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Impossible de récupérer le solde" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const stats = statsData.data[0];
 
     return new Response(
-      JSON.stringify({ success: true, credit: creditData, stats: statsData }),
+      JSON.stringify({
+        success: true,
+        creditAvailable: stats.creditAvailable ?? 0,
+        creditUsed: stats.creditUsed ?? 0,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
