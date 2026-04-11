@@ -1,30 +1,8 @@
-import { MapPin, TrendingUp, Users, FileCheck, ArrowRight } from "lucide-react";
-import { AnimatedSection, StaggerContainer, StaggerItem } from "./AnimatedSection";
+import { ArrowRight } from "lucide-react";
+import { AnimatedSection } from "./AnimatedSection";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-
-const SALES_FEATURES = [
-  {
-    icon: MapPin,
-    title: "Catalogue de biens",
-    description: "Gérez votre portefeuille de terrains, maisons et appartements à vendre avec fiches détaillées et photos.",
-  },
-  {
-    icon: Users,
-    title: "Suivi des prospects",
-    description: "Centralisez vos contacts acheteurs, suivez les visites et relancez au bon moment.",
-  },
-  {
-    icon: TrendingUp,
-    title: "Pipeline de ventes",
-    description: "Visualisez chaque étape de la transaction : prospection, négociation, compromis, acte notarié.",
-  },
-  {
-    icon: FileCheck,
-    title: "Documents & conformité",
-    description: "Titres fonciers, mandats de vente, compromis : tous vos documents centralisés et accessibles.",
-  },
-];
+import salesImg from "@/assets/real-estate-sales.jpg";
 
 export function RealEstateSalesSection() {
   const navigate = useNavigate();
@@ -55,20 +33,17 @@ export function RealEstateSalesSection() {
             </Button>
           </AnimatedSection>
 
-          {/* Right — feature cards */}
-          <StaggerContainer className="grid sm:grid-cols-2 gap-4" staggerDelay={0.08}>
-            {SALES_FEATURES.map((f) => (
-              <StaggerItem key={f.title}>
-                <div className="p-6 rounded-2xl bg-card border border-border hover:border-primary/20 hover:shadow-md transition-all duration-300 h-full">
-                  <div className="p-2.5 rounded-xl bg-primary/8 w-fit mb-4">
-                    <f.icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <h3 className="text-base font-bold text-foreground mb-1.5">{f.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{f.description}</p>
-                </div>
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
+          {/* Right — image */}
+          <AnimatedSection direction="right">
+            <img
+              src={salesImg}
+              alt="Interface de gestion de vente immobilière RentFlow"
+              className="w-full rounded-2xl shadow-xl border border-border"
+              loading="lazy"
+              width={1024}
+              height={768}
+            />
+          </AnimatedSection>
         </div>
       </div>
     </section>
