@@ -41,6 +41,7 @@ const NAV_ITEMS = [
   { label: "Codes Promo", href: "/admin/promo-codes", icon: Settings },
   { label: "Super Admins", href: "/admin/admins", icon: Users },
   { label: "Utilisateurs", href: "/admin/users", icon: UserCheck },
+  { label: "Paramètres", href: "/admin/settings", icon: Settings },
 ];
 
 function AdminSidebar() {

@@ -155,7 +155,7 @@ function ApiTab() {
             ].map((api) => (
               <div key={api.name} className="flex items-center justify-between p-3 rounded-lg border border-border">
                 <div className="flex items-center gap-3">
-                  <div className={`h-2 w-2 rounded-full ${api.status === "active" ? "bg-emerald-500" : "bg-muted-foreground/30"}`} />
+                  <div className={`h-2 w-2 rounded-full ${api.status === "active" ? "bg-primary" : "bg-muted-foreground/30"}`} />
                   <div>
                     <p className="text-sm font-medium text-foreground">{api.name}</p>
                     <p className="text-xs text-muted-foreground">{api.service}</p>
