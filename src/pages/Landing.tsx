@@ -8,10 +8,12 @@ import { PricingSection } from "@/components/landing/PricingSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { CtaSection } from "@/components/landing/CtaSection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
+import { AnnouncementBanner } from "@/components/layout/AnnouncementBanner";
 
 const Landing = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <AnnouncementBanner />
       <LandingNavbar />
       <HeroSection />
       <FeaturesSection />

@@ -46,6 +46,48 @@ export type Database = {
           },
         ]
       }
+      announcements: {
+        Row: {
+          bg_color: string
+          created_at: string
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          link_label: string | null
+          link_url: string | null
+          message: string
+          starts_at: string | null
+          text_color: string
+          updated_at: string
+        }
+        Insert: {
+          bg_color?: string
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          link_label?: string | null
+          link_url?: string | null
+          message: string
+          starts_at?: string | null
+          text_color?: string
+          updated_at?: string
+        }
+        Update: {
+          bg_color?: string
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          link_label?: string | null
+          link_url?: string | null
+          message?: string
+          starts_at?: string | null
+          text_color?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       asset_holders: {
         Row: {
           address: string | null

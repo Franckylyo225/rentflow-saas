@@ -15,7 +15,7 @@ import {
 import {
   Mail, Key, Globe, Shield, Bell, Database, Server,
   CheckCircle2, Send, RefreshCw, Save, Settings2,
-  Pencil, Eye, X, Code, ToggleLeft,
+  Pencil, Eye, X, Code, ToggleLeft, Megaphone, Plus, Trash2,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
@@ -578,6 +578,174 @@ function PlatformTab() {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Announcements Tab                                                 */
+/* ------------------------------------------------------------------ */
+function AnnouncementsTab() {
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState({
+    message: "",
+    link_url: "",
+    link_label: "",
+    bg_color: "#7c3aed",
+    text_color: "#ffffff",
+    is_active: true,
+    starts_at: "",
+    ends_at: "",
+  });
+  const [saving, setSaving] = useState(false);
+
+  const { data: announcements = [], isLoading } = useQuery({
+    queryKey: ["admin-announcements"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("announcements")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const handleAdd = async () => {
+    if (!form.message.trim()) return toast.error("Le message est requis");
+    setSaving(true);
+    const { error } = await supabase.from("announcements").insert({
+      message: form.message,
+      link_url: form.link_url || null,
+      link_label: form.link_label || null,
+      bg_color: form.bg_color,
+      text_color: form.text_color,
+      is_active: form.is_active,
+      starts_at: form.starts_at || null,
+      ends_at: form.ends_at || null,
+    });
+    setSaving(false);
+    if (error) return toast.error("Erreur : " + error.message);
+    toast.success("Annonce créée");
+    setForm({ message: "", link_url: "", link_label: "", bg_color: "#7c3aed", text_color: "#ffffff", is_active: true, starts_at: "", ends_at: "" });
+    queryClient.invalidateQueries({ queryKey: ["admin-announcements"] });
+  };
+
+  const toggleActive = async (id: string, current: boolean) => {
+    await supabase.from("announcements").update({ is_active: !current }).eq("id", id);
+    queryClient.invalidateQueries({ queryKey: ["admin-announcements"] });
+  };
+
+  const deleteAnnouncement = async (id: string) => {
+    await supabase.from("announcements").delete().eq("id", id);
+    queryClient.invalidateQueries({ queryKey: ["admin-announcements"] });
+    toast.success("Annonce supprimée");
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Plus className="h-5 w-5 text-primary" /> Nouvelle annonce
+          </CardTitle>
+          <CardDescription>Affiche un bandeau en haut du site pour les visiteurs</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Message *</Label>
+            <Input value={form.message} onChange={(e) => setForm(f => ({ ...f, message: e.target.value }))} placeholder="🚀 Bêta ouverte ! Code promo TRIAL100..." />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>URL du lien</Label>
+              <Input value={form.link_url} onChange={(e) => setForm(f => ({ ...f, link_url: e.target.value }))} placeholder="/auth" />
+            </div>
+            <div className="space-y-2">
+              <Label>Texte du lien</Label>
+              <Input value={form.link_label} onChange={(e) => setForm(f => ({ ...f, link_label: e.target.value }))} placeholder="S'inscrire maintenant" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <Label>Couleur fond</Label>
+              <div className="flex gap-2 items-center">
+                <input type="color" value={form.bg_color} onChange={(e) => setForm(f => ({ ...f, bg_color: e.target.value }))} className="h-9 w-12 rounded cursor-pointer" />
+                <Input value={form.bg_color} onChange={(e) => setForm(f => ({ ...f, bg_color: e.target.value }))} className="font-mono text-xs" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Couleur texte</Label>
+              <div className="flex gap-2 items-center">
+                <input type="color" value={form.text_color} onChange={(e) => setForm(f => ({ ...f, text_color: e.target.value }))} className="h-9 w-12 rounded cursor-pointer" />
+                <Input value={form.text_color} onChange={(e) => setForm(f => ({ ...f, text_color: e.target.value }))} className="font-mono text-xs" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Date début</Label>
+              <Input type="datetime-local" value={form.starts_at} onChange={(e) => setForm(f => ({ ...f, starts_at: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Date fin</Label>
+              <Input type="datetime-local" value={form.ends_at} onChange={(e) => setForm(f => ({ ...f, ends_at: e.target.value }))} />
+            </div>
+          </div>
+
+          {/* Preview */}
+          {form.message && (
+            <div className="rounded-lg overflow-hidden">
+              <div className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium" style={{ backgroundColor: form.bg_color, color: form.text_color }}>
+                <span>{form.message}</span>
+                {form.link_label && <span className="underline font-semibold">{form.link_label} →</span>}
+              </div>
+            </div>
+          )}
+
+          <Button onClick={handleAdd} disabled={saving} className="gap-2">
+            {saving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            Créer l'annonce
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Annonces existantes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground">Chargement...</p>
+          ) : announcements.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Aucune annonce</p>
+          ) : (
+            <div className="space-y-3">
+              {announcements.map((a: any) => (
+                <div key={a.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="h-4 w-4 rounded-full shrink-0" style={{ backgroundColor: a.bg_color }} />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{a.message}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {a.link_url && <span className="mr-2">→ {a.link_url}</span>}
+                        {a.ends_at && <span>Expire : {new Date(a.ends_at).toLocaleDateString("fr-FR")}</span>}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant={a.is_active ? "default" : "secondary"}>
+                      {a.is_active ? "Active" : "Inactive"}
+                    </Badge>
+                    <Switch checked={a.is_active} onCheckedChange={() => toggleActive(a.id, a.is_active)} />
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteAnnouncement(a.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main Page                                                         */
 /* ------------------------------------------------------------------ */
 export default function AdminSettings() {
@@ -597,6 +765,9 @@ export default function AdminSettings() {
             <TabsTrigger value="api" className="gap-1.5">
               <Key className="h-3.5 w-3.5" /> API & Intégrations
             </TabsTrigger>
+            <TabsTrigger value="announcements" className="gap-1.5">
+              <Megaphone className="h-3.5 w-3.5" /> Annonces
+            </TabsTrigger>
             <TabsTrigger value="platform" className="gap-1.5">
               <Settings2 className="h-3.5 w-3.5" /> Plateforme
             </TabsTrigger>
@@ -604,6 +775,7 @@ export default function AdminSettings() {
 
           <TabsContent value="emails"><EmailTab /></TabsContent>
           <TabsContent value="api"><ApiTab /></TabsContent>
+          <TabsContent value="announcements"><AnnouncementsTab /></TabsContent>
           <TabsContent value="platform"><PlatformTab /></TabsContent>
         </Tabs>
       </div>
