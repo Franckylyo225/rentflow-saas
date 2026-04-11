@@ -42,6 +42,7 @@ import NotFound from "./pages/NotFound";
 import TermsOfService from "./pages/legal/TermsOfService";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import LegalNotice from "./pages/legal/LegalNotice";
+import Contact from "./pages/Contact";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,7 @@ const App = () => (
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/legal" element={<LegalNotice />} />
+              <Route path="/contact" element={<Contact />} />
 
               {/* SaaS user routes */}
               <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />

@@ -8,7 +8,7 @@ const FOOTER_LINKS = {
   ],
   Entreprise: [
     { label: "À propos", href: "#" },
-    { label: "Contact", href: "#" },
+    { label: "Contact", href: "/contact", isRoute: true },
   ],
   Légal: [
     { label: "Conditions d'utilisation", href: "/terms", isRoute: true },
