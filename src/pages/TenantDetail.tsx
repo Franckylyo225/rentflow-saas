@@ -176,6 +176,7 @@ export default function TenantDetail() {
               <div className="flex justify-between"><span className="text-muted-foreground">Fin</span><span className="font-medium text-card-foreground">{leaseEnd.toLocaleDateString("fr-FR")}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Durée</span><span className="font-medium text-card-foreground">{tenant.lease_duration} mois</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Loyer</span><span className="font-medium text-card-foreground">{tenant.rent.toLocaleString()} FCFA</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Mois d'avance</span><span className="font-medium text-card-foreground">{tenant.advance_months || 0} mois</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Caution</span><span className="font-medium text-card-foreground">{tenant.deposit.toLocaleString()} FCFA</span></div>
             </CardContent>
           </Card>
