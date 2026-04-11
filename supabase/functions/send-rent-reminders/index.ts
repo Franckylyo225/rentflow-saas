@@ -41,24 +41,30 @@ Deno.serve(async (req) => {
     let testMode = false;
     let testRecipient = "";
     let testOrgId = "";
+    let testTemplateKey = "";
     try {
       const body = await req.json();
       if (body?.test && body?.email && body?.organization_id) {
         testMode = true;
         testRecipient = body.email;
         testOrgId = body.organization_id;
+        testTemplateKey = body.template_key || "";
       }
     } catch { /* no body = normal cron mode */ }
 
-    // TEST MODE: send a sample email using the first template
+    // TEST MODE: send a sample email using selected template
     if (testMode) {
-      const { data: tpl } = await supabase
+      let query = supabase
         .from("notification_templates")
         .select("*")
         .eq("organization_id", testOrgId)
-        .eq("email_enabled", true)
-        .limit(1)
-        .single();
+        .eq("email_enabled", true);
+
+      if (testTemplateKey) {
+        query = query.eq("template_key", testTemplateKey);
+      }
+
+      const { data: tpl } = await query.limit(1).single();
 
       if (!tpl) {
         return new Response(JSON.stringify({ error: "Aucun modèle email actif trouvé" }), {
