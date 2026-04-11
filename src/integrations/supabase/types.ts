@@ -403,6 +403,54 @@ export type Database = {
           },
         ]
       }
+      email_reminder_logs: {
+        Row: {
+          error_message: string | null
+          id: string
+          organization_id: string
+          recipient_email: string
+          rent_payment_id: string
+          sent_at: string
+          status: string
+          template_key: string
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          organization_id: string
+          recipient_email: string
+          rent_payment_id: string
+          sent_at?: string
+          status?: string
+          template_key: string
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          organization_id?: string
+          recipient_email?: string
+          rent_payment_id?: string
+          sent_at?: string
+          status?: string
+          template_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_reminder_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_reminder_logs_rent_payment_id_fkey"
+            columns: ["rent_payment_id"]
+            isOneToOne: false
+            referencedRelation: "rent_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           city_id: string | null
