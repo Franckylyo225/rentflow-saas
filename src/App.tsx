@@ -45,6 +45,7 @@ const App = () => (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <ProfileProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -86,6 +87,7 @@ const App = () => (
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
+        </ProfileProvider>
       </AuthProvider>
     </QueryClientProvider>
   </ThemeProvider>
