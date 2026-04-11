@@ -15,6 +15,7 @@ const Landing = () => {
       <LandingNavbar />
       <HeroSection />
       <FeaturesSection />
+      <RealEstateSalesSection />
       <ProblemSolutionSection />
       <HowItWorksSection />
       <PricingSection />
