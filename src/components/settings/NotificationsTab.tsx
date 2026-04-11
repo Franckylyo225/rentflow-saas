@@ -82,6 +82,31 @@ export function NotificationsTab() {
     toast.success("Paramètres de relance sauvegardés");
   };
 
+  const handleSendTest = async () => {
+    if (!testEmail) {
+      toast.error("Veuillez saisir une adresse email");
+      return;
+    }
+    const orgId = templates[0]?.organization_id;
+    if (!orgId) {
+      toast.error("Organisation introuvable");
+      return;
+    }
+    setSendingTest(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-rent-reminders", {
+        body: { test: true, email: testEmail, organization_id: orgId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Email de test envoyé à ${testEmail}`);
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de l'envoi");
+    } finally {
+      setSendingTest(false);
+    }
+  };
+
   if (loading) {
     return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
