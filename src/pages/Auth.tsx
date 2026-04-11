@@ -89,6 +89,15 @@ export default function AuthPage() {
           toast.error(error.message);
         } else {
           toast.success("Inscription réussie ! Un administrateur doit approuver votre accès.");
+          // Send welcome email (fire-and-forget)
+          supabase.functions.invoke("send-email", {
+            body: {
+              templateName: "signup-confirmation",
+              recipientEmail: email,
+              templateData: { name: fullName, email },
+              adminEmail: null,
+            },
+          }).catch(() => {});
         }
       } else {
         // Use a default company name - will be updated in onboarding
@@ -97,6 +106,15 @@ export default function AuthPage() {
           toast.error(error.message);
         } else {
           toast.success("Compte créé avec succès !");
+          // Send welcome email + admin notification (fire-and-forget)
+          supabase.functions.invoke("send-email", {
+            body: {
+              templateName: "signup-confirmation",
+              recipientEmail: email,
+              templateData: { name: fullName, email },
+              adminEmail: "admin@rent-flow.net",
+            },
+          }).catch(() => {});
         }
       }
     } else {
