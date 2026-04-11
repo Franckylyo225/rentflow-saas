@@ -4,15 +4,15 @@ const LegalNotice = () => (
   <LegalLayout title="Mentions Légales" lastUpdated="11 avril 2026">
     <h2>1. Éditeur de la Plateforme</h2>
     <ul>
-      <li><strong>Raison sociale :</strong> SCI Binieba</li>
-      <li><strong>Forme juridique :</strong> Société Civile Immobilière</li>
+      <li><strong>Raison sociale :</strong> New Wave Conception</li>
+      <li><strong>Activité :</strong> Entreprise intégratrice de solutions web</li>
       <li><strong>Siège social :</strong> Abidjan, Côte d'Ivoire</li>
       <li><strong>Email de contact :</strong> disponible dans la section « Contact » de la Plateforme</li>
     </ul>
 
     <h2>2. Directeur de la publication</h2>
     <p>
-      Le directeur de la publication est le représentant légal de SCI Binieba.
+      Le directeur de la publication est le représentant légal de New Wave Conception.
     </p>
 
     <h2>3. Hébergement</h2>
