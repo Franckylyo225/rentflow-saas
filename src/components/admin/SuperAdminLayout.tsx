@@ -8,6 +8,7 @@ import {
   LogOut,
   Shield,
   Users,
+  UserCheck,
   ChevronLeft,
   Settings,
   Layers,
@@ -37,6 +38,7 @@ const NAV_ITEMS = [
   { label: "Abonnements", href: "/admin/subscriptions", icon: CreditCard },
   { label: "Codes Promo", href: "/admin/promo-codes", icon: Settings },
   { label: "Super Admins", href: "/admin/admins", icon: Users },
+  { label: "Utilisateurs", href: "/admin/users", icon: UserCheck },
 ];
 
 function AdminSidebar() {
