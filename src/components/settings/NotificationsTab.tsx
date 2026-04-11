@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Mail, Save, Loader2, Info, Clock, AlertTriangle, Send } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Bell, Mail, Save, Loader2, Info, Clock, AlertTriangle, Send, TestTube } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,6 +26,8 @@ export function NotificationsTab() {
   const [emailsSentThisMonth, setEmailsSentThisMonth] = useState(0);
   const [recentLogs, setRecentLogs] = useState<any[]>([]);
   const [showLogs, setShowLogs] = useState(false);
+  const [testEmail, setTestEmail] = useState("");
+  const [sendingTest, setSendingTest] = useState(false);
 
   useEffect(() => {
     if (!user) return;
