@@ -36,16 +36,11 @@ export function AppHeader({ onMenuClick, orgName, userName }: AppHeaderProps) {
         <GlobalSearch />
 
         <DropdownMenu>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl">
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-            </TooltipTrigger>
-            <TooltipContent>Actions rapides</TooltipContent>
-          </Tooltip>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl" title="Actions rapides">
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52 rounded-xl">
             <DropdownMenuItem onClick={() => navigate("/properties?action=new")} className="rounded-lg">
               <Building2 className="h-4 w-4 mr-2" /> Nouveau bien
