@@ -103,7 +103,7 @@ export function NotificationsTab() {
             </Badge>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Button size="sm" variant="outline" className="gap-2" onClick={() => setShowLogs(!showLogs)}>
             <Clock className="h-4 w-4" /> Historique
           </Button>
