@@ -20,6 +20,8 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
   const { profile, role } = useProfile();
   const { settings } = useOrganizationSettings();
   const { hasFeature, loading: featuresLoading } = useFeatureAccess();
+  const { planName, daysUntilExpiry, expired, subscriptionStatus, loading: planLoading } = usePlanLimits();
+  const navigate = useNavigate();
 
   const initials = profile?.full_name
     ? profile.full_name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
