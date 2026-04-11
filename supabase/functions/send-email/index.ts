@@ -5,7 +5,7 @@ const corsHeaders = {
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
-const FROM_EMAIL = "SCI Binieba <noreply@rent-flow.net>";
+const FROM_EMAIL = "RentFlow <noreply@rent-flow.net>";
 
 // Fallback templates (used if DB fetch fails)
 const fallbackTemplates: Record<string, (data: Record<string, any>) => { subject: string; html: string }> = {
