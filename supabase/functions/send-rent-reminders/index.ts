@@ -37,6 +37,91 @@ Deno.serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   try {
+    // Parse body for test mode
+    let testMode = false;
+    let testRecipient = "";
+    let testOrgId = "";
+    try {
+      const body = await req.json();
+      if (body?.test && body?.email && body?.organization_id) {
+        testMode = true;
+        testRecipient = body.email;
+        testOrgId = body.organization_id;
+      }
+    } catch { /* no body = normal cron mode */ }
+
+    // TEST MODE: send a sample email using the first template
+    if (testMode) {
+      const { data: tpl } = await supabase
+        .from("notification_templates")
+        .select("*")
+        .eq("organization_id", testOrgId)
+        .eq("email_enabled", true)
+        .limit(1)
+        .single();
+
+      if (!tpl) {
+        return new Response(JSON.stringify({ error: "Aucun modèle email actif trouvé" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: org } = await supabase
+        .from("organizations")
+        .select("name")
+        .eq("id", testOrgId)
+        .single();
+
+      const senderName = org?.name || "RentFlow";
+      const fromEmail = `${senderName} <noreply@rent-flow.net>`;
+      const today = new Date();
+      const formattedDate = `${today.getUTCDate().toString().padStart(2, "0")}/${(today.getUTCMonth() + 1).toString().padStart(2, "0")}/${today.getUTCFullYear()}`;
+
+      const emailContent = tpl.email_content
+        .replace(/\{\{nom\}\}/g, "Locataire Test")
+        .replace(/\{\{montant\}\}/g, "100 000")
+        .replace(/\{\{date_echeance\}\}/g, formattedDate);
+
+      const lines = emailContent.split(/\\n|\n/).map((l: string) => l.trim()).filter(Boolean);
+      const htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: #f8f9fa; border-radius: 8px; padding: 24px;">
+            ${lines.map((line: string) => `<p style="margin: 0 0 12px; color: #333; line-height: 1.6;">${line}</p>`).join("")}
+          </div>
+          <p style="font-size: 12px; color: #999; margin-top: 20px; text-align: center;">
+            ⚠️ Ceci est un email de test — Envoyé par ${senderName} via RentFlow
+          </p>
+        </div>
+      `;
+
+      const res = await fetch(`${GATEWAY_URL}/emails`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "X-Connection-Api-Key": RESEND_API_KEY,
+        },
+        body: JSON.stringify({
+          from: fromEmail,
+          to: [testRecipient],
+          subject: `[TEST] Rappel de loyer — ${formattedDate}`,
+          html: htmlContent,
+        }),
+      });
+
+      const resData = await res.json();
+      if (!res.ok) {
+        return new Response(JSON.stringify({ error: "Erreur Resend", details: resData }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true, sent: 1, test: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // NORMAL CRON MODE
     // Get all organizations with their notification templates
     const { data: templates, error: tplErr } = await supabase
       .from("notification_templates")

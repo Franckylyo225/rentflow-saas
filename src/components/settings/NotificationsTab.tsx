@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Mail, Save, Loader2, Info, Clock, AlertTriangle, Send } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Bell, Mail, Save, Loader2, Info, Clock, AlertTriangle, Send, TestTube } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,6 +26,8 @@ export function NotificationsTab() {
   const [emailsSentThisMonth, setEmailsSentThisMonth] = useState(0);
   const [recentLogs, setRecentLogs] = useState<any[]>([]);
   const [showLogs, setShowLogs] = useState(false);
+  const [testEmail, setTestEmail] = useState("");
+  const [sendingTest, setSendingTest] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -79,6 +82,31 @@ export function NotificationsTab() {
     toast.success("Paramètres de relance sauvegardés");
   };
 
+  const handleSendTest = async () => {
+    if (!testEmail) {
+      toast.error("Veuillez saisir une adresse email");
+      return;
+    }
+    const orgId = templates[0]?.organization_id;
+    if (!orgId) {
+      toast.error("Organisation introuvable");
+      return;
+    }
+    setSendingTest(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-rent-reminders", {
+        body: { test: true, email: testEmail, organization_id: orgId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Email de test envoyé à ${testEmail}`);
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de l'envoi");
+    } finally {
+      setSendingTest(false);
+    }
+  };
+
   if (loading) {
     return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
@@ -100,7 +128,7 @@ export function NotificationsTab() {
             </Badge>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Button size="sm" variant="outline" className="gap-2" onClick={() => setShowLogs(!showLogs)}>
             <Clock className="h-4 w-4" /> Historique
           </Button>
@@ -144,6 +172,39 @@ export function NotificationsTab() {
           </CardContent>
         </Card>
       )}
+
+      {/* Test email */}
+      <Card className="border-border">
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3">
+            <div className="flex-1 w-full">
+              <Label className="text-sm font-medium mb-1.5 flex items-center gap-2">
+                <TestTube className="h-4 w-4 text-primary" /> Envoyer un email de test
+              </Label>
+              <Input
+                type="email"
+                placeholder="adresse@email.com"
+                value={testEmail}
+                onChange={e => setTestEmail(e.target.value)}
+                className="max-w-sm"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Envoie le premier modèle actif avec des données fictives
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-2 shrink-0"
+              onClick={handleSendTest}
+              disabled={sendingTest || !testEmail}
+            >
+              {sendingTest ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Envoyer le test
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Timeline visual */}
       <Card className="border-border overflow-hidden">
