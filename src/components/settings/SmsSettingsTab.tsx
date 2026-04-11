@@ -38,8 +38,25 @@ export function SmsSettingsTab() {
   const [testTemplateKey, setTestTemplateKey] = useState("before_5");
   const [sendingTest, setSendingTest] = useState(false);
 
+  const fetchCredits = async () => {
+    setLoadingCredits(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sms-credits", { body: {} });
+      if (!error && data?.success) {
+        setCreditAvailable(data.creditAvailable);
+        setCreditUsed(data.creditUsed);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setLoadingCredits(false);
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
+
+    fetchCredits();
 
     // Load org settings
     supabase
