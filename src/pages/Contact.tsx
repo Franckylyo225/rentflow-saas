@@ -9,8 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Mail, MapPin, Send } from "lucide-react";
+import { LandingNavbar } from "@/components/landing/LandingNavbar";
+import { LandingFooter } from "@/components/landing/LandingFooter";
+import { Mail, MapPin, Send } from "lucide-react";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Le nom est requis").max(100),
@@ -53,20 +54,10 @@ export default function Contact() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 py-4 flex items-center gap-4">
-          <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="h-4 w-4" />
-            <span className="text-sm">Retour</span>
-          </Link>
-          <div className="h-4 w-px bg-border" />
-          <img src="/logo-horizontal.png" alt="RentFlow" className="h-7" />
-        </div>
-      </header>
+    <div className="min-h-screen bg-background text-foreground">
+      <LandingNavbar />
 
-      <main className="max-w-5xl mx-auto px-5 sm:px-8 py-16">
+      <main className="max-w-5xl mx-auto px-5 sm:px-8 py-20">
         <div className="text-center mb-12">
           <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
             Contactez-nous
@@ -172,6 +163,8 @@ export default function Contact() {
           </Card>
         </div>
       </main>
+
+      <LandingFooter />
     </div>
   );
 }
