@@ -72,6 +72,7 @@ export default function TenantDetail() {
       tenant_type: editForm.tenant_type,
       lease_duration: parseInt(editForm.lease_duration) || 12,
       deposit: parseInt(editForm.deposit) || 0,
+      advance_months: parseInt(editForm.advance_months) || 0,
     };
     if (editForm.tenant_type === "company") {
       updateData.company_name = editForm.company_name;
