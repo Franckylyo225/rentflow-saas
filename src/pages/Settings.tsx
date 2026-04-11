@@ -1,3 +1,4 @@
+import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Building2, Banknote, Bell, Users, Shield, Loader2, CreditCard } from "lucide-react";
@@ -11,7 +12,8 @@ import { SubscriptionTab } from "@/components/settings/SubscriptionTab";
 
 export default function SettingsPage() {
   const { settings, loading, updateSettings, uploadLogo } = useOrganizationSettings();
-
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get("tab") || "general";
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -25,7 +27,7 @@ export default function SettingsPage() {
             <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <Tabs defaultValue="general" className="space-y-6">
+          <Tabs defaultValue={defaultTab} className="space-y-6">
             <TabsList className="flex-wrap h-auto gap-1 p-1">
               <TabsTrigger value="general" className="gap-1.5"><Building2 className="h-3.5 w-3.5" /> Général</TabsTrigger>
               <TabsTrigger value="finance" className="gap-1.5"><Banknote className="h-3.5 w-3.5" /> Finance</TabsTrigger>
