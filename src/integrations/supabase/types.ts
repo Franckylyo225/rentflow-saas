@@ -206,6 +206,35 @@ export type Database = {
           },
         ]
       }
+      contract_reminders: {
+        Row: {
+          contract_id: string
+          created_at: string
+          id: string
+          reminder_type: string
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          id?: string
+          reminder_type: string
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          id?: string
+          reminder_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_reminders_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_templates: {
         Row: {
           content: string
@@ -251,6 +280,7 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          expires_at: string | null
           generated_at: string | null
           id: string
           status: string
@@ -261,6 +291,7 @@ export type Database = {
         Insert: {
           content?: string
           created_at?: string
+          expires_at?: string | null
           generated_at?: string | null
           id?: string
           status?: string
@@ -271,6 +302,7 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          expires_at?: string | null
           generated_at?: string | null
           id?: string
           status?: string
