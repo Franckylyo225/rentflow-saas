@@ -4,7 +4,7 @@ const PrivacyPolicy = () => (
   <LegalLayout title="Politique de Confidentialité" lastUpdated="11 avril 2026">
     <h2>1. Introduction</h2>
     <p>
-      SCI Binieba, éditrice de la plateforme RentFlow, s'engage à protéger la vie privée de ses utilisateurs. La présente politique décrit comment nous collectons, utilisons, stockons et protégeons vos données personnelles.
+      New Wave Conception, éditrice de la plateforme RentFlow, s'engage à protéger la vie privée de ses utilisateurs. La présente politique décrit comment nous collectons, utilisons, stockons et protégeons vos données personnelles.
     </p>
 
     <h2>2. Données collectées</h2>
