@@ -39,6 +39,9 @@ import AdminPromoCodes from "./pages/admin/AdminPromoCodes";
 import AdminLogin from "./pages/admin/AdminLogin";
 import { SuperAdminRoute } from "./components/admin/SuperAdminRoute";
 import NotFound from "./pages/NotFound";
+import TermsOfService from "./pages/legal/TermsOfService";
+import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
+import LegalNotice from "./pages/legal/LegalNotice";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +63,9 @@ const App = () => (
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/mfa-verify" element={<MfaVerify />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/legal" element={<LegalNotice />} />
 
               {/* SaaS user routes */}
               <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
