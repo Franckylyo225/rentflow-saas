@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, Save, Loader2, Info, Clock, AlertTriangle, Send, TestTube, Phone, Settings2 } from "lucide-react";
+import { MessageSquare, Save, Loader2, Info, Clock, AlertTriangle, Send, TestTube, Phone, Settings2, Wallet, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,6 +27,11 @@ export function SmsSettingsTab() {
   const [senderName, setSenderName] = useState("");
   const [savingSender, setSavingSender] = useState(false);
   const [orgId, setOrgId] = useState<string | null>(null);
+
+  // Credits state
+  const [creditAvailable, setCreditAvailable] = useState<number | null>(null);
+  const [creditUsed, setCreditUsed] = useState<number | null>(null);
+  const [loadingCredits, setLoadingCredits] = useState(false);
 
   // Test SMS state
   const [testPhone, setTestPhone] = useState("");
