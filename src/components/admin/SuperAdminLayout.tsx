@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   Settings,
   Layers,
+  Receipt,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
