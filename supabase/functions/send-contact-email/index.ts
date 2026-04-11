@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
         'X-Connection-Api-Key': RESEND_API_KEY,
       },
       body: JSON.stringify({
-        from: `RentFlow Contact <onboarding@resend.dev>`,
+        from: `RentFlow <noreply@rent-flow.net>`,
         to: ['contact@rent-flow.net'],
         reply_to: email,
         subject: `[Contact] ${subject}`,
