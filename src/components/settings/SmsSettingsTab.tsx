@@ -184,6 +184,45 @@ export function SmsSettingsTab() {
         </Button>
       </div>
 
+      {/* Credits card */}
+      <Card className="border-border">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                <Wallet className="h-4 w-4 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Crédits SMS</p>
+                {loadingCredits ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mt-1" />
+                ) : creditAvailable !== null ? (
+                  <div className="flex items-center gap-3 mt-0.5">
+                    <span className={`text-2xl font-bold ${creditAvailable <= 10 ? "text-destructive" : creditAvailable <= 50 ? "text-amber-600" : "text-emerald-600"}`}>
+                      {creditAvailable}
+                    </span>
+                    <span className="text-xs text-muted-foreground">disponibles</span>
+                    {creditUsed !== null && (
+                      <Badge variant="outline" className="text-[10px] font-normal gap-1">
+                        {creditUsed} utilisés
+                      </Badge>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-0.5">Impossible de récupérer le solde</p>
+                )}
+                {creditAvailable !== null && creditAvailable <= 10 && (
+                  <p className="text-xs text-destructive mt-1">⚠️ Solde faible — pensez à recharger vos crédits</p>
+                )}
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fetchCredits} disabled={loadingCredits}>
+              <RefreshCw className={`h-4 w-4 ${loadingCredits ? "animate-spin" : ""}`} />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Sender config */}
       <Card className="border-border">
         <CardHeader className="pb-3">
