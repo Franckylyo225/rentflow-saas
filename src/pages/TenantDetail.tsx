@@ -298,10 +298,14 @@ export default function TenantDetail() {
                 <Label>N° pièce d'identité</Label>
                 <Input value={editForm.id_number} onChange={e => setEditForm((f: any) => ({ ...f, id_number: e.target.value }))} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label>Durée du bail (mois)</Label>
                   <Input type="number" value={editForm.lease_duration} onChange={e => setEditForm((f: any) => ({ ...f, lease_duration: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Mois d'avance</Label>
+                  <Input type="number" min="0" value={editForm.advance_months} onChange={e => setEditForm((f: any) => ({ ...f, advance_months: e.target.value }))} />
                 </div>
                 <div>
                   <Label>Caution (FCFA)</Label>
