@@ -8,8 +8,8 @@ import {
   LogOut,
   Shield,
   Users,
+  UserCheck,
   ChevronLeft,
-  Settings,
   Layers,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,7 +37,7 @@ const NAV_ITEMS = [
   { label: "Abonnements", href: "/admin/subscriptions", icon: CreditCard },
   { label: "Codes Promo", href: "/admin/promo-codes", icon: Settings },
   { label: "Super Admins", href: "/admin/admins", icon: Users },
-  { label: "Utilisateurs", href: "/admin/users", icon: Shield },
+  { label: "Utilisateurs", href: "/admin/users", icon: UserCheck },
 ];
 
 function AdminSidebar() {
