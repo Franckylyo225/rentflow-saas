@@ -10,19 +10,211 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Mail, Key, Globe, Shield, Bell, Database, Server,
-  CheckCircle2, AlertCircle, Send, RefreshCw, Save, Settings2,
+  CheckCircle2, Send, RefreshCw, Save, Settings2,
+  Pencil, Eye, X, Code, ToggleLeft,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+/* ------------------------------------------------------------------ */
+/*  Types                                                             */
+/* ------------------------------------------------------------------ */
+interface EmailTemplate {
+  id: string;
+  template_key: string;
+  label: string;
+  subject: string;
+  html_content: string;
+  description: string | null;
+  is_active: boolean;
+  updated_at: string;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Template Editor Dialog                                            */
+/* ------------------------------------------------------------------ */
+function TemplateEditorDialog({
+  template,
+  open,
+  onOpenChange,
+}: {
+  template: EmailTemplate | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const queryClient = useQueryClient();
+  const [subject, setSubject] = useState("");
+  const [htmlContent, setHtmlContent] = useState("");
+  const [showPreview, setShowPreview] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (template) {
+      setSubject(template.subject);
+      setHtmlContent(template.html_content);
+      setShowPreview(false);
+    }
+  }, [template]);
+
+  const handleSave = async () => {
+    if (!template) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("platform_email_templates")
+        .update({ subject, html_content: htmlContent })
+        .eq("id", template.id);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["platform-email-templates"] });
+      toast.success("Template sauvegardé !");
+      onOpenChange(false);
+    } catch (e: any) {
+      toast.error("Erreur : " + (e.message || "Échec de la sauvegarde"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!template) return null;
+
+  const VARIABLES: Record<string, string[]> = {
+    "signup-confirmation": ["{{name}}"],
+    "new-user-admin": ["{{name}}", "{{email}}", "{{organization}}"],
+    "payment-confirmation": ["{{name}}", "{{plan}}", "{{amount}}", "{{period}}"],
+    "payment-admin": ["{{organization}}", "{{plan}}", "{{amount}}"],
+  };
+
+  const vars = VARIABLES[template.template_key] || [];
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Pencil className="h-5 w-5 text-primary" />
+            Modifier : {template.label}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto space-y-4 py-2">
+          {/* Subject */}
+          <div className="space-y-2">
+            <Label>Objet de l'email</Label>
+            <Input value={subject} onChange={(e) => setSubject(e.target.value)} />
+          </div>
+
+          {/* Variables */}
+          {vars.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted-foreground">Variables disponibles :</span>
+              {vars.map((v) => (
+                <Badge key={v} variant="secondary" className="text-xs font-mono cursor-pointer"
+                  onClick={() => {
+                    navigator.clipboard.writeText(v);
+                    toast.info(`${v} copié !`);
+                  }}
+                >
+                  {v}
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          {/* Toggle preview / code */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant={showPreview ? "outline" : "default"}
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setShowPreview(false)}
+            >
+              <Code className="h-3.5 w-3.5" /> Code HTML
+            </Button>
+            <Button
+              variant={showPreview ? "default" : "outline"}
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setShowPreview(true)}
+            >
+              <Eye className="h-3.5 w-3.5" /> Aperçu
+            </Button>
+          </div>
+
+          {showPreview ? (
+            <div className="border border-border rounded-lg overflow-hidden bg-background">
+              <iframe
+                srcDoc={htmlContent}
+                className="w-full h-[400px] border-0"
+                title="Aperçu email"
+                sandbox="allow-same-origin"
+              />
+            </div>
+          ) : (
+            <Textarea
+              value={htmlContent}
+              onChange={(e) => setHtmlContent(e.target.value)}
+              rows={18}
+              className="font-mono text-xs leading-relaxed"
+              placeholder="Contenu HTML du template..."
+            />
+          )}
+        </div>
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Annuler
+          </Button>
+          <Button onClick={handleSave} disabled={saving} className="gap-2">
+            {saving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Sauvegarder
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 /* ------------------------------------------------------------------ */
 /*  Email Tab                                                         */
 /* ------------------------------------------------------------------ */
 function EmailTab() {
+  const queryClient = useQueryClient();
   const [testEmail, setTestEmail] = useState("");
   const [sending, setSending] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
+
+  const { data: templates = [], isLoading } = useQuery({
+    queryKey: ["platform-email-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("platform_email_templates")
+        .select("*")
+        .order("created_at");
+      if (error) throw error;
+      return data as EmailTemplate[];
+    },
+  });
+
+  const toggleActive = useMutation({
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      const { error } = await supabase
+        .from("platform_email_templates")
+        .update({ is_active })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["platform-email-templates"] });
+      toast.success("Statut mis à jour");
+    },
+  });
 
   const handleTestEmail = async () => {
     if (!testEmail) return toast.error("Entrez une adresse email");
@@ -64,7 +256,6 @@ function EmailTab() {
               <CheckCircle2 className="h-3 w-3" /> Vérifié
             </Badge>
           </div>
-
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Nom d'expéditeur</Label>
@@ -78,31 +269,58 @@ function EmailTab() {
         </CardContent>
       </Card>
 
-      {/* Templates */}
+      {/* Editable Templates */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Mail className="h-5 w-5 text-primary" /> Templates email
           </CardTitle>
-          <CardDescription>Modèles d'emails transactionnels configurés</CardDescription>
+          <CardDescription>Cliquez sur un template pour le modifier. Les variables entre {"{{ }}"} seront remplacées automatiquement.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {[
-              { key: "signup-confirmation", label: "Confirmation d'inscription", desc: "Envoyé aux nouveaux utilisateurs" },
-              { key: "new-user-admin", label: "Notification nouvel utilisateur", desc: "Envoyé à l'admin SaaS" },
-              { key: "payment-confirmation", label: "Confirmation de paiement", desc: "Envoyé au client après paiement" },
-              { key: "payment-admin", label: "Notification paiement admin", desc: "Envoyé à l'admin lors d'un paiement" },
-            ].map((t) => (
-              <div key={t.key} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
-                <div>
-                  <p className="text-sm font-medium text-foreground">{t.label}</p>
-                  <p className="text-xs text-muted-foreground">{t.desc}</p>
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {templates.map((t) => (
+                <div
+                  key={t.id}
+                  className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/30 transition-colors group"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-foreground">{t.label}</p>
+                      {!t.is_active && (
+                        <Badge variant="secondary" className="text-[10px]">Désactivé</Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{t.description}</p>
+                    <p className="text-xs text-muted-foreground/60 mt-0.5 font-mono">{t.template_key}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Switch
+                      checked={t.is_active}
+                      onCheckedChange={(checked) => toggleActive.mutate({ id: t.id, is_active: checked })}
+                      className="scale-90"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => {
+                        setEditingTemplate(t);
+                        setEditorOpen(true);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <Badge variant="outline" className="text-xs">{t.key}</Badge>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -128,6 +346,12 @@ function EmailTab() {
           </div>
         </CardContent>
       </Card>
+
+      <TemplateEditorDialog
+        template={editingTemplate}
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+      />
     </div>
   );
 }
@@ -193,7 +417,7 @@ function ApiTab() {
                   <p className="text-xs text-muted-foreground">{fn.desc}</p>
                 </div>
                 <Badge variant="outline" className="gap-1 text-xs">
-                  <CheckCircle2 className="h-3 w-3 text-emerald-500" /> Déployé
+                  <CheckCircle2 className="h-3 w-3 text-primary" /> Déployé
                 </Badge>
               </div>
             ))}
@@ -298,37 +522,23 @@ function PlatformTab() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-foreground">Nouvelle inscription</p>
-              <p className="text-xs text-muted-foreground">Recevoir un email à chaque nouvelle organisation</p>
+          {[
+            { label: "Nouvelle inscription", desc: "Recevoir un email à chaque nouvelle organisation", on: true },
+            { label: "Nouveau paiement", desc: "Recevoir un email à chaque paiement d'abonnement", on: true },
+            { label: "Fin de période d'essai", desc: "Alerte quand une organisation arrive en fin d'essai", on: true },
+            { label: "Organisation désactivée", desc: "Alerte quand une organisation est désactivée", on: false },
+          ].map((item, i) => (
+            <div key={i}>
+              {i > 0 && <Separator className="mb-4" />}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">{item.label}</p>
+                  <p className="text-xs text-muted-foreground">{item.desc}</p>
+                </div>
+                <Switch defaultChecked={item.on} />
+              </div>
             </div>
-            <Switch defaultChecked />
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-foreground">Nouveau paiement</p>
-              <p className="text-xs text-muted-foreground">Recevoir un email à chaque paiement d'abonnement</p>
-            </div>
-            <Switch defaultChecked />
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-foreground">Fin de période d'essai</p>
-              <p className="text-xs text-muted-foreground">Alerte quand une organisation arrive en fin d'essai</p>
-            </div>
-            <Switch defaultChecked />
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-foreground">Organisation désactivée</p>
-              <p className="text-xs text-muted-foreground">Alerte quand une organisation est désactivée</p>
-            </div>
-            <Switch />
-          </div>
+          ))}
         </CardContent>
       </Card>
 
