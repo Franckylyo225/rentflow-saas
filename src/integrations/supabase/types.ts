@@ -1841,6 +1841,7 @@ export type Database = {
         Returns: Json
       }
       can_manage_payments: { Args: { _user_id: string }; Returns: boolean }
+      ensure_user_profile: { Args: never; Returns: Json }
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
