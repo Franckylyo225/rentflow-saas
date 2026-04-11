@@ -10,8 +10,8 @@ const FROM_EMAIL = "RentFlow <noreply@rent-flow.net>";
 // Fallback templates (used if DB fetch fails)
 const fallbackTemplates: Record<string, (data: Record<string, any>) => { subject: string; html: string }> = {
   "signup-confirmation": (data) => ({
-    subject: "Bienvenue sur SCI Binieba !",
-    html: `<div style="font-family:'Inter',Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden"><div style="background:hsl(160,84%,39%);padding:32px 24px;text-align:center"><h1 style="color:#fff;margin:0;font-size:24px;font-weight:700">Bienvenue sur SCI Binieba</h1></div><div style="padding:32px 24px"><p style="color:#1a1a2e;font-size:16px;line-height:1.6">Bonjour${data.name ? ` <strong>${data.name}</strong>` : ""},</p><p style="color:#555;font-size:14px;line-height:1.6">Votre compte a été créé avec succès.</p></div></div>`,
+    subject: "Bienvenue sur RentFlow !",
+    html: `<div style="font-family:'Inter',Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden"><div style="background:hsl(160,84%,39%);padding:32px 24px;text-align:center"><h1 style="color:#fff;margin:0;font-size:24px;font-weight:700">Bienvenue sur RentFlow</h1></div><div style="padding:32px 24px"><p style="color:#1a1a2e;font-size:16px;line-height:1.6">Bonjour${data.name ? ` <strong>${data.name}</strong>` : ""},</p><p style="color:#555;font-size:14px;line-height:1.6">Votre compte a été créé avec succès.</p></div></div>`,
   }),
   "new-user-admin": (data) => ({
     subject: `Nouvel utilisateur : ${data.email || "inscription"}`,
