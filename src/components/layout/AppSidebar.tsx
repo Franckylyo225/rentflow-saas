@@ -96,8 +96,45 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
             );
           })}
         </nav>
+        {/* Subscription indicator */}
+        {!planLoading && planName && (
+          <div className="mx-3 mb-2 rounded-lg border border-border bg-muted/30 px-3 py-2.5 space-y-2">
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                {planName}
+              </Badge>
+            </div>
+            {daysUntilExpiry !== null && (
+              <p className={cn(
+                "text-xs font-medium",
+                expired
+                  ? "text-destructive"
+                  : daysUntilExpiry <= 15
+                    ? "text-destructive"
+                    : daysUntilExpiry <= 20
+                      ? "text-warning"
+                      : "text-muted-foreground"
+              )}>
+                {expired
+                  ? subscriptionStatus === "trial" ? "Essai expiré" : "Abonnement expiré"
+                  : `${daysUntilExpiry} jour${daysUntilExpiry > 1 ? "s" : ""} restant${daysUntilExpiry > 1 ? "s" : ""}`}
+              </p>
+            )}
+            {(daysUntilExpiry !== null && daysUntilExpiry <= 20) && (
+              <Button
+                size="sm"
+                variant={expired || (daysUntilExpiry <= 15) ? "default" : "outline"}
+                className="w-full h-7 text-xs gap-1"
+                onClick={() => navigate("/settings?tab=subscription")}
+              >
+                {expired ? "Souscrire" : "Renouveler"} <ArrowUpRight className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        )}
 
-        {/* User */}
+
         <div className="px-4 py-4 border-t border-border">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
