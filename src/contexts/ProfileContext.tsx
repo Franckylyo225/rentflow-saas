@@ -54,10 +54,22 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
 
     setLoading(true);
-    const [profileRes, roleRes] = await Promise.all([
+    let [profileRes, roleRes] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", user.id).single(),
       supabase.from("user_roles").select("role").eq("user_id", user.id).single(),
     ]);
+
+    // If no profile exists (e.g. Google OAuth user), auto-create via RPC
+    if (!profileRes.data && profileRes.error?.code === "PGRST116") {
+      const { data: rpcResult } = await supabase.rpc("ensure_user_profile" as any);
+      if (rpcResult && (rpcResult as any).status === "created") {
+        // Re-fetch after creation
+        [profileRes, roleRes] = await Promise.all([
+          supabase.from("profiles").select("*").eq("user_id", user.id).single(),
+          supabase.from("user_roles").select("role").eq("user_id", user.id).single(),
+        ]);
+      }
+    }
 
     if (profileRes.data) {
       const p = profileRes.data as unknown as Profile;
