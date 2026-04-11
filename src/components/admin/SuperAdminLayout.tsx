@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   Settings,
   Layers,
+  Receipt,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -36,6 +37,7 @@ const NAV_ITEMS = [
   { label: "Organisations", href: "/admin/organizations", icon: Building2 },
   { label: "Plans tarifaires", href: "/admin/plans", icon: Layers },
   { label: "Abonnements", href: "/admin/subscriptions", icon: CreditCard },
+  { label: "Transactions", href: "/admin/transactions", icon: Receipt },
   { label: "Codes Promo", href: "/admin/promo-codes", icon: Settings },
   { label: "Super Admins", href: "/admin/admins", icon: Users },
   { label: "Utilisateurs", href: "/admin/users", icon: UserCheck },
