@@ -134,7 +134,7 @@ export const rentPayments: RentPayment[] = [
 export const navItems = [
   { label: "Tableau de bord", icon: LayoutDashboard, path: "/", featureKey: null },
   { label: "Biens", icon: Building2, path: "/properties", featureKey: "properties" },
-  { label: "Patrimoine", icon: Landmark, path: "/patrimoine", featureKey: "patrimoine" },
+  
   { label: "Locataires", icon: Users, path: "/tenants", featureKey: "tenants" },
   { label: "Loyers", icon: CreditCard, path: "/rents", featureKey: "rents" },
   { label: "Dépenses", icon: Receipt, path: "/expenses", featureKey: "expenses" },
