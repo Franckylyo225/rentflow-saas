@@ -56,6 +56,7 @@ export default function TenantDetail() {
       rccm: tenant.rccm || "",
       lease_duration: String(tenant.lease_duration || 12),
       deposit: String(tenant.deposit || 0),
+      advance_months: String(tenant.advance_months || 0),
     });
     setShowEdit(true);
   };
@@ -71,6 +72,7 @@ export default function TenantDetail() {
       tenant_type: editForm.tenant_type,
       lease_duration: parseInt(editForm.lease_duration) || 12,
       deposit: parseInt(editForm.deposit) || 0,
+      advance_months: parseInt(editForm.advance_months) || 0,
     };
     if (editForm.tenant_type === "company") {
       updateData.company_name = editForm.company_name;
@@ -176,6 +178,7 @@ export default function TenantDetail() {
               <div className="flex justify-between"><span className="text-muted-foreground">Fin</span><span className="font-medium text-card-foreground">{leaseEnd.toLocaleDateString("fr-FR")}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Durée</span><span className="font-medium text-card-foreground">{tenant.lease_duration} mois</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Loyer</span><span className="font-medium text-card-foreground">{tenant.rent.toLocaleString()} FCFA</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Mois d'avance</span><span className="font-medium text-card-foreground">{tenant.advance_months || 0} mois</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Caution</span><span className="font-medium text-card-foreground">{tenant.deposit.toLocaleString()} FCFA</span></div>
             </CardContent>
           </Card>
@@ -295,10 +298,14 @@ export default function TenantDetail() {
                 <Label>N° pièce d'identité</Label>
                 <Input value={editForm.id_number} onChange={e => setEditForm((f: any) => ({ ...f, id_number: e.target.value }))} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label>Durée du bail (mois)</Label>
                   <Input type="number" value={editForm.lease_duration} onChange={e => setEditForm((f: any) => ({ ...f, lease_duration: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Mois d'avance</Label>
+                  <Input type="number" min="0" value={editForm.advance_months} onChange={e => setEditForm((f: any) => ({ ...f, advance_months: e.target.value }))} />
                 </div>
                 <div>
                   <Label>Caution (FCFA)</Label>

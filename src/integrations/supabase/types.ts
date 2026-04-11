@@ -1407,6 +1407,7 @@ export type Database = {
       }
       tenants: {
         Row: {
+          advance_months: number
           company_name: string | null
           contact_person: string | null
           created_at: string
@@ -1426,6 +1427,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          advance_months?: number
           company_name?: string | null
           contact_person?: string | null
           created_at?: string
@@ -1445,6 +1447,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          advance_months?: number
           company_name?: string | null
           contact_person?: string | null
           created_at?: string

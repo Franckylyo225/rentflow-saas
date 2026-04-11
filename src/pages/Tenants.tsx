@@ -39,7 +39,7 @@ export default function Tenants() {
     unit_id: "", full_name: "", phone: "", email: "", id_number: "",
     lease_start: new Date().toISOString().split("T")[0], lease_duration: "12", deposit: "",
     tenant_type: "individual" as "individual" | "company",
-    company_name: "", contact_person: "", rccm: "",
+    company_name: "", contact_person: "", rccm: "", advance_months: "0",
   });
   const [formerSearch, setFormerSearch] = useState("");
   const [formerTenants, setFormerTenants] = useState<any[]>([]);
@@ -177,6 +177,7 @@ export default function Tenants() {
       lease_duration: parseInt(form.lease_duration) || 12, rent: unit.rent,
       deposit: parseInt(form.deposit) || unit.rent * 2,
       tenant_type: form.tenant_type,
+      advance_months: parseInt(form.advance_months) || 0,
     };
     if (form.tenant_type === "company") {
       insertData.company_name = form.company_name;
@@ -188,7 +189,7 @@ export default function Tenants() {
     await supabase.from("units").update({ status: "occupied" as const }).eq("id", form.unit_id);
     toast.success("Locataire ajouté et unité mise à jour");
     setShowAdd(false);
-    setForm({ unit_id: "", full_name: "", phone: "", email: "", id_number: "", lease_start: new Date().toISOString().split("T")[0], lease_duration: "12", deposit: "", tenant_type: "individual", company_name: "", contact_person: "", rccm: "" });
+    setForm({ unit_id: "", full_name: "", phone: "", email: "", id_number: "", lease_start: new Date().toISOString().split("T")[0], lease_duration: "12", deposit: "", tenant_type: "individual", company_name: "", contact_person: "", rccm: "", advance_months: "0" });
     setSelectedProperty("");
     setSaving(false);
     refetch();
@@ -504,9 +505,15 @@ export default function Tenants() {
                 <Input type="number" value={form.lease_duration} onChange={e => setForm(f => ({ ...f, lease_duration: e.target.value }))} placeholder="12" />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Dépôt de garantie (FCFA)</Label>
-              <Input type="number" value={form.deposit} onChange={e => setForm(f => ({ ...f, deposit: e.target.value }))} placeholder={selectedUnit ? (selectedUnit.rent * 2).toString() : "Ex: 700000"} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Dépôt de garantie (FCFA)</Label>
+                <Input type="number" value={form.deposit} onChange={e => setForm(f => ({ ...f, deposit: e.target.value }))} placeholder={selectedUnit ? (selectedUnit.rent * 2).toString() : "Ex: 700000"} />
+              </div>
+              <div className="space-y-2">
+                <Label>Mois d'avance</Label>
+                <Input type="number" min="0" value={form.advance_months} onChange={e => setForm(f => ({ ...f, advance_months: e.target.value }))} placeholder="2" />
+              </div>
             </div>
             <div className="p-3 rounded-lg bg-accent/30 text-xs text-accent-foreground">
               <strong>Règle métier :</strong> Dès validation, l'unité passera en statut "Occupé".
