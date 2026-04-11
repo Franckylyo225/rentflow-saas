@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
         .single();
 
       const senderName = org?.name || "RentFlow";
-      const fromEmail = `${senderName} <onboarding@resend.dev>`;
+      const fromEmail = `${senderName} <noreply@rent-flow.net>`;
 
       for (const tpl of orgTpls) {
         const config = TEMPLATE_KEY_MAP[tpl.template_key];
