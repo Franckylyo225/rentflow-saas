@@ -45,6 +45,7 @@ serve(async (req) => {
     const smsPayload = {
       apiKey: MONSMS_API_KEY,
       companyId: MONSMS_COMPANY_ID,
+      senderId: senderName || "SCIBinieba",
       contacts: [{ phone: recipientPhone }],
       text: message,
       type: "SMS",
