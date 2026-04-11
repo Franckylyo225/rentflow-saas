@@ -27,6 +27,7 @@ export function NotificationsTab() {
   const [recentLogs, setRecentLogs] = useState<any[]>([]);
   const [showLogs, setShowLogs] = useState(false);
   const [testEmail, setTestEmail] = useState("");
+  const [testTemplateKey, setTestTemplateKey] = useState("before_5");
   const [sendingTest, setSendingTest] = useState(false);
 
   useEffect(() => {
@@ -95,7 +96,7 @@ export function NotificationsTab() {
     setSendingTest(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-rent-reminders", {
-        body: { test: true, email: testEmail, organization_id: orgId },
+        body: { test: true, email: testEmail, organization_id: orgId, template_key: testTemplateKey },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -176,20 +177,36 @@ export function NotificationsTab() {
       {/* Test email */}
       <Card className="border-border">
         <CardContent className="p-4">
+          <Label className="text-sm font-medium mb-3 flex items-center gap-2">
+            <TestTube className="h-4 w-4 text-primary" /> Envoyer un email de test
+          </Label>
           <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3">
-            <div className="flex-1 w-full">
-              <Label className="text-sm font-medium mb-1.5 flex items-center gap-2">
-                <TestTube className="h-4 w-4 text-primary" /> Envoyer un email de test
-              </Label>
-              <Input
-                type="email"
-                placeholder="adresse@email.com"
-                value={testEmail}
-                onChange={e => setTestEmail(e.target.value)}
-                className="max-w-sm"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Envoie le premier modèle actif avec des données fictives
+            <div className="flex-1 w-full space-y-2">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  type="email"
+                  placeholder="adresse@email.com"
+                  value={testEmail}
+                  onChange={e => setTestEmail(e.target.value)}
+                  className="max-w-sm"
+                />
+                <select
+                  value={testTemplateKey}
+                  onChange={e => setTestTemplateKey(e.target.value)}
+                  className="h-9 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  {templates.filter(t => t.email_enabled).map(t => {
+                    const config = TIMELINE_ICONS[t.template_key];
+                    return (
+                      <option key={t.id} value={t.template_key}>
+                        {config?.label || t.template_key} — {t.label}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Envoie le modèle sélectionné avec des données fictives
               </p>
             </div>
             <Button
