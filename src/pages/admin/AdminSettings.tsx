@@ -582,7 +582,7 @@ function PlatformTab() {
 /* ------------------------------------------------------------------ */
 function AnnouncementsTab() {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({
+  const emptyForm = {
     message: "",
     link_url: "",
     link_label: "",
@@ -591,7 +591,9 @@ function AnnouncementsTab() {
     is_active: true,
     starts_at: "",
     ends_at: "",
-  });
+  };
+  const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const { data: announcements = [], isLoading } = useQuery({
@@ -606,10 +608,29 @@ function AnnouncementsTab() {
     },
   });
 
-  const handleAdd = async () => {
+  const resetForm = () => {
+    setForm(emptyForm);
+    setEditingId(null);
+  };
+
+  const startEdit = (a: any) => {
+    setEditingId(a.id);
+    setForm({
+      message: a.message,
+      link_url: a.link_url || "",
+      link_label: a.link_label || "",
+      bg_color: a.bg_color,
+      text_color: a.text_color,
+      is_active: a.is_active,
+      starts_at: a.starts_at ? a.starts_at.slice(0, 16) : "",
+      ends_at: a.ends_at ? a.ends_at.slice(0, 16) : "",
+    });
+  };
+
+  const handleSave = async () => {
     if (!form.message.trim()) return toast.error("Le message est requis");
     setSaving(true);
-    const { error } = await supabase.from("announcements").insert({
+    const payload = {
       message: form.message,
       link_url: form.link_url || null,
       link_label: form.link_label || null,
@@ -618,11 +639,16 @@ function AnnouncementsTab() {
       is_active: form.is_active,
       starts_at: form.starts_at || null,
       ends_at: form.ends_at || null,
-    });
+    };
+
+    const { error } = editingId
+      ? await supabase.from("announcements").update(payload).eq("id", editingId)
+      : await supabase.from("announcements").insert(payload);
+
     setSaving(false);
     if (error) return toast.error("Erreur : " + error.message);
-    toast.success("Annonce créée");
-    setForm({ message: "", link_url: "", link_label: "", bg_color: "#7c3aed", text_color: "#ffffff", is_active: true, starts_at: "", ends_at: "" });
+    toast.success(editingId ? "Annonce modifiée" : "Annonce créée");
+    resetForm();
     queryClient.invalidateQueries({ queryKey: ["admin-announcements"] });
   };
 
@@ -633,6 +659,7 @@ function AnnouncementsTab() {
 
   const deleteAnnouncement = async (id: string) => {
     await supabase.from("announcements").delete().eq("id", id);
+    if (editingId === id) resetForm();
     queryClient.invalidateQueries({ queryKey: ["admin-announcements"] });
     toast.success("Annonce supprimée");
   };
@@ -641,10 +668,20 @@ function AnnouncementsTab() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Plus className="h-5 w-5 text-primary" /> Nouvelle annonce
-          </CardTitle>
-          <CardDescription>Affiche un bandeau en haut du site pour les visiteurs</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                {editingId ? <Pencil className="h-5 w-5 text-primary" /> : <Plus className="h-5 w-5 text-primary" />}
+                {editingId ? "Modifier l'annonce" : "Nouvelle annonce"}
+              </CardTitle>
+              <CardDescription>Affiche un bandeau en haut du site pour les visiteurs</CardDescription>
+            </div>
+            {editingId && (
+              <Button variant="outline" size="sm" onClick={resetForm}>
+                <X className="h-4 w-4 mr-1" /> Annuler
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -696,9 +733,9 @@ function AnnouncementsTab() {
             </div>
           )}
 
-          <Button onClick={handleAdd} disabled={saving} className="gap-2">
-            {saving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            Créer l'annonce
+          <Button onClick={handleSave} disabled={saving} className="gap-2">
+            {saving ? <RefreshCw className="h-4 w-4 animate-spin" /> : editingId ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {editingId ? "Sauvegarder" : "Créer l'annonce"}
           </Button>
         </CardContent>
       </Card>
@@ -715,7 +752,7 @@ function AnnouncementsTab() {
           ) : (
             <div className="space-y-3">
               {announcements.map((a: any) => (
-                <div key={a.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
+                <div key={a.id} className={`flex items-center justify-between p-3 rounded-lg border ${editingId === a.id ? "border-primary bg-primary/5" : "border-border"}`}>
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className="h-4 w-4 rounded-full shrink-0" style={{ backgroundColor: a.bg_color }} />
                     <div className="min-w-0">
@@ -731,6 +768,9 @@ function AnnouncementsTab() {
                       {a.is_active ? "Active" : "Inactive"}
                     </Badge>
                     <Switch checked={a.is_active} onCheckedChange={() => toggleActive(a.id, a.is_active)} />
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(a)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteAnnouncement(a.id)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
