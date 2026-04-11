@@ -173,6 +173,39 @@ export function NotificationsTab() {
         </Card>
       )}
 
+      {/* Test email */}
+      <Card className="border-border">
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3">
+            <div className="flex-1 w-full">
+              <Label className="text-sm font-medium mb-1.5 flex items-center gap-2">
+                <TestTube className="h-4 w-4 text-primary" /> Envoyer un email de test
+              </Label>
+              <Input
+                type="email"
+                placeholder="adresse@email.com"
+                value={testEmail}
+                onChange={e => setTestEmail(e.target.value)}
+                className="max-w-sm"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Envoie le premier modèle actif avec des données fictives
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-2 shrink-0"
+              onClick={handleSendTest}
+              disabled={sendingTest || !testEmail}
+            >
+              {sendingTest ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Envoyer le test
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Timeline visual */}
       <Card className="border-border overflow-hidden">
         <CardContent className="p-4">
