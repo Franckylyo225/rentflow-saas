@@ -36,6 +36,7 @@ export default function SettingsPage() {
               <TabsTrigger value="users" className="gap-1.5"><Users className="h-3.5 w-3.5" /> Utilisateurs & Rôles</TabsTrigger>
               <TabsTrigger value="security" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Sécurité</TabsTrigger>
               <TabsTrigger value="subscription" className="gap-1.5"><CreditCard className="h-3.5 w-3.5" /> Abonnement</TabsTrigger>
+              <TabsTrigger value="contracts" className="gap-1.5"><FileText className="h-3.5 w-3.5" /> Modèles de contrats</TabsTrigger>
             </TabsList>
 
             <TabsContent value="general">
@@ -61,6 +62,10 @@ export default function SettingsPage() {
 
             <TabsContent value="subscription">
               <SubscriptionTab />
+            </TabsContent>
+
+            <TabsContent value="contracts">
+              <ContractTemplatesTab />
             </TabsContent>
           </Tabs>
         )}
