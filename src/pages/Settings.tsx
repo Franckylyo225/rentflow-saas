@@ -12,7 +12,8 @@ import { SubscriptionTab } from "@/components/settings/SubscriptionTab";
 
 export default function SettingsPage() {
   const { settings, loading, updateSettings, uploadLogo } = useOrganizationSettings();
-
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get("tab") || "general";
   return (
     <AppLayout>
       <div className="space-y-6">
