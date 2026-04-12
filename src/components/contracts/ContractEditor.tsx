@@ -162,7 +162,7 @@ export function ContractEditor({ content, onChange, editable = true, placeholder
   };
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden bg-background">
+    <div className="border border-border rounded-lg overflow-hidden bg-background contract-editor-root">
       {editable && (
         <div className="flex flex-wrap items-center gap-0.5 p-2 border-b border-border bg-muted/30">
           {/* Text formatting */}
