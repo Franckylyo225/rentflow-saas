@@ -71,6 +71,7 @@ interface ContractEditorProps {
   onChange: (html: string) => void;
   editable?: boolean;
   placeholder?: string;
+  borderless?: boolean;
 }
 
 function ToolbarButton({
@@ -105,7 +106,7 @@ function ToolbarSep() {
   return <div className="w-px h-5 bg-border mx-1" />;
 }
 
-export function ContractEditor({ content, onChange, editable = true, placeholder }: ContractEditorProps) {
+export function ContractEditor({ content, onChange, editable = true, placeholder, borderless = false }: ContractEditorProps) {
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
@@ -162,7 +163,7 @@ export function ContractEditor({ content, onChange, editable = true, placeholder
   };
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden bg-background">
+    <div className={`overflow-hidden bg-background ${borderless ? "" : "border border-border rounded-lg"}`}>
       {editable && (
         <div className="flex flex-wrap items-center gap-0.5 p-2 border-b border-border bg-muted/30">
           {/* Text formatting */}

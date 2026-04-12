@@ -2,16 +2,13 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { FileText, Plus, Pencil, Trash2, Loader2, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ContractEditor } from "@/components/contracts/ContractEditor";
+import { ContractEditorFullscreen } from "@/components/contracts/ContractEditorFullscreen";
 
 interface ContractTemplate {
   id: string;
@@ -27,15 +24,10 @@ export function ContractTemplatesTab() {
   const [templates, setTemplates] = useState<ContractTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingTemplate, setEditingTemplate] = useState<ContractTemplate | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState<ContractTemplate | null>(null);
-
-  // Form state
-  const [formName, setFormName] = useState("");
-  const [formType, setFormType] = useState("individual");
-  const [formContent, setFormContent] = useState("");
 
   useEffect(() => {
     fetchTemplates();
@@ -60,30 +52,23 @@ export function ContractTemplatesTab() {
   function openCreate() {
     setIsCreating(true);
     setEditingTemplate(null);
-    setFormName("");
-    setFormType("individual");
-    setFormContent("");
-    setIsDialogOpen(true);
+    setIsEditorOpen(true);
   }
 
   function openEdit(template: ContractTemplate) {
     setIsCreating(false);
     setEditingTemplate(template);
-    setFormName(template.name);
-    setFormType(template.template_type);
-    setFormContent(template.content);
-    setIsDialogOpen(true);
+    setIsEditorOpen(true);
   }
 
-  async function handleSave() {
-    if (!formName.trim()) {
+  async function handleSave(name: string, type: string, content: string) {
+    if (!name.trim()) {
       toast.error("Le nom du modèle est requis");
       return;
     }
     setSaving(true);
 
     if (isCreating) {
-      // Get org id from existing template or profile
       const { data: profile } = await supabase
         .from("profiles")
         .select("organization_id")
@@ -97,9 +82,9 @@ export function ContractTemplatesTab() {
 
       const { error } = await supabase.from("contract_templates").insert({
         organization_id: profile.organization_id,
-        name: formName,
-        template_type: formType,
-        content: formContent,
+        name,
+        template_type: type,
+        content,
         is_default: false,
       });
 
@@ -108,16 +93,12 @@ export function ContractTemplatesTab() {
       } else {
         toast.success("Modèle créé");
         fetchTemplates();
-        setIsDialogOpen(false);
+        setIsEditorOpen(false);
       }
     } else if (editingTemplate) {
       const { error } = await supabase
         .from("contract_templates")
-        .update({
-          name: formName,
-          template_type: formType,
-          content: formContent,
-        })
+        .update({ name, template_type: type, content })
         .eq("id", editingTemplate.id);
 
       if (error) {
@@ -125,7 +106,7 @@ export function ContractTemplatesTab() {
       } else {
         toast.success("Modèle mis à jour");
         fetchTemplates();
-        setIsDialogOpen(false);
+        setIsEditorOpen(false);
       }
     }
     setSaving(false);
@@ -149,6 +130,21 @@ export function ContractTemplatesTab() {
       toast.success("Modèle supprimé");
       fetchTemplates();
     }
+  }
+
+  // Show fullscreen editor
+  if (isEditorOpen) {
+    return (
+      <ContractEditorFullscreen
+        initialName={editingTemplate?.name || ""}
+        initialType={editingTemplate?.template_type || "individual"}
+        initialContent={editingTemplate?.content || ""}
+        isCreating={isCreating}
+        saving={saving}
+        onSave={handleSave}
+        onBack={() => setIsEditorOpen(false)}
+      />
+    );
   }
 
   return (
@@ -268,57 +264,6 @@ export function ContractTemplatesTab() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Edit/Create Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {isCreating ? "Nouveau modèle de contrat" : "Modifier le modèle"}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Nom du modèle</Label>
-                <Input
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  placeholder="Ex: Contrat de bail résidentiel"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Type de contrat</Label>
-                <Select value={formType} onValueChange={setFormType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="individual">Personne physique</SelectItem>
-                    <SelectItem value="company">Entreprise</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Contenu du modèle</Label>
-              <ContractEditor content={formContent} onChange={setFormContent} />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Annuler
-            </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
-              {isCreating ? "Créer" : "Enregistrer"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Preview Dialog */}
       <Dialog open={!!previewTemplate} onOpenChange={() => setPreviewTemplate(null)}>
