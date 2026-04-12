@@ -537,7 +537,7 @@ export default function Onboarding() {
                     {promoApplied && (
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Réduction promo</span>
-                        <span className="font-semibold text-green-600">
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">
                           -{formatPrice(promoApplied.discount)} FCFA
                         </span>
                       </div>
