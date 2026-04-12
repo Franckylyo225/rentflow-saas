@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { Mail, Lock, User, ArrowRight, UserPlus, ArrowLeft, Phone, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -398,15 +397,16 @@ export default function AuthPage() {
                   onClick={async () => {
                     setGoogleLoading(true);
                     try {
-                      const result = await lovable.auth.signInWithOAuth("google", {
-                        redirect_uri: window.location.origin,
+                      const { error } = await supabase.auth.signInWithOAuth({
+                        provider: "google",
+                        options: {
+                          redirectTo: window.location.origin + "/dashboard",
+                        },
                       });
-                      if (result.error) {
+                      if (error) {
                         toast.error("Erreur de connexion Google");
                         setGoogleLoading(false);
-                        return;
                       }
-                      if (result.redirected) return;
                     } catch {
                       toast.error("Erreur de connexion Google");
                       setGoogleLoading(false);
