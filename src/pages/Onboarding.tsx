@@ -443,14 +443,25 @@ export default function Onboarding() {
                         </ul>
 
                         <div className="mt-4">
-                          <Button
-                            variant={isSelected ? "default" : "outline"}
-                            size="sm"
-                            className="w-full rounded-full"
-                            onClick={(e) => { e.stopPropagation(); setSelectedPlan(plan.slug); }}
-                          >
-                            {isSelected ? "✓ Sélectionné" : "Choisir cette offre"}
-                          </Button>
+                          {isCustom ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full rounded-full"
+                              onClick={(e) => { e.stopPropagation(); window.open("/contact", "_blank"); }}
+                            >
+                              Contactez-nous
+                            </Button>
+                          ) : (
+                            <Button
+                              variant={isSelected ? "default" : "outline"}
+                              size="sm"
+                              className="w-full rounded-full"
+                              onClick={(e) => { e.stopPropagation(); setSelectedPlan(plan.slug); }}
+                            >
+                              {isSelected ? "✓ Sélectionné" : "Choisir cette offre"}
+                            </Button>
+                          )}
                         </div>
                       </div>
                     );
