@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, Save, Loader2, Info, Clock, AlertTriangle, Send, TestTube, Phone, Settings2, Wallet, RefreshCw } from "lucide-react";
+import { MessageSquare, Save, Loader2, Info, Clock, AlertTriangle, Phone, Send, TestTube } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,60 +24,25 @@ export function SmsSettingsTab() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [expandedTemplate, setExpandedTemplate] = useState<string | null>(null);
-  const [senderName, setSenderName] = useState("");
-  const [savingSender, setSavingSender] = useState(false);
   const [orgId, setOrgId] = useState<string | null>(null);
-
-  // Credits state
-  const [creditAvailable, setCreditAvailable] = useState<number | null>(null);
-  const [creditUsed, setCreditUsed] = useState<number | null>(null);
-  const [loadingCredits, setLoadingCredits] = useState(false);
 
   // Test SMS state
   const [testPhone, setTestPhone] = useState("");
   const [testTemplateKey, setTestTemplateKey] = useState("before_5");
   const [sendingTest, setSendingTest] = useState(false);
 
-  const fetchCredits = async () => {
-    setLoadingCredits(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("sms-credits", { body: {} });
-      if (!error && data?.success) {
-        setCreditAvailable(data.creditAvailable);
-        setCreditUsed(data.creditUsed);
-      }
-    } catch {
-      // silently fail
-    } finally {
-      setLoadingCredits(false);
-    }
-  };
-
   useEffect(() => {
     if (!user) return;
 
-    fetchCredits();
-
-    // Load org settings
     supabase
       .from("profiles")
       .select("organization_id")
       .eq("user_id", user.id)
       .single()
       .then(({ data: profile }) => {
-        if (!profile) return;
-        setOrgId(profile.organization_id);
-        supabase
-          .from("organizations")
-          .select("sms_sender_name")
-          .eq("id", profile.organization_id)
-          .single()
-          .then(({ data: org }) => {
-            setSenderName(org?.sms_sender_name || "RentFlow");
-          });
+        if (profile) setOrgId(profile.organization_id);
       });
 
-    // Load templates
     supabase.from("notification_templates").select("*").order("created_at").then(({ data }) => {
       if (data) {
         setTemplates(data);
@@ -89,21 +54,6 @@ export function SmsSettingsTab() {
 
   const updateTemplate = (id: string, field: string, value: string | boolean) => {
     setTemplates(prev => prev.map(t => t.id === id ? { ...t, [field]: value } : t));
-  };
-
-  const handleSaveSender = async () => {
-    if (!orgId) return;
-    setSavingSender(true);
-    const { error } = await supabase
-      .from("organizations")
-      .update({ sms_sender_name: senderName })
-      .eq("id", orgId);
-    setSavingSender(false);
-    if (error) {
-      toast.error("Erreur lors de la sauvegarde");
-    } else {
-      toast.success("Nom d'expéditeur mis à jour");
-    }
   };
 
   const handleSaveTemplates = async () => {
@@ -134,7 +84,6 @@ export function SmsSettingsTab() {
       return;
     }
 
-    // Replace variables with test data
     const testMessage = template.sms_content
       .replace(/\{\{nom\}\}/g, "Jean Dupont")
       .replace(/\{\{montant\}\}/g, "150 000")
@@ -146,6 +95,7 @@ export function SmsSettingsTab() {
         body: {
           to: testPhone,
           message: testMessage,
+          senderName: "RENTFLOW",
           organizationId: orgId,
           recipientName: "Test",
           templateKey: testTemplateKey,
@@ -172,10 +122,13 @@ export function SmsSettingsTab() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <p className="text-sm text-muted-foreground">Configurez les relances automatiques par SMS</p>
+          <p className="text-sm text-muted-foreground">Personnalisez les messages SMS envoyés à vos locataires</p>
           <div className="flex items-center gap-3 mt-2">
             <Badge variant="outline" className="gap-1.5 text-xs font-normal">
               <MessageSquare className="h-3 w-3" /> {enabledSmsCount} SMS actif{enabledSmsCount > 1 ? "s" : ""}
+            </Badge>
+            <Badge variant="secondary" className="gap-1.5 text-xs font-normal">
+              Expéditeur : RENTFLOW
             </Badge>
           </div>
         </div>
@@ -184,131 +137,18 @@ export function SmsSettingsTab() {
         </Button>
       </div>
 
-      {/* Credits card */}
-      <Card className="border-border">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-                <Wallet className="h-4 w-4 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium">Crédits SMS</p>
-                {loadingCredits ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mt-1" />
-                ) : creditAvailable !== null ? (
-                  <div className="flex items-center gap-3 mt-0.5">
-                    <span className={`text-2xl font-bold ${creditAvailable <= 10 ? "text-destructive" : creditAvailable <= 50 ? "text-amber-600" : "text-emerald-600"}`}>
-                      {creditAvailable}
-                    </span>
-                    <span className="text-xs text-muted-foreground">disponibles</span>
-                    {creditUsed !== null && (
-                      <Badge variant="outline" className="text-[10px] font-normal gap-1">
-                        {creditUsed} utilisés
-                      </Badge>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground mt-0.5">Impossible de récupérer le solde</p>
-                )}
-                {creditAvailable !== null && creditAvailable <= 10 && (
-                  <p className="text-xs text-destructive mt-1">⚠️ Solde faible — pensez à recharger vos crédits</p>
-                )}
-              </div>
-            </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fetchCredits} disabled={loadingCredits}>
-              <RefreshCw className={`h-4 w-4 ${loadingCredits ? "animate-spin" : ""}`} />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Sender config */}
-      <Card className="border-border">
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Settings2 className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-base">Expéditeur SMS</CardTitle>
-              <CardDescription>Nom affiché comme expéditeur des SMS (max 11 caractères alphanumériques)</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3">
-            <div className="flex-1 w-full space-y-1">
-              <Label htmlFor="senderName" className="text-sm">Nom de l'expéditeur</Label>
-              <Input
-                id="senderName"
-                value={senderName}
-                onChange={e => setSenderName(e.target.value.slice(0, 11))}
-                placeholder="RentFlow"
-                className="max-w-xs"
-                maxLength={11}
-              />
-              <p className="text-xs text-muted-foreground">{senderName.length}/11 caractères</p>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-2 shrink-0"
-              onClick={handleSaveSender}
-              disabled={savingSender}
-            >
-              {savingSender ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Enregistrer
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Test SMS */}
-      <Card className="border-border">
-        <CardContent className="p-4">
-          <Label className="text-sm font-medium mb-3 flex items-center gap-2">
-            <TestTube className="h-4 w-4 text-primary" /> Envoyer un SMS de test
-          </Label>
-          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3">
-            <div className="flex-1 w-full space-y-2">
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Input
-                  type="tel"
-                  placeholder="0758160904"
-                  value={testPhone}
-                  onChange={e => setTestPhone(e.target.value)}
-                  className="max-w-xs"
-                />
-                <select
-                  value={testTemplateKey}
-                  onChange={e => setTestTemplateKey(e.target.value)}
-                  className="h-9 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  {templates.filter(t => t.sms_enabled).map(t => {
-                    const config = TIMELINE_ICONS[t.template_key];
-                    return (
-                      <option key={t.id} value={t.template_key}>
-                        {config?.label || t.template_key} — {t.label}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Envoie le modèle SMS sélectionné avec des données fictives
-              </p>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-2 shrink-0"
-              onClick={handleSendTest}
-              disabled={sendingTest || !testPhone}
-            >
-              {sendingTest ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Envoyer le test
-            </Button>
+      {/* Variables info */}
+      <Card className="border-border bg-accent/30">
+        <CardContent className="p-4 flex items-start gap-3">
+          <Info className="h-4 w-4 text-accent-foreground mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm text-accent-foreground">
+              <strong>Variables disponibles :</strong>{" "}
+              <code className="text-xs bg-background/50 px-1.5 py-0.5 rounded">{"{{nom}}"}</code>{" "}
+              <code className="text-xs bg-background/50 px-1.5 py-0.5 rounded">{"{{montant}}"}</code>{" "}
+              <code className="text-xs bg-background/50 px-1.5 py-0.5 rounded">{"{{date_echeance}}"}</code>
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Ces variables seront remplacées automatiquement par les données du locataire. Les relances s'arrêtent lorsque le statut passe à "Payé".</p>
           </div>
         </CardContent>
       </Card>
@@ -351,22 +191,6 @@ export function SmsSettingsTab() {
         </CardContent>
       </Card>
 
-      {/* Variables info */}
-      <Card className="border-border bg-accent/30">
-        <CardContent className="p-4 flex items-start gap-3">
-          <Info className="h-4 w-4 text-accent-foreground mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="text-sm text-accent-foreground">
-              <strong>Variables disponibles :</strong>{" "}
-              <code className="text-xs bg-background/50 px-1.5 py-0.5 rounded">{"{{nom}}"}</code>{" "}
-              <code className="text-xs bg-background/50 px-1.5 py-0.5 rounded">{"{{montant}}"}</code>{" "}
-              <code className="text-xs bg-background/50 px-1.5 py-0.5 rounded">{"{{date_echeance}}"}</code>
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">Les relances s'arrêtent automatiquement lorsque le statut passe à "Payé".</p>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Template details */}
       <div className="space-y-4">
         {templates.map(template => {
@@ -388,7 +212,7 @@ export function SmsSettingsTab() {
                       {template.label}
                       <Badge variant="outline" className="text-[10px] font-normal">{config.label}</Badge>
                     </CardTitle>
-                    <CardDescription>Modèle de relance SMS automatique</CardDescription>
+                    <CardDescription>Personnalisez le message envoyé à vos locataires</CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -413,6 +237,55 @@ export function SmsSettingsTab() {
           );
         })}
       </div>
+
+      {/* Test SMS */}
+      <Card className="border-border">
+        <CardContent className="p-4">
+          <Label className="text-sm font-medium mb-3 flex items-center gap-2">
+            <TestTube className="h-4 w-4 text-primary" /> Envoyer un SMS de test
+          </Label>
+          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3">
+            <div className="flex-1 w-full space-y-2">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  type="tel"
+                  placeholder="0758160904"
+                  value={testPhone}
+                  onChange={e => setTestPhone(e.target.value)}
+                  className="max-w-xs"
+                />
+                <select
+                  value={testTemplateKey}
+                  onChange={e => setTestTemplateKey(e.target.value)}
+                  className="h-9 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  {templates.filter(t => t.sms_enabled).map(t => {
+                    const config = TIMELINE_ICONS[t.template_key];
+                    return (
+                      <option key={t.id} value={t.template_key}>
+                        {config?.label || t.template_key} — {t.label}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Envoie le modèle sélectionné avec des données fictives via l'expéditeur RENTFLOW
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-2 shrink-0"
+              onClick={handleSendTest}
+              disabled={sendingTest || !testPhone}
+            >
+              {sendingTest ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Envoyer le test
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* SMS History */}
       <SmsHistoryTable />
