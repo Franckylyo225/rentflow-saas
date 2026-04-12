@@ -51,7 +51,7 @@ const ACTIVITY_TYPES = [
 const STEPS = [
   { label: "Votre activité", icon: Briefcase },
   { label: "Votre plan", icon: Rocket },
-  { label: "Code promo", icon: Gift },
+  { label: "Facturation", icon: CreditCard },
   { label: "C'est parti !", icon: Check },
 ];
 
@@ -486,10 +486,10 @@ export default function Onboarding() {
             </motion.div>
           )}
 
-          {/* Step 2: Promo code */}
+          {/* Step 2: Billing / Payment */}
           {step === 2 && (
             <motion.div
-              key="promo"
+              key="billing"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
@@ -498,19 +498,82 @@ export default function Onboarding() {
             >
               <div className="text-center space-y-3">
                 <div className="mx-auto h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                  <Gift className="h-8 w-8 text-primary" />
+                  <CreditCard className="h-8 w-8 text-primary" />
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-                  Avez-vous un code promo ?
+                  Récapitulatif & facturation
                 </h2>
                 <p className="text-muted-foreground text-sm">
-                  Entrez votre code pour activer un essai gratuit prolongé.
+                  Vérifiez votre formule. Le paiement sera activé prochainement.
                 </p>
               </div>
 
-              {/* Promo input */}
+              {/* Plan recap card */}
+              {selectedPlanData && (
+                <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Formule sélectionnée</p>
+                      <p className="text-lg font-bold text-foreground">{selectedPlanData.name}</p>
+                    </div>
+                    <Badge variant="secondary" className="gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      Essai gratuit
+                    </Badge>
+                  </div>
+
+                  <div className="h-px bg-border" />
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Abonnement mensuel</span>
+                      <span className="font-semibold text-foreground">
+                        {selectedPlanData.price_monthly > 0
+                          ? `${formatPrice(selectedPlanData.price_monthly)} FCFA`
+                          : "Sur mesure"}
+                      </span>
+                    </div>
+
+                    {promoApplied && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Réduction promo</span>
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                          -{formatPrice(promoApplied.discount)} FCFA
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="h-px bg-border" />
+
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium text-foreground">Total après essai</span>
+                      <span className="font-bold text-foreground">
+                        {promoApplied
+                          ? `${formatPrice(promoApplied.final_price)} FCFA`
+                          : selectedPlanData.price_monthly > 0
+                          ? `${formatPrice(selectedPlanData.price_monthly)} FCFA`
+                          : "Sur mesure"}
+                        <span className="text-muted-foreground font-normal">/mois</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs text-primary bg-primary/5 rounded-lg px-3 py-2">
+                    <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      {promoApplied ? "30 jours d'essai gratuit activés" : "7 jours d'essai gratuit inclus"}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Promo code section */}
               {organization && selectedPlanData && (
-                <div className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <Gift className="h-4 w-4 text-primary" />
+                    Code promo
+                  </div>
                   <PromoCodeInput
                     organizationId={organization.id}
                     planSlug={selectedPlan}
@@ -518,27 +581,13 @@ export default function Onboarding() {
                     onApplied={(r) => setPromoApplied({ discount: r.discount!, final_price: r.final_price! })}
                     onRemoved={() => setPromoApplied(null)}
                   />
-
-                  {promoApplied && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="rounded-2xl bg-primary/5 border border-primary/20 p-5 text-center space-y-2"
-                    >
-                      <span className="text-3xl">🎉</span>
-                      <p className="font-bold text-foreground text-lg">Essai gratuit activé !</p>
-                      <p className="text-sm text-muted-foreground">
-                        Profitez de 30 jours d'accès complet sans aucun paiement.
-                      </p>
-                    </motion.div>
-                  )}
                 </div>
               )}
 
-              {/* No credit card */}
-              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                <CreditCard className="h-3.5 w-3.5" />
-                <span>Aucune carte bancaire requise</span>
+              {/* Payment note */}
+              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-4 py-3">
+                <CreditCard className="h-3.5 w-3.5 shrink-0" />
+                <span>Aucun paiement requis pour démarrer. Le paiement en ligne sera disponible très bientôt.</span>
               </div>
 
               <div className="flex justify-between">
@@ -550,7 +599,7 @@ export default function Onboarding() {
                   className="rounded-full gap-2 font-semibold"
                   onClick={handlePromoStep}
                 >
-                  {promoApplied ? "Continuer" : "Passer cette étape"} <ArrowRight className="h-4 w-4" />
+                  Continuer <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
             </motion.div>
