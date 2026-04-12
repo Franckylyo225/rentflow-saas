@@ -95,6 +95,7 @@ const Pricing = () => {
               {plans.map((plan) => {
                 const isComingSoon = plan.status === "coming_soon";
                 const isActive = plan.status === "active";
+                const isCustom = plan.price_monthly === 0 && plan.max_properties === null;
 
                 return (
                   <StaggerItem key={plan.slug}>
@@ -126,10 +127,16 @@ const Pricing = () => {
                       </div>
 
                       <div className="mb-8">
-                        <span className="text-4xl font-extrabold text-foreground tracking-tight">
-                          {formatPrice(plan.price_monthly)}
-                        </span>
-                        <span className="text-muted-foreground ml-1 text-sm">FCFA/mois</span>
+                        {isCustom ? (
+                          <span className="text-4xl font-extrabold text-foreground tracking-tight">Sur mesure</span>
+                        ) : (
+                          <>
+                            <span className="text-4xl font-extrabold text-foreground tracking-tight">
+                              {formatPrice(plan.price_monthly)}
+                            </span>
+                            <span className="text-muted-foreground ml-1 text-sm">FCFA/mois</span>
+                          </>
+                        )}
                       </div>
 
                       <ul className="space-y-3.5 mb-8 flex-1">
@@ -143,10 +150,17 @@ const Pricing = () => {
                         ))}
                       </ul>
 
-                      {isActive ? (
+                      {isActive && !isCustom ? (
                         <Button className="w-full rounded-full font-semibold gap-2" variant="default" size="lg" asChild>
                           <Link to="/auth">
                             {plan.cta_label || "Commencer gratuitement"}
+                            <ArrowRight className="h-3.5 w-3.5" />
+                          </Link>
+                        </Button>
+                      ) : isCustom ? (
+                        <Button className="w-full rounded-full font-semibold gap-2" variant="outline" size="lg" asChild>
+                          <Link to="/contact">
+                            {plan.cta_label || "Contactez-nous"}
                             <ArrowRight className="h-3.5 w-3.5" />
                           </Link>
                         </Button>
