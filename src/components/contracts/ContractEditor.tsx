@@ -71,6 +71,7 @@ interface ContractEditorProps {
   onChange: (html: string) => void;
   editable?: boolean;
   placeholder?: string;
+  borderless?: boolean;
 }
 
 function ToolbarButton({
