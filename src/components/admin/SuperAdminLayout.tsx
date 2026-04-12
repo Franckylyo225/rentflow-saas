@@ -13,7 +13,6 @@ import {
   Settings,
   Layers,
   Receipt,
-  MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -42,7 +41,6 @@ const NAV_ITEMS = [
   { label: "Codes Promo", href: "/admin/promo-codes", icon: Settings },
   { label: "Super Admins", href: "/admin/admins", icon: Users },
   { label: "Utilisateurs", href: "/admin/users", icon: UserCheck },
-  { label: "SMS", href: "/admin/sms", icon: MessageSquare },
   { label: "Paramètres", href: "/admin/settings", icon: Settings },
 ];
 
