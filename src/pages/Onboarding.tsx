@@ -175,6 +175,7 @@ export default function Onboarding() {
     if (error) {
       toast.error("Erreur lors de la finalisation");
     } else {
+      await refetch();
       navigate("/dashboard", { replace: true });
     }
     setSaving(false);
