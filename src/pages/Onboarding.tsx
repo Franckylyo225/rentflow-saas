@@ -62,7 +62,7 @@ function formatPrice(price: number) {
 export default function Onboarding() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile, organization, role, loading: profileLoading } = useProfile();
+  const { profile, organization, role, loading: profileLoading, refetch } = useProfile();
 
   const [step, setStep] = useState(0);
   const [plans, setPlans] = useState<Plan[]>([]);
