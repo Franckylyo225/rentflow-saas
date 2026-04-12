@@ -16,11 +16,13 @@ import {
   Mail, Key, Globe, Shield, Bell, Database, Server,
   CheckCircle2, Send, RefreshCw, Save, Settings2,
   Pencil, Eye, X, Code, ToggleLeft, Megaphone, Plus, Trash2,
+  MessageSquare,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { SmsSettingsTab } from "@/components/settings/SmsSettingsTab";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                             */
@@ -811,12 +813,16 @@ export default function AdminSettings() {
             <TabsTrigger value="platform" className="gap-1.5">
               <Settings2 className="h-3.5 w-3.5" /> Plateforme
             </TabsTrigger>
+            <TabsTrigger value="sms" className="gap-1.5">
+              <MessageSquare className="h-3.5 w-3.5" /> SMS
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="emails"><EmailTab /></TabsContent>
           <TabsContent value="api"><ApiTab /></TabsContent>
           <TabsContent value="announcements"><AnnouncementsTab /></TabsContent>
           <TabsContent value="platform"><PlatformTab /></TabsContent>
+          <TabsContent value="sms"><SmsSettingsTab /></TabsContent>
         </Tabs>
       </div>
     </SuperAdminLayout>
