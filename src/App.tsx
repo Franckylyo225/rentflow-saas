@@ -47,6 +47,7 @@ import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import LegalNotice from "./pages/legal/LegalNotice";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
+import Help from "./pages/Help";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,7 @@ const App = () => (
               <Route path="/employees" element={<ProtectedRoute><FeatureGate featureKey="employees"><Employees /></FeatureGate></ProtectedRoute>} />
               <Route path="/financial-reports" element={<ProtectedRoute><FeatureGate featureKey="reports"><FinancialReports /></FeatureGate></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+              <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 
               {/* Super Admin routes — separate auth */}
