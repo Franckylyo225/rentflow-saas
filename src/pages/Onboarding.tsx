@@ -51,7 +51,7 @@ const ACTIVITY_TYPES = [
 const STEPS = [
   { label: "Votre activité", icon: Briefcase },
   { label: "Votre plan", icon: Rocket },
-  { label: "Code promo", icon: Gift },
+  { label: "Facturation", icon: CreditCard },
   { label: "C'est parti !", icon: Check },
 ];
 
