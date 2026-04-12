@@ -106,7 +106,7 @@ function ToolbarSep() {
   return <div className="w-px h-5 bg-border mx-1" />;
 }
 
-export function ContractEditor({ content, onChange, editable = true, placeholder }: ContractEditorProps) {
+export function ContractEditor({ content, onChange, editable = true, placeholder, borderless = false }: ContractEditorProps) {
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
