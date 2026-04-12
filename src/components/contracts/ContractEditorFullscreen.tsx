@@ -103,7 +103,7 @@ export function ContractEditorFullscreen({
               transformOrigin: "top center",
             }}
           >
-            <ContractEditor content={content} onChange={setContent} />
+            <ContractEditor content={content} onChange={setContent} borderless />
           </div>
         </div>
       </div>
