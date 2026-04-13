@@ -196,14 +196,14 @@ export default function Tenants() {
       for (let i = 0; i < advanceMonths; i++) {
         const paymentDate = new Date(leaseStart);
         paymentDate.setMonth(paymentDate.getMonth() + i);
-        const monthLabel = paymentDate.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
         const dueDate = new Date(paymentDate.getFullYear(), paymentDate.getMonth(), 5);
+        const monthISO = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, '0')}`;
         rentPayments.push({
           tenant_id: newTenant.id,
           amount: unit.rent,
           paid_amount: unit.rent,
           due_date: dueDate.toISOString().split("T")[0],
-          month: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1),
+          month: monthISO,
           status: "paid" as const,
         });
       }
