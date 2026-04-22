@@ -188,17 +188,24 @@ export default function Tenants() {
     if (tenantError || !newTenant) { toast.error("Erreur : " + (tenantError?.message || "Locataire non créé")); setSaving(false); return; }
     await supabase.from("units").update({ status: "occupied" as const }).eq("id", form.unit_id);
 
-    // Générer les échéances pour les mois d'avance et les marquer comme payés.
-    // IMPORTANT : les échéances commencent au MOIS D'AJOUT du locataire (mois courant),
-    // pas au lease_start. On suppose que les loyers antérieurs ont déjà été encaissés
-    // par l'agence hors de la plateforme.
+    // Génération des échéances d'avance :
+    // - NOUVEAU bail (lease_start dans le mois courant ou futur) :
+    //   on enregistre les mois d'avance comme déjà payés à partir du lease_start.
+    // - Bail DÉJÀ EN COURS (lease_start avant le mois courant) :
+    //   on suppose que les avances ont déjà été encaissées hors plateforme,
+    //   on ne crée AUCUNE échéance passée. Le suivi commence au mois courant
+    //   via la génération automatique des loyers.
     const advanceMonths = parseInt(form.advance_months) || 0;
-    if (advanceMonths > 0) {
-      const today = new Date();
-      const startMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const today = new Date();
+    const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const leaseStartDate = new Date(form.lease_start);
+    const leaseStartMonth = new Date(leaseStartDate.getFullYear(), leaseStartDate.getMonth(), 1);
+    const isNewLease = leaseStartMonth.getTime() >= currentMonthStart.getTime();
+
+    if (advanceMonths > 0 && isNewLease) {
       const rentPayments = [];
       for (let i = 0; i < advanceMonths; i++) {
-        const paymentDate = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1);
+        const paymentDate = new Date(leaseStartMonth.getFullYear(), leaseStartMonth.getMonth() + i, 1);
         const dueDate = new Date(paymentDate.getFullYear(), paymentDate.getMonth(), 5);
         const monthISO = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, '0')}`;
         rentPayments.push({
