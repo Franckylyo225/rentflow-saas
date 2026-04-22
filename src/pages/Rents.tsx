@@ -86,11 +86,23 @@ export default function Rents() {
     return true;
   });
 
-  const totalDue = payments.reduce((s, r) => s + r.amount, 0);
-  const totalPaid = payments.reduce((s, r) => s + r.paid_amount, 0);
+  // Stats are based on the selected month filter
+  const statsBase = useMemo(
+    () => (monthFilter === "all" ? paymentsWithEscalation : paymentsWithEscalation.filter(p => p.month === monthFilter)),
+    [paymentsWithEscalation, monthFilter]
+  );
+  const totalDue = statsBase.reduce((s, r) => s + r.amount, 0);
+  const totalPaid = statsBase.reduce((s, r) => s + r.paid_amount, 0);
   const totalUnpaid = totalDue - totalPaid;
-  const lateCount = paymentsWithEscalation.filter(r => r.escalation.level !== "none").length;
-  const criticalCount = paymentsWithEscalation.filter(r => r.escalation.level === "critical").length;
+  const lateCount = statsBase.filter(r => r.escalation.level !== "none").length;
+  const criticalCount = statsBase.filter(r => r.escalation.level === "critical").length;
+
+  const formatMonthLabel = (m: string) => {
+    if (/^\d{4}-\d{2}$/.test(m)) {
+      return new Date(m + "-01").toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+    }
+    return m;
+  };
 
   const openPayment = (payment: any) => {
     if (expired) {
@@ -225,8 +237,22 @@ export default function Rents() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground tracking-tight">Gestion des loyers</h1>
-            <p className="text-muted-foreground text-sm mt-1">Suivi des paiements, escalade et impayés</p>
+            <p className="text-muted-foreground text-sm mt-1">
+              Suivi des paiements, escalade et impayés
+              {monthFilter !== "all" && <span className="ml-1">· {formatMonthLabel(monthFilter)}</span>}
+            </p>
           </div>
+          <Select value={monthFilter} onValueChange={setMonthFilter}>
+            <SelectTrigger className="w-full sm:w-56">
+              <SelectValue placeholder="Toutes les périodes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les périodes</SelectItem>
+              {availableMonths.map(m => (
+                <SelectItem key={m} value={m}>{formatMonthLabel(m)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -250,13 +276,6 @@ export default function Rents() {
 
           <TabsContent value="payments" className="space-y-4 mt-4">
             <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
-              <Select value={monthFilter} onValueChange={setMonthFilter}>
-                <SelectTrigger className="w-44"><SelectValue placeholder="Tous les mois" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les mois</SelectItem>
-                  {availableMonths.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                </SelectContent>
-              </Select>
               <Select value={cityFilter} onValueChange={setCityFilter}>
                 <SelectTrigger className="w-44"><SelectValue placeholder="Toutes les villes" /></SelectTrigger>
                 <SelectContent>
