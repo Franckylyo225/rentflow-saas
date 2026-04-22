@@ -8,6 +8,7 @@ import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { Building2, Users, AlertTriangle, TrendingUp, Home, Loader2, Wallet, TrendingDown, ChevronLeft, ChevronRight, Calendar, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { useProperties, useUnits, useTenants, useRentPayments } from "@/hooks/useData";
 import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
+import { GuidedTour } from "@/components/onboarding/GuidedTour";
 import { useExpenses } from "@/hooks/useExpenses";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -499,6 +500,8 @@ export default function Dashboard() {
           </>
         )}
       </div>
+      {/* Tour guidé interactif — auto-affiché tant que la prise en main n'est pas terminée */}
+      <GuidedTour />
     </AppLayout>
   );
 }

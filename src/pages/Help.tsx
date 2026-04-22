@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Search, Building2, Users, CreditCard, FileText, Settings, BarChart3,
-  ChevronRight, BookOpen, Landmark, Receipt, Bell, Shield, HelpCircle,
+  ChevronRight, BookOpen, Landmark, Receipt, Bell, Shield, HelpCircle, Sparkles, ArrowRight,
 } from "lucide-react";
+import { GuidedTour } from "@/components/onboarding/GuidedTour";
+import { Button } from "@/components/ui/button";
 
 interface Article {
   id: string;
@@ -226,6 +228,7 @@ export default function Help() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   const [openArticle, setOpenArticle] = useState<string | null>(null);
+  const [tourOpen, setTourOpen] = useState(false);
 
   const filtered = useMemo(() => {
     return ARTICLES.filter((a) => {
@@ -250,6 +253,22 @@ export default function Help() {
           <p className="text-muted-foreground text-sm">
             Retrouvez des guides pas-à-pas pour utiliser toutes les fonctionnalités de RentFlow.
           </p>
+        </div>
+
+        {/* CTA Tour guidé */}
+        <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="h-12 w-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+            <Sparkles className="h-6 w-6 text-primary" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-base font-semibold text-foreground">Nouveau sur RentFlow ?</h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Lancez le tour guidé pour configurer la plateforme étape par étape : bien, unités, locataire, loyers…
+            </p>
+          </div>
+          <Button onClick={() => setTourOpen(true)} className="gap-2 shrink-0 self-stretch sm:self-auto">
+            Démarrer le tour <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
 
         {/* Search */}
@@ -346,6 +365,7 @@ export default function Help() {
           })}
         </div>
       </div>
+      <GuidedTour open={tourOpen} onOpenChange={setTourOpen} />
     </AppLayout>
   );
 }
