@@ -276,13 +276,6 @@ export default function Rents() {
 
           <TabsContent value="payments" className="space-y-4 mt-4">
             <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
-              <Select value={monthFilter} onValueChange={setMonthFilter}>
-                <SelectTrigger className="w-44"><SelectValue placeholder="Tous les mois" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les mois</SelectItem>
-                  {availableMonths.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                </SelectContent>
-              </Select>
               <Select value={cityFilter} onValueChange={setCityFilter}>
                 <SelectTrigger className="w-44"><SelectValue placeholder="Toutes les villes" /></SelectTrigger>
                 <SelectContent>
