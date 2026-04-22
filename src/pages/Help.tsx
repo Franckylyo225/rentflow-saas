@@ -228,6 +228,7 @@ export default function Help() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   const [openArticle, setOpenArticle] = useState<string | null>(null);
+  const [tourOpen, setTourOpen] = useState(false);
 
   const filtered = useMemo(() => {
     return ARTICLES.filter((a) => {
