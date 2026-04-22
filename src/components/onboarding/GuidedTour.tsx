@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Building2, DoorOpen, Users, Receipt, FileText, BarChart3,
-  Check, ArrowRight, ArrowLeft, X, Sparkles, Rocket,
+  Check, ArrowRight, ArrowLeft, X, Sparkles, Rocket, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { useProperties, useUnits, useTenants, useRentPayments } from "@/hooks/useData";
+import { cn } from "@/lib/utils";
 
 interface TourStep {
   id: string;
@@ -18,7 +18,7 @@ interface TourStep {
   tips: string[];
   cta: string;
   route: string;
-  routeAction?: string; // ?action=new pour pré-ouvrir
+  routeAction?: string;
   isComplete: (ctx: TourContext) => boolean;
 }
 
@@ -100,7 +100,7 @@ const STEPS: TourStep[] = [
     ],
     cta: "Voir mes locataires",
     route: "/tenants",
-    isComplete: (c) => c.tenantsCount > 0, // proxy : disponible dès qu'il y a un locataire
+    isComplete: (c) => c.tenantsCount > 0,
   },
   {
     id: "dashboard",
@@ -120,6 +120,7 @@ const STEPS: TourStep[] = [
 ];
 
 const STORAGE_KEY = "rentflow_tour_dismissed";
+const COLLAPSED_KEY = "rentflow_tour_collapsed";
 
 interface GuidedTourProps {
   /** Force l'ouverture (ignore le flag de dismiss) */
@@ -147,7 +148,6 @@ export function GuidedTour({ open: controlledOpen, onOpenChange }: GuidedTourPro
   const completedCount = STEPS.filter((s) => s.isComplete(ctx)).length;
   const allDone = completedCount === STEPS.length;
 
-  // Auto-positionner sur la première étape non terminée
   const firstIncompleteIdx = useMemo(() => {
     const idx = STEPS.findIndex((s) => !s.isComplete(ctx));
     return idx === -1 ? 0 : idx;
@@ -155,6 +155,10 @@ export function GuidedTour({ open: controlledOpen, onOpenChange }: GuidedTourPro
 
   const [internalOpen, setInternalOpen] = useState(false);
   const [stepIdx, setStepIdx] = useState(firstIncompleteIdx);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(COLLAPSED_KEY) === "1";
+  });
 
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
@@ -163,7 +167,6 @@ export function GuidedTour({ open: controlledOpen, onOpenChange }: GuidedTourPro
     else setInternalOpen(v);
   };
 
-  // Auto-ouverture : tant que la checklist n'est pas complète et que l'utilisateur ne l'a pas fermée manuellement
   useEffect(() => {
     if (isControlled) return;
     if (allDone) return;
@@ -171,12 +174,22 @@ export function GuidedTour({ open: controlledOpen, onOpenChange }: GuidedTourPro
     if (!dismissed) setInternalOpen(true);
   }, [allDone, isControlled]);
 
-  // Si l'utilisateur progresse, on avance automatiquement à l'étape suivante non terminée
   useEffect(() => {
     setStepIdx(firstIncompleteIdx);
   }, [firstIncompleteIdx]);
 
+  const toggleCollapsed = () => {
+    setCollapsed((c) => {
+      const next = !c;
+      if (typeof window !== "undefined") {
+        localStorage.setItem(COLLAPSED_KEY, next ? "1" : "0");
+      }
+      return next;
+    });
+  };
+
   if (allDone && !isControlled) return null;
+  if (!open) return null;
 
   const current = STEPS[stepIdx];
   const Icon = current.icon;
@@ -184,7 +197,6 @@ export function GuidedTour({ open: controlledOpen, onOpenChange }: GuidedTourPro
 
   const handleAction = () => {
     const path = current.routeAction ? `${current.route}?action=${current.routeAction}` : current.route;
-    setOpen(false);
     navigate(path);
   };
 
@@ -193,145 +205,188 @@ export function GuidedTour({ open: controlledOpen, onOpenChange }: GuidedTourPro
     setOpen(false);
   };
 
-  const handleSkipForNow = () => {
-    if (!isControlled) localStorage.setItem(STORAGE_KEY, "1");
-    setOpen(false);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : handleClose())}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden gap-0">
-        {/* Header avec progression */}
-        <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-transparent px-6 pt-6 pb-4 border-b">
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 20, scale: 0.95 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+        className={cn(
+          "fixed z-40 bg-card border border-border rounded-xl shadow-2xl overflow-hidden",
+          "bottom-4 right-4",
+          "w-[calc(100vw-2rem)] sm:w-96 max-w-sm",
+        )}
+        role="dialog"
+        aria-label="Aide à la prise en main"
+      >
+        {/* Header (toujours visible) */}
+        <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-b border-border">
+          <div className="h-7 w-7 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+          </div>
+          <button
+            onClick={toggleCollapsed}
+            className="flex-1 min-w-0 text-left"
+            aria-label={collapsed ? "Développer" : "Réduire"}
+          >
+            <p className="text-sm font-semibold text-foreground truncate">Prise en main</p>
+            <p className="text-[11px] text-muted-foreground">
+              {completedCount}/{STEPS.length} étapes · {progressPct}%
+            </p>
+          </button>
+          <button
+            onClick={toggleCollapsed}
+            className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+            aria-label={collapsed ? "Développer" : "Réduire"}
+          >
+            {collapsed ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+            className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
             aria-label="Fermer"
           >
-            <X className="h-4 w-4" />
+            <X className="h-3.5 w-3.5" />
           </button>
-          <div className="flex items-center gap-2 mb-3">
-            <div className="h-8 w-8 rounded-lg bg-primary/15 flex items-center justify-center">
-              <Sparkles className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-base font-semibold text-foreground">Prise en main de RentFlow</h2>
-              <p className="text-xs text-muted-foreground">
-                Étape {stepIdx + 1} sur {STEPS.length} · {completedCount}/{STEPS.length} terminée{completedCount > 1 ? "s" : ""}
-              </p>
-            </div>
-          </div>
-          <Progress value={progressPct} className="h-1.5" />
-          {/* Step dots */}
-          <div className="flex items-center gap-1.5 mt-3">
-            {STEPS.map((s, i) => {
-              const done = s.isComplete(ctx);
-              const active = i === stepIdx;
-              return (
-                <button
-                  key={s.id}
-                  onClick={() => setStepIdx(i)}
-                  className={`h-1.5 rounded-full transition-all ${
-                    active ? "w-8 bg-primary" : done ? "w-4 bg-primary/50" : "w-4 bg-muted"
-                  }`}
-                  aria-label={`Aller à l'étape ${i + 1}`}
-                />
-              );
-            })}
-          </div>
         </div>
 
-        {/* Contenu de l'étape */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={current.id}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.25 }}
-            className="px-6 py-6 space-y-5"
-          >
-            <div className="flex items-start gap-4">
-              <div
-                className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${
-                  current.isComplete(ctx)
-                    ? "bg-success/15 text-success"
-                    : "bg-primary/10 text-primary"
-                }`}
-              >
-                {current.isComplete(ctx) ? <Check className="h-6 w-6" /> : <Icon className="h-6 w-6" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-bold text-foreground tracking-tight">{current.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{current.description}</p>
-              </div>
-            </div>
+        {/* Progress bar fine sous le header */}
+        <div className="h-1 bg-muted">
+          <div
+            className="h-full bg-primary transition-all duration-500"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
 
-            <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2.5">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Comment faire</p>
-              <ul className="space-y-2">
-                {current.tips.map((tip, i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-sm text-foreground">
-                    <div className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
-                      {i + 1}
+        {/* Contenu (collapsable) */}
+        <AnimatePresence initial={false}>
+          {!collapsed && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              {/* Step dots */}
+              <div className="flex items-center gap-1 px-4 pt-3">
+                {STEPS.map((s, i) => {
+                  const done = s.isComplete(ctx);
+                  const active = i === stepIdx;
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => setStepIdx(i)}
+                      className={cn(
+                        "h-1 rounded-full transition-all flex-1",
+                        active ? "bg-primary" : done ? "bg-primary/40" : "bg-muted"
+                      )}
+                      aria-label={`Étape ${i + 1}`}
+                    />
+                  );
+                })}
+              </div>
+
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={current.id}
+                  initial={{ opacity: 0, x: 12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -12 }}
+                  transition={{ duration: 0.18 }}
+                  className="px-4 py-4 space-y-3"
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={cn(
+                        "h-9 w-9 rounded-lg flex items-center justify-center shrink-0",
+                        current.isComplete(ctx)
+                          ? "bg-success/15 text-success"
+                          : "bg-primary/10 text-primary"
+                      )}
+                    >
+                      {current.isComplete(ctx) ? (
+                        <Check className="h-4.5 w-4.5" />
+                      ) : (
+                        <Icon className="h-4.5 w-4.5" />
+                      )}
                     </div>
-                    <span>{tip}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                        Étape {stepIdx + 1}/{STEPS.length}
+                      </p>
+                      <h3 className="text-sm font-bold text-foreground leading-tight">
+                        {current.title}
+                      </h3>
+                    </div>
+                  </div>
 
-            {current.isComplete(ctx) && (
-              <div className="flex items-center gap-2 text-sm text-success bg-success/10 px-3 py-2 rounded-lg">
-                <Check className="h-4 w-4" />
-                <span>Étape déjà terminée — vous pouvez passer à la suivante.</span>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {current.description}
+                  </p>
+
+                  <ul className="space-y-1.5 rounded-lg bg-muted/40 border border-border p-2.5">
+                    {current.tips.slice(0, 3).map((tip, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs text-foreground">
+                        <div className="h-4 w-4 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">
+                          {i + 1}
+                        </div>
+                        <span className="leading-snug">{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {current.isComplete(ctx) && (
+                    <div className="flex items-center gap-1.5 text-xs text-success bg-success/10 px-2 py-1.5 rounded-md">
+                      <Check className="h-3 w-3" />
+                      <span>Étape terminée</span>
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Footer */}
+              <div className="px-4 py-3 border-t border-border bg-muted/20 flex items-center justify-between gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setStepIdx((i) => Math.max(0, i - 1))}
+                  disabled={stepIdx === 0}
+                  className="h-7 px-2 text-xs"
+                >
+                  <ArrowLeft className="h-3 w-3" />
+                </Button>
+
+                <div className="flex items-center gap-1.5">
+                  {stepIdx < STEPS.length - 1 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setStepIdx((i) => Math.min(STEPS.length - 1, i + 1))}
+                      className="h-7 px-2 text-xs"
+                    >
+                      Suivant
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    onClick={allDone ? handleClose : handleAction}
+                    className="h-7 px-2.5 text-xs gap-1"
+                  >
+                    {allDone ? (
+                      <>Terminer <Rocket className="h-3 w-3" /></>
+                    ) : (
+                      <>{current.cta} <ArrowRight className="h-3 w-3" /></>
+                    )}
+                  </Button>
+                </div>
               </div>
-            )}
-          </motion.div>
+            </motion.div>
+          )}
         </AnimatePresence>
-
-        {/* Footer */}
-        <div className="px-6 py-4 border-t bg-muted/20 flex items-center justify-between gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setStepIdx((i) => Math.max(0, i - 1))}
-            disabled={stepIdx === 0}
-            className="gap-1.5"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" /> Précédent
-          </Button>
-
-          <button
-            onClick={handleSkipForNow}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
-          >
-            Plus tard
-          </button>
-
-          <div className="flex items-center gap-2">
-            {stepIdx < STEPS.length - 1 ? (
-              <>
-                <Button variant="outline" size="sm" onClick={() => setStepIdx((i) => Math.min(STEPS.length - 1, i + 1))}>
-                  Étape suivante
-                </Button>
-                <Button size="sm" onClick={handleAction} className="gap-1.5">
-                  {current.cta} <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              </>
-            ) : (
-              <Button size="sm" onClick={allDone ? handleClose : handleAction} className="gap-1.5">
-                {allDone ? (
-                  <>Terminer <Rocket className="h-3.5 w-3.5" /></>
-                ) : (
-                  <>{current.cta} <ArrowRight className="h-3.5 w-3.5" /></>
-                )}
-              </Button>
-            )}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
@@ -343,6 +398,7 @@ export function GuidedTourTrigger({ children }: { children?: React.ReactNode }) 
       <button
         onClick={() => {
           localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(COLLAPSED_KEY);
           setOpen(true);
         }}
         className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
