@@ -188,35 +188,15 @@ export default function Tenants() {
     if (tenantError || !newTenant) { toast.error("Erreur : " + (tenantError?.message || "Locataire non créé")); setSaving(false); return; }
     await supabase.from("units").update({ status: "occupied" as const }).eq("id", form.unit_id);
 
-    // Génération des échéances d'avance :
-    // - NOUVEAU bail (lease_start dans le mois courant ou futur) :
-    //   on enregistre les mois d'avance comme déjà payés à partir du lease_start.
-    // - Bail DÉJÀ EN COURS (lease_start avant le mois courant) :
-    //   on suppose que les avances ont déjà été encaissées hors plateforme,
-    //   on ne crée AUCUNE échéance passée. Le suivi commence au mois courant
-    //   via la génération automatique des loyers.
+    // Génération des échéances d'avance — voir src/lib/advancePayments.ts
     const advanceMonths = parseInt(form.advance_months) || 0;
-    const today = new Date();
-    const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-    const leaseStartDate = new Date(form.lease_start);
-    const leaseStartMonth = new Date(leaseStartDate.getFullYear(), leaseStartDate.getMonth(), 1);
-    const isNewLease = leaseStartMonth.getTime() >= currentMonthStart.getTime();
-
-    if (advanceMonths > 0 && isNewLease) {
-      const rentPayments = [];
-      for (let i = 0; i < advanceMonths; i++) {
-        const paymentDate = new Date(leaseStartMonth.getFullYear(), leaseStartMonth.getMonth() + i, 1);
-        const dueDate = new Date(paymentDate.getFullYear(), paymentDate.getMonth(), 5);
-        const monthISO = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, '0')}`;
-        rentPayments.push({
-          tenant_id: newTenant.id,
-          amount: unit.rent,
-          paid_amount: unit.rent,
-          due_date: dueDate.toISOString().split("T")[0],
-          month: monthISO,
-          status: "paid" as const,
-        });
-      }
+    const rentPayments = buildAdvancePayments({
+      tenantId: newTenant.id,
+      unitRent: unit.rent,
+      leaseStart: form.lease_start,
+      advanceMonths,
+    });
+    if (rentPayments.length > 0) {
       const { error: rpError } = await supabase.from("rent_payments").insert(rentPayments);
       if (rpError) {
         console.error("Erreur création paiements d'avance:", rpError);
