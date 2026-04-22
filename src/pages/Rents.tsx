@@ -86,11 +86,23 @@ export default function Rents() {
     return true;
   });
 
-  const totalDue = payments.reduce((s, r) => s + r.amount, 0);
-  const totalPaid = payments.reduce((s, r) => s + r.paid_amount, 0);
+  // Stats are based on the selected month filter
+  const statsBase = useMemo(
+    () => (monthFilter === "all" ? paymentsWithEscalation : paymentsWithEscalation.filter(p => p.month === monthFilter)),
+    [paymentsWithEscalation, monthFilter]
+  );
+  const totalDue = statsBase.reduce((s, r) => s + r.amount, 0);
+  const totalPaid = statsBase.reduce((s, r) => s + r.paid_amount, 0);
   const totalUnpaid = totalDue - totalPaid;
-  const lateCount = paymentsWithEscalation.filter(r => r.escalation.level !== "none").length;
-  const criticalCount = paymentsWithEscalation.filter(r => r.escalation.level === "critical").length;
+  const lateCount = statsBase.filter(r => r.escalation.level !== "none").length;
+  const criticalCount = statsBase.filter(r => r.escalation.level === "critical").length;
+
+  const formatMonthLabel = (m: string) => {
+    if (/^\d{4}-\d{2}$/.test(m)) {
+      return new Date(m + "-01").toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+    }
+    return m;
+  };
 
   const openPayment = (payment: any) => {
     if (expired) {
