@@ -255,6 +255,22 @@ export default function Help() {
           </p>
         </div>
 
+        {/* CTA Tour guidé */}
+        <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="h-12 w-12 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+            <Sparkles className="h-6 w-6 text-primary" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-base font-semibold text-foreground">Nouveau sur RentFlow ?</h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Lancez le tour guidé pour configurer la plateforme étape par étape : bien, unités, locataire, loyers…
+            </p>
+          </div>
+          <Button onClick={() => setTourOpen(true)} className="gap-2 shrink-0 self-stretch sm:self-auto">
+            Démarrer le tour <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
