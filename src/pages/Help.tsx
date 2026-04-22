@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Search, Building2, Users, CreditCard, FileText, Settings, BarChart3,
-  ChevronRight, BookOpen, Landmark, Receipt, Bell, Shield, HelpCircle,
+  ChevronRight, BookOpen, Landmark, Receipt, Bell, Shield, HelpCircle, Sparkles, ArrowRight,
 } from "lucide-react";
+import { GuidedTour } from "@/components/onboarding/GuidedTour";
+import { Button } from "@/components/ui/button";
 
 interface Article {
   id: string;
