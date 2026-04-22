@@ -188,14 +188,17 @@ export default function Tenants() {
     if (tenantError || !newTenant) { toast.error("Erreur : " + (tenantError?.message || "Locataire non créé")); setSaving(false); return; }
     await supabase.from("units").update({ status: "occupied" as const }).eq("id", form.unit_id);
 
-    // Générer les échéances pour les mois d'avance et les marquer comme payés
+    // Générer les échéances pour les mois d'avance et les marquer comme payés.
+    // IMPORTANT : les échéances commencent au MOIS D'AJOUT du locataire (mois courant),
+    // pas au lease_start. On suppose que les loyers antérieurs ont déjà été encaissés
+    // par l'agence hors de la plateforme.
     const advanceMonths = parseInt(form.advance_months) || 0;
     if (advanceMonths > 0) {
-      const leaseStart = new Date(form.lease_start);
+      const today = new Date();
+      const startMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       const rentPayments = [];
       for (let i = 0; i < advanceMonths; i++) {
-        const paymentDate = new Date(leaseStart);
-        paymentDate.setMonth(paymentDate.getMonth() + i);
+        const paymentDate = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1);
         const dueDate = new Date(paymentDate.getFullYear(), paymentDate.getMonth(), 5);
         const monthISO = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, '0')}`;
         rentPayments.push({
