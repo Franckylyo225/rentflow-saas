@@ -237,8 +237,22 @@ export default function Rents() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground tracking-tight">Gestion des loyers</h1>
-            <p className="text-muted-foreground text-sm mt-1">Suivi des paiements, escalade et impayés</p>
+            <p className="text-muted-foreground text-sm mt-1">
+              Suivi des paiements, escalade et impayés
+              {monthFilter !== "all" && <span className="ml-1">· {formatMonthLabel(monthFilter)}</span>}
+            </p>
           </div>
+          <Select value={monthFilter} onValueChange={setMonthFilter}>
+            <SelectTrigger className="w-full sm:w-56">
+              <SelectValue placeholder="Toutes les périodes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les périodes</SelectItem>
+              {availableMonths.map(m => (
+                <SelectItem key={m} value={m}>{formatMonthLabel(m)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
