@@ -500,6 +500,8 @@ export default function Dashboard() {
           </>
         )}
       </div>
+      {/* Tour guidé interactif — auto-affiché tant que la prise en main n'est pas terminée */}
+      <GuidedTour />
     </AppLayout>
   );
 }
