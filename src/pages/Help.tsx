@@ -365,6 +365,7 @@ export default function Help() {
           })}
         </div>
       </div>
+      <GuidedTour open={tourOpen} onOpenChange={setTourOpen} />
     </AppLayout>
   );
 }
