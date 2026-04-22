@@ -18,6 +18,7 @@ import { computeTenantRiskScore, riskStyles, riskProgressColors, type TenantRisk
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
+import { buildAdvancePayments } from "@/lib/advancePayments";
 
 const REASON_LABELS: Record<string, string> = {
   normal: "Fin normale",
