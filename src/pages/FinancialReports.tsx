@@ -164,37 +164,38 @@ export default function FinancialReports() {
     })).sort((a, b) => b.benefice - a.benefice);
   }, [filteredPayments, filteredExpenses]);
 
+  const captureChart = async (selector: string): Promise<{ data: string; ratio: number } | null> => {
+    const el = reportRef.current?.querySelector(selector) as HTMLElement | null;
+    if (!el) return null;
+    const canvas = await html2canvas(el, {
+      scale: 2,
+      backgroundColor: "#ffffff",
+      useCORS: true,
+      logging: false,
+    });
+    return { data: canvas.toDataURL("image/jpeg", 0.95), ratio: canvas.width / canvas.height };
+  };
+
   const handleExportPdf = async () => {
-    if (!canExport || !reportRef.current) return;
+    if (!canExport) return;
     setExporting(true);
     try {
-      const node = reportRef.current;
-      const canvas = await html2canvas(node, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-        logging: false,
-      });
-
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 12;
       const headerH = 24;
-      const footerH = 8;
-      const contentTop = margin + headerH;
-      const contentMaxH = pageHeight - contentTop - margin - footerH;
+      const footerH = 10;
+      const contentTop = margin + headerH + 4;
+      const contentBottom = pageHeight - margin - footerH;
       const contentMaxW = pageWidth - margin * 2;
-
-      // Convert mm/px ratio: full image width fits contentMaxW
-      const pxPerMm = canvas.width / contentMaxW;
-      const sliceHeightPx = Math.floor(contentMaxH * pxPerMm);
-      const totalSlices = Math.max(1, Math.ceil(canvas.height / sliceHeightPx));
 
       const generatedAt = new Date().toLocaleString("fr-FR");
       const orgName = orgSettings?.name || "Rapport financier";
+      let pageNum = 1;
+      let cursorY = contentTop;
 
-      const drawHeader = (pageNum: number) => {
+      const drawHeader = () => {
         pdf.setFillColor(15, 23, 42);
         pdf.rect(0, 0, pageWidth, headerH, "F");
         pdf.setTextColor(255, 255, 255);
@@ -203,36 +204,103 @@ export default function FinancialReports() {
         pdf.text(orgName, margin, 10);
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(10);
-        pdf.text(`Rapport financier · ${periodLabel}`, margin, 16);
+        pdf.text(`Rapport financier · ${periodLabel}`, margin, 17);
         pdf.setFontSize(8);
         pdf.text(`Généré le ${generatedAt}`, pageWidth - margin, 10, { align: "right" });
-        pdf.text(`Page ${pageNum}/${totalSlices}`, pageWidth - margin, 16, { align: "right" });
       };
 
-      // Reusable canvas for each slice
-      const sliceCanvas = document.createElement("canvas");
-      const sliceCtx = sliceCanvas.getContext("2d")!;
-      sliceCanvas.width = canvas.width;
+      const drawFooter = () => {
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(8);
+        pdf.setTextColor(120, 120, 120);
+        pdf.text(`Page ${pageNum}`, pageWidth - margin, pageHeight - 6, { align: "right" });
+        pdf.text(orgName, margin, pageHeight - 6);
+      };
 
-      for (let i = 0; i < totalSlices; i++) {
-        const sy = i * sliceHeightPx;
-        const sh = Math.min(sliceHeightPx, canvas.height - sy);
-        sliceCanvas.height = sh;
-        sliceCtx.fillStyle = "#ffffff";
-        sliceCtx.fillRect(0, 0, sliceCanvas.width, sh);
-        sliceCtx.drawImage(canvas, 0, sy, canvas.width, sh, 0, 0, canvas.width, sh);
-        const sliceData = sliceCanvas.toDataURL("image/jpeg", 0.92);
+      const ensureSpace = (h: number) => {
+        if (cursorY + h > contentBottom) {
+          drawFooter();
+          pdf.addPage();
+          pageNum++;
+          drawHeader();
+          cursorY = contentTop;
+        }
+      };
 
-        if (i > 0) pdf.addPage();
-        drawHeader(i + 1);
+      drawHeader();
 
-        const drawW = contentMaxW;
-        const drawH = sh / pxPerMm;
-        pdf.addImage(sliceData, "JPEG", margin, contentTop, drawW, drawH);
+      // === Section title ===
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(13);
+      pdf.setTextColor(15, 23, 42);
+      pdf.text("Indicateurs clés", margin, cursorY);
+      cursorY += 6;
+
+      // === KPI cards as vector text ===
+      const kpis = [
+        { label: "Chiffre d'affaires", value: `${ca.toLocaleString("fr-FR")} FCFA`, color: [16, 185, 129] as [number, number, number] },
+        { label: "Dépenses", value: `${totalExpenses.toLocaleString("fr-FR")} FCFA`, color: [239, 68, 68] as [number, number, number] },
+        { label: "Bénéfice net", value: `${benefice.toLocaleString("fr-FR")} FCFA`, color: benefice >= 0 ? [16, 185, 129] as [number, number, number] : [239, 68, 68] as [number, number, number] },
+        { label: "Marge", value: `${marge}%`, color: marge >= 50 ? [16, 185, 129] as [number, number, number] : marge >= 20 ? [245, 158, 11] as [number, number, number] : [239, 68, 68] as [number, number, number] },
+      ];
+      const cardGap = 4;
+      const cardW = (contentMaxW - cardGap * 3) / 4;
+      const cardH = 26;
+      ensureSpace(cardH + 4);
+      kpis.forEach((k, i) => {
+        const x = margin + i * (cardW + cardGap);
+        // card bg
+        pdf.setFillColor(248, 250, 252);
+        pdf.setDrawColor(226, 232, 240);
+        pdf.roundedRect(x, cursorY, cardW, cardH, 2, 2, "FD");
+        // label
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 116, 139);
+        pdf.text(k.label, x + 4, cursorY + 6);
+        // value
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(12);
+        pdf.setTextColor(...k.color);
+        pdf.text(k.value, x + 4, cursorY + 14);
+        // period
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(7);
+        pdf.setTextColor(148, 163, 184);
+        pdf.text(periodLabel, x + 4, cursorY + 21);
+      });
+      cursorY += cardH + 8;
+
+      // === Charts (captured as images, but titles are vector) ===
+      const charts = [
+        { selector: "[data-pdf='chart-monthly']", title: "CA vs Dépenses" },
+        { selector: "[data-pdf='chart-categories']", title: "Dépenses par catégorie" },
+        { selector: "[data-pdf='chart-cities']", title: "Bénéfice par ville" },
+      ];
+
+      for (const c of charts) {
+        const captured = await captureChart(c.selector);
+        if (!captured) continue;
+        const imgW = contentMaxW;
+        const imgH = imgW / captured.ratio;
+        ensureSpace(imgH + 10);
+        // chart title (vector)
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(11);
+        pdf.setTextColor(15, 23, 42);
+        pdf.text(c.title, margin, cursorY);
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(9);
+        pdf.setTextColor(100, 116, 139);
+        pdf.text(`· ${periodLabel}`, margin + pdf.getTextWidth(c.title) + 2, cursorY);
+        cursorY += 4;
+        pdf.addImage(captured.data, "JPEG", margin, cursorY, imgW, imgH);
+        cursorY += imgH + 6;
       }
 
+      drawFooter();
       pdf.save(`rapport-financier-${periodValue !== "all" ? periodValue : periodMode}-${Date.now()}.pdf`);
-      toast.success(`Rapport exporté (${totalSlices} page${totalSlices > 1 ? "s" : ""})`);
+      toast.success(`Rapport exporté (${pageNum} page${pageNum > 1 ? "s" : ""})`);
     } catch (e) {
       console.error(e);
       toast.error("Échec de l'export PDF");
