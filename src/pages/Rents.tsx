@@ -140,7 +140,7 @@ export default function Rents() {
       amount: payment.amount,
       paidAmount: payment.paid_amount,
       dueDate: payment.due_date,
-      month: payment.month,
+      month: formatMonthLabel(payment.month),
       paymentDate: payment.updated_at ?? payment.due_date,
       organizationName: orgSettings?.name,
       organizationAddress: orgSettings?.address ?? undefined,
