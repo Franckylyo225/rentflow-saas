@@ -90,7 +90,8 @@ export function QuittanceDialog({ open, onOpenChange, data }: QuittanceDialogPro
           </div>
         ) : previewUrl ? (
           <object
-            data={previewUrl}
+            key={previewUrl}
+            data={`${previewUrl}#t=${Date.now()}`}
             type="application/pdf"
             className="w-full h-[500px] rounded-lg border border-border mt-2"
             aria-label="Aperçu de la quittance"
