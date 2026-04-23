@@ -1,7 +1,7 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
-import { downloadQuittance, getQuittanceDataUrl, type QuittanceData } from "@/lib/generateQuittance";
+import { Download, Loader2, ExternalLink } from "lucide-react";
+import { downloadQuittance, getQuittanceBlob, type QuittanceData } from "@/lib/generateQuittance";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 
