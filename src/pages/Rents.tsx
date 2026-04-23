@@ -147,6 +147,8 @@ export default function Rents() {
       organizationPhone: orgSettings?.phone ?? undefined,
       organizationEmail: orgSettings?.email ?? undefined,
       organizationLogoUrl: orgSettings?.logo_url ?? undefined,
+      rentPaymentId: payment.id,
+      organizationId: profile?.organization_id,
     });
     setShowQuittance(true);
   };
