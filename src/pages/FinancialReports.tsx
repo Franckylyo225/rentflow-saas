@@ -392,7 +392,7 @@ export default function FinancialReports() {
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* CA vs Dépenses */}
-          <Card className="border-border lg:col-span-2">
+          <Card className="border-border lg:col-span-2" data-pdf="chart-monthly">
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-semibold">CA vs Dépenses <span className="text-xs font-normal text-muted-foreground ml-1">· {periodLabel}</span></CardTitle>
             </CardHeader>
