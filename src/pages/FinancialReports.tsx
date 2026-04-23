@@ -450,7 +450,7 @@ export default function FinancialReports() {
         </div>
 
         {/* Bénéfice par ville */}
-        <Card className="border-border">
+        <Card className="border-border" data-pdf="chart-cities">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold">Bénéfice par ville <span className="text-xs font-normal text-muted-foreground ml-1">· {periodLabel}</span></CardTitle>
           </CardHeader>
