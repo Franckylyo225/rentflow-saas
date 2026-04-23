@@ -416,7 +416,7 @@ export default function FinancialReports() {
           </Card>
 
           {/* Dépenses par catégorie */}
-          <Card className="border-border">
+          <Card className="border-border" data-pdf="chart-categories">
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-semibold">Dépenses par catégorie <span className="text-xs font-normal text-muted-foreground ml-1">· {periodLabel}</span></CardTitle>
             </CardHeader>
