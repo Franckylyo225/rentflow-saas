@@ -1,11 +1,18 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useExpenses, useExpenseCategories } from "@/hooks/useExpenses";
 import { useRentPayments, useProperties, useCities } from "@/hooks/useData";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TrendingUp, TrendingDown, Wallet, Percent, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TrendingUp, TrendingDown, Wallet, Percent, Loader2, FileDown, Lock } from "lucide-react";
+import { toast } from "sonner";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell,
@@ -28,6 +35,11 @@ export default function FinancialReports() {
   const { data: cities } = useCities();
   const [periodMode, setPeriodMode] = useState<PeriodMode>("all");
   const [periodValue, setPeriodValue] = useState<string>("all");
+  const [exporting, setExporting] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
+  const { hasFeature, planName } = useFeatureAccess();
+  const { settings: orgSettings } = useOrganizationSettings();
+  const canExport = hasFeature("advanced_reports");
 
   const loading = expLoading || payLoading;
 
@@ -152,6 +164,61 @@ export default function FinancialReports() {
     })).sort((a, b) => b.benefice - a.benefice);
   }, [filteredPayments, filteredExpenses]);
 
+  const handleExportPdf = async () => {
+    if (!canExport || !reportRef.current) return;
+    setExporting(true);
+    try {
+      const node = reportRef.current;
+      const canvas = await html2canvas(node, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        logging: false,
+      });
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 12;
+      const headerH = 24;
+      const contentTop = margin + headerH;
+      const contentMaxH = pageHeight - contentTop - margin;
+      const contentMaxW = pageWidth - margin * 2;
+
+      // Header
+      pdf.setFillColor(15, 23, 42);
+      pdf.rect(0, 0, pageWidth, headerH, "F");
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(14);
+      pdf.text(orgSettings?.name || "Rapport financier", margin, 10);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(10);
+      pdf.text(`Rapport financier · ${periodLabel}`, margin, 16);
+      pdf.setFontSize(8);
+      pdf.text(`Généré le ${new Date().toLocaleString("fr-FR")}`, pageWidth - margin, 10, { align: "right" });
+
+      // Image scaled to fit
+      const imgRatio = canvas.width / canvas.height;
+      let drawW = contentMaxW;
+      let drawH = drawW / imgRatio;
+      if (drawH > contentMaxH) {
+        drawH = contentMaxH;
+        drawW = drawH * imgRatio;
+      }
+      const drawX = (pageWidth - drawW) / 2;
+      pdf.addImage(imgData, "JPEG", drawX, contentTop, drawW, drawH);
+
+      pdf.save(`rapport-financier-${periodValue !== "all" ? periodValue : periodMode}-${Date.now()}.pdf`);
+      toast.success("Rapport exporté");
+    } catch (e) {
+      console.error(e);
+      toast.error("Échec de l'export PDF");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading) {
     return <AppLayout><div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div></AppLayout>;
   }
@@ -192,11 +259,40 @@ export default function FinancialReports() {
                 </SelectContent>
               </Select>
             )}
+            <TooltipProvider>
+              <UITooltip>
+                <TooltipTrigger asChild>
+                  <span tabIndex={canExport ? -1 : 0}>
+                    <Button
+                      onClick={handleExportPdf}
+                      disabled={!canExport || exporting}
+                      variant="default"
+                      className="w-full sm:w-auto"
+                    >
+                      {exporting ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : canExport ? (
+                        <FileDown className="h-4 w-4 mr-2" />
+                      ) : (
+                        <Lock className="h-4 w-4 mr-2" />
+                      )}
+                      Exporter en PDF
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!canExport && (
+                  <TooltipContent>
+                    Disponible avec l'offre Pro ou Business (offre actuelle : {planName})
+                  </TooltipContent>
+                )}
+              </UITooltip>
+            </TooltipProvider>
           </div>
         </div>
 
-        {/* KPI cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div ref={reportRef} className="space-y-6 bg-background">
+          {/* KPI cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard title="Chiffre d'affaires" value={`${ca.toLocaleString("fr-FR")} FCFA`} subtitle={periodLabel} icon={TrendingUp} variant="success" />
           <StatCard title="Dépenses" value={`${totalExpenses.toLocaleString("fr-FR")} FCFA`} subtitle={periodLabel} icon={TrendingDown} variant="destructive" />
           <StatCard title="Bénéfice net" value={`${benefice.toLocaleString("fr-FR")} FCFA`} subtitle={periodLabel} icon={Wallet} variant={benefice >= 0 ? "success" : "destructive"} />
@@ -305,6 +401,7 @@ export default function FinancialReports() {
             )}
           </CardContent>
         </Card>
+        </div>
       </div>
     </AppLayout>
   );
