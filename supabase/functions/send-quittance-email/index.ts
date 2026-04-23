@@ -67,7 +67,19 @@ Deno.serve(async (req) => {
 
     if (!recipientEmail || !pdfBase64 || !month) {
       return new Response(
-        JSON.stringify({ error: "recipientEmail, pdfBase64 and month are required" }),
+        JSON.stringify({ error: "Champs requis manquants (destinataire, PDF ou mois).", code: "missing_fields" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validation basique du format email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(recipientEmail)) {
+      return new Response(
+        JSON.stringify({
+          error: `L'adresse email "${recipientEmail}" est invalide.`,
+          code: "invalid_email",
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -115,9 +127,40 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       console.error("Resend error:", result);
+      // Traduit les erreurs Resend les plus courantes en messages lisibles
+      const resendMessage: string =
+        result?.message || result?.error?.message || result?.error || "";
+      const resendName: string = result?.name || result?.error?.name || "";
+      let userMessage = "Le service d'envoi d'email est indisponible. Réessayez dans quelques minutes.";
+      let code = "service_unavailable";
+
+      if (
+        response.status === 422 ||
+        /invalid.*to|invalid.*recipient|invalid.*email/i.test(resendMessage)
+      ) {
+        userMessage = `L'adresse email "${recipientEmail}" est invalide ou a été refusée par le service.`;
+        code = "invalid_email";
+      } else if (response.status === 401 || response.status === 403) {
+        userMessage = "Configuration email invalide. Contactez l'administrateur.";
+        code = "auth_error";
+      } else if (response.status === 429) {
+        userMessage = "Trop d'envois en peu de temps. Patientez puis réessayez.";
+        code = "rate_limited";
+      } else if (response.status === 413 || /too large|payload/i.test(resendMessage)) {
+        userMessage = "Le PDF est trop volumineux pour être envoyé par email.";
+        code = "payload_too_large";
+      } else if (resendMessage) {
+        userMessage = `Échec de l'envoi : ${resendMessage}`;
+      }
+
       return new Response(
-        JSON.stringify({ error: "Failed to send email", details: result }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          error: userMessage,
+          code,
+          provider_status: response.status,
+          provider_name: resendName || undefined,
+        }),
+        { status: response.status >= 400 && response.status < 500 ? response.status : 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -127,8 +170,13 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error("send-quittance-email error:", error);
+    const message = error instanceof Error ? error.message : String(error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
+      JSON.stringify({
+        error: "Erreur interne lors de l'envoi de l'email. Réessayez plus tard.",
+        code: "internal_error",
+        details: message,
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
