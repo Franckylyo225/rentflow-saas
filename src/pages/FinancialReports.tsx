@@ -175,42 +175,64 @@ export default function FinancialReports() {
         useCORS: true,
         logging: false,
       });
-      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 12;
       const headerH = 24;
+      const footerH = 8;
       const contentTop = margin + headerH;
-      const contentMaxH = pageHeight - contentTop - margin;
+      const contentMaxH = pageHeight - contentTop - margin - footerH;
       const contentMaxW = pageWidth - margin * 2;
 
-      // Header
-      pdf.setFillColor(15, 23, 42);
-      pdf.rect(0, 0, pageWidth, headerH, "F");
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(14);
-      pdf.text(orgSettings?.name || "Rapport financier", margin, 10);
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(10);
-      pdf.text(`Rapport financier · ${periodLabel}`, margin, 16);
-      pdf.setFontSize(8);
-      pdf.text(`Généré le ${new Date().toLocaleString("fr-FR")}`, pageWidth - margin, 10, { align: "right" });
+      // Convert mm/px ratio: full image width fits contentMaxW
+      const pxPerMm = canvas.width / contentMaxW;
+      const sliceHeightPx = Math.floor(contentMaxH * pxPerMm);
+      const totalSlices = Math.max(1, Math.ceil(canvas.height / sliceHeightPx));
 
-      // Image scaled to fit
-      const imgRatio = canvas.width / canvas.height;
-      let drawW = contentMaxW;
-      let drawH = drawW / imgRatio;
-      if (drawH > contentMaxH) {
-        drawH = contentMaxH;
-        drawW = drawH * imgRatio;
+      const generatedAt = new Date().toLocaleString("fr-FR");
+      const orgName = orgSettings?.name || "Rapport financier";
+
+      const drawHeader = (pageNum: number) => {
+        pdf.setFillColor(15, 23, 42);
+        pdf.rect(0, 0, pageWidth, headerH, "F");
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(14);
+        pdf.text(orgName, margin, 10);
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(10);
+        pdf.text(`Rapport financier · ${periodLabel}`, margin, 16);
+        pdf.setFontSize(8);
+        pdf.text(`Généré le ${generatedAt}`, pageWidth - margin, 10, { align: "right" });
+        pdf.text(`Page ${pageNum}/${totalSlices}`, pageWidth - margin, 16, { align: "right" });
+      };
+
+      // Reusable canvas for each slice
+      const sliceCanvas = document.createElement("canvas");
+      const sliceCtx = sliceCanvas.getContext("2d")!;
+      sliceCanvas.width = canvas.width;
+
+      for (let i = 0; i < totalSlices; i++) {
+        const sy = i * sliceHeightPx;
+        const sh = Math.min(sliceHeightPx, canvas.height - sy);
+        sliceCanvas.height = sh;
+        sliceCtx.fillStyle = "#ffffff";
+        sliceCtx.fillRect(0, 0, sliceCanvas.width, sh);
+        sliceCtx.drawImage(canvas, 0, sy, canvas.width, sh, 0, 0, canvas.width, sh);
+        const sliceData = sliceCanvas.toDataURL("image/jpeg", 0.92);
+
+        if (i > 0) pdf.addPage();
+        drawHeader(i + 1);
+
+        const drawW = contentMaxW;
+        const drawH = sh / pxPerMm;
+        pdf.addImage(sliceData, "JPEG", margin, contentTop, drawW, drawH);
       }
-      const drawX = (pageWidth - drawW) / 2;
-      pdf.addImage(imgData, "JPEG", drawX, contentTop, drawW, drawH);
 
       pdf.save(`rapport-financier-${periodValue !== "all" ? periodValue : periodMode}-${Date.now()}.pdf`);
-      toast.success("Rapport exporté");
+      toast.success(`Rapport exporté (${totalSlices} page${totalSlices > 1 ? "s" : ""})`);
     } catch (e) {
       console.error(e);
       toast.error("Échec de l'export PDF");
