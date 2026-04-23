@@ -174,7 +174,7 @@ export function useRentPayments() {
     setLoading(true);
     const { data: result } = await supabase
       .from("rent_payments")
-      .select("*, tenants(full_name, phone, email, unit_id, units(name, property_id, properties(name, city_id, cities(name))))")
+      .select("*, tenants(id, full_name, phone, email, rent, unit_id, units(name, rent, property_id, properties(name, city_id, cities(name))))")
       .order("due_date", { ascending: false });
     if (result) setData(result as any);
     setLoading(false);
