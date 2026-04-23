@@ -357,7 +357,10 @@ export default function Rents() {
                             </td>
                             <td className="py-3 px-4 text-muted-foreground hidden md:table-cell">{payment.tenants?.units?.properties?.name}</td>
                             <td className="py-3 px-4 text-right font-medium text-card-foreground">{payment.amount.toLocaleString()} FCFA</td>
-                            <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">{new Date(payment.due_date).toLocaleDateString("fr-FR")}</td>
+                            <td className="py-3 px-4 hidden sm:table-cell">
+                              <p className="text-card-foreground capitalize">{formatMonthLabel(payment.month)}</p>
+                              <p className="text-xs text-muted-foreground">échéance {new Date(payment.due_date).toLocaleDateString("fr-FR")}</p>
+                            </td>
                             <td className="py-3 px-4 text-center"><PaymentStatusBadge status={payment.status} /></td>
                             <td className="py-3 px-4 text-center">
                               <EscalationBadge level={payment.escalation.level} label={payment.escalation.label} />
