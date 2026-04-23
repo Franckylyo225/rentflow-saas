@@ -259,11 +259,40 @@ export default function FinancialReports() {
                 </SelectContent>
               </Select>
             )}
+            <TooltipProvider>
+              <UITooltip>
+                <TooltipTrigger asChild>
+                  <span tabIndex={canExport ? -1 : 0}>
+                    <Button
+                      onClick={handleExportPdf}
+                      disabled={!canExport || exporting}
+                      variant="default"
+                      className="w-full sm:w-auto"
+                    >
+                      {exporting ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : canExport ? (
+                        <FileDown className="h-4 w-4 mr-2" />
+                      ) : (
+                        <Lock className="h-4 w-4 mr-2" />
+                      )}
+                      Exporter en PDF
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!canExport && (
+                  <TooltipContent>
+                    Disponible avec l'offre Pro ou Business (offre actuelle : {planName})
+                  </TooltipContent>
+                )}
+              </UITooltip>
+            </TooltipProvider>
           </div>
         </div>
 
-        {/* KPI cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div ref={reportRef} className="space-y-6 bg-background">
+          {/* KPI cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard title="Chiffre d'affaires" value={`${ca.toLocaleString("fr-FR")} FCFA`} subtitle={periodLabel} icon={TrendingUp} variant="success" />
           <StatCard title="Dépenses" value={`${totalExpenses.toLocaleString("fr-FR")} FCFA`} subtitle={periodLabel} icon={TrendingDown} variant="destructive" />
           <StatCard title="Bénéfice net" value={`${benefice.toLocaleString("fr-FR")} FCFA`} subtitle={periodLabel} icon={Wallet} variant={benefice >= 0 ? "success" : "destructive"} />
