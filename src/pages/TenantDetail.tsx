@@ -137,6 +137,11 @@ export default function TenantDetail() {
               <Pencil className="h-4 w-4 mr-2" /> Modifier
             </Button>
             {tenant.is_active && (
+              <Button variant="outline" size="sm" onClick={() => setShowAdvance(true)}>
+                <FastForward className="h-4 w-4 mr-2" /> Paiement anticipé
+              </Button>
+            )}
+            {tenant.is_active && (
               <Button variant="destructive" size="sm" onClick={() => setShowTermination(true)}>
                 <LogOut className="h-4 w-4 mr-2" /> Initier fin de bail
               </Button>
