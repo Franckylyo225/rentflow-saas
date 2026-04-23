@@ -18,33 +18,70 @@ const CATEGORY_COLORS = [
   "hsl(330, 70%, 55%)", "hsl(120, 60%, 40%)", "hsl(50, 80%, 50%)",
 ];
 
+type PeriodMode = "all" | "month" | "quarter" | "year";
+
 export default function FinancialReports() {
   const { data: expenses, loading: expLoading } = useExpenses();
   const { data: categories } = useExpenseCategories();
   const { data: payments, loading: payLoading } = useRentPayments();
   const { data: properties } = useProperties();
   const { data: cities } = useCities();
-  const [periodFilter, setPeriodFilter] = useState("all");
+  const [periodMode, setPeriodMode] = useState<PeriodMode>("all");
+  const [periodValue, setPeriodValue] = useState<string>("all");
 
   const loading = expLoading || payLoading;
 
-  // Filter by period
-  const filteredPayments = useMemo(() => {
-    if (periodFilter === "all") return payments;
-    return payments.filter(p => p.month === periodFilter);
-  }, [payments, periodFilter]);
+  const toQuarter = (ym: string) => {
+    const [y, m] = ym.split("-");
+    const q = Math.floor((parseInt(m, 10) - 1) / 3) + 1;
+    return `${y}-Q${q}`;
+  };
+  const toYear = (ym: string) => ym.slice(0, 4);
 
-  const filteredExpenses = useMemo(() => {
-    if (periodFilter === "all") return expenses;
-    return expenses.filter(e => e.expense_date.slice(0, 7) === periodFilter);
-  }, [expenses, periodFilter]);
+  const matchesPeriod = (ym: string) => {
+    if (periodMode === "all" || periodValue === "all") return true;
+    if (periodMode === "month") return ym === periodValue;
+    if (periodMode === "quarter") return toQuarter(ym) === periodValue;
+    if (periodMode === "year") return toYear(ym) === periodValue;
+    return true;
+  };
 
-  const months = useMemo(() => {
-    const set = new Set<string>();
-    payments.forEach(p => set.add(p.month));
-    expenses.forEach(e => set.add(e.expense_date.slice(0, 7)));
-    return [...set].sort().reverse();
-  }, [payments, expenses]);
+  const filteredPayments = useMemo(
+    () => payments.filter(p => matchesPeriod(p.month)),
+    [payments, periodMode, periodValue]
+  );
+
+  const filteredExpenses = useMemo(
+    () => expenses.filter(e => matchesPeriod(e.expense_date.slice(0, 7))),
+    [expenses, periodMode, periodValue]
+  );
+
+  const periodOptions = useMemo(() => {
+    const months = new Set<string>();
+    payments.forEach(p => months.add(p.month));
+    expenses.forEach(e => months.add(e.expense_date.slice(0, 7)));
+    const sorted = [...months].sort().reverse();
+    if (periodMode === "month") return sorted;
+    if (periodMode === "quarter") return [...new Set(sorted.map(toQuarter))];
+    if (periodMode === "year") return [...new Set(sorted.map(toYear))];
+    return [];
+  }, [payments, expenses, periodMode]);
+
+  const formatPeriodLabel = (v: string) => {
+    if (periodMode === "month") {
+      return new Date(v + "-01").toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+    }
+    if (periodMode === "quarter") {
+      const [y, q] = v.split("-");
+      return `${q} ${y}`;
+    }
+    return v;
+  };
+
+  const handleModeChange = (mode: PeriodMode) => {
+    setPeriodMode(mode);
+    setPeriodValue("all");
+  };
 
   // KPIs
   const ca = useMemo(() => filteredPayments.reduce((s, p) => s + p.paid_amount, 0), [filteredPayments]);
@@ -117,17 +154,35 @@ export default function FinancialReports() {
             <h1 className="text-2xl font-bold text-foreground tracking-tight">Rapports financiers</h1>
             <p className="text-muted-foreground text-sm mt-1">Performance financière globale</p>
           </div>
-          <Select value={periodFilter} onValueChange={setPeriodFilter}>
-            <SelectTrigger className="w-48"><SelectValue placeholder="Période" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les périodes</SelectItem>
-              {months.map(m => (
-                <SelectItem key={m} value={m}>
-                  {new Date(m + "-01").toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Select value={periodMode} onValueChange={(v) => handleModeChange(v as PeriodMode)}>
+              <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="Type" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes périodes</SelectItem>
+                <SelectItem value="month">Par mois</SelectItem>
+                <SelectItem value="quarter">Par trimestre</SelectItem>
+                <SelectItem value="year">Par année</SelectItem>
+              </SelectContent>
+            </Select>
+            {periodMode !== "all" && (
+              <Select value={periodValue} onValueChange={setPeriodValue}>
+                <SelectTrigger className="w-full sm:w-52">
+                  <SelectValue placeholder={
+                    periodMode === "month" ? "Choisir un mois" :
+                    periodMode === "quarter" ? "Choisir un trimestre" : "Choisir une année"
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    {periodMode === "month" ? "Tous les mois" : periodMode === "quarter" ? "Tous les trimestres" : "Toutes les années"}
+                  </SelectItem>
+                  {periodOptions.map(v => (
+                    <SelectItem key={v} value={v}>{formatPeriodLabel(v)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
         </div>
 
         {/* KPI cards */}
