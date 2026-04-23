@@ -164,6 +164,61 @@ export default function FinancialReports() {
     })).sort((a, b) => b.benefice - a.benefice);
   }, [filteredPayments, filteredExpenses]);
 
+  const handleExportPdf = async () => {
+    if (!canExport || !reportRef.current) return;
+    setExporting(true);
+    try {
+      const node = reportRef.current;
+      const canvas = await html2canvas(node, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        logging: false,
+      });
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 12;
+      const headerH = 24;
+      const contentTop = margin + headerH;
+      const contentMaxH = pageHeight - contentTop - margin;
+      const contentMaxW = pageWidth - margin * 2;
+
+      // Header
+      pdf.setFillColor(15, 23, 42);
+      pdf.rect(0, 0, pageWidth, headerH, "F");
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(14);
+      pdf.text(orgSettings?.name || "Rapport financier", margin, 10);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(10);
+      pdf.text(`Rapport financier · ${periodLabel}`, margin, 16);
+      pdf.setFontSize(8);
+      pdf.text(`Généré le ${new Date().toLocaleString("fr-FR")}`, pageWidth - margin, 10, { align: "right" });
+
+      // Image scaled to fit
+      const imgRatio = canvas.width / canvas.height;
+      let drawW = contentMaxW;
+      let drawH = drawW / imgRatio;
+      if (drawH > contentMaxH) {
+        drawH = contentMaxH;
+        drawW = drawH * imgRatio;
+      }
+      const drawX = (pageWidth - drawW) / 2;
+      pdf.addImage(imgData, "JPEG", drawX, contentTop, drawW, drawH);
+
+      pdf.save(`rapport-financier-${periodValue !== "all" ? periodValue : periodMode}-${Date.now()}.pdf`);
+      toast.success("Rapport exporté");
+    } catch (e) {
+      console.error(e);
+      toast.error("Échec de l'export PDF");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading) {
     return <AppLayout><div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div></AppLayout>;
   }
