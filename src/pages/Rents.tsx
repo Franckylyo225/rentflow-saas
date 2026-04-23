@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getEscalationInfo, defaultTasksByLevel, type EscalationInfo } from "@/lib/escalation";
 import { generateMiseEnDemeure } from "@/lib/generateMiseEnDemeure";
 import { QuittanceDialog } from "@/components/rent/QuittanceDialog";
+import { AdvancePaymentDialog } from "@/components/rent/AdvancePaymentDialog";
 import type { QuittanceData } from "@/lib/generateQuittance";
 import { downloadInvoice, generateInvoiceNumber, type InvoiceData } from "@/lib/generateInvoice";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
