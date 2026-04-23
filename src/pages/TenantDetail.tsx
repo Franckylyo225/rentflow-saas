@@ -2,13 +2,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, CreditCard, Home, Mail, Phone, User, Loader2, LogOut, Building2, FileText, Pencil } from "lucide-react";
+import { ArrowLeft, Calendar, CreditCard, Home, Mail, Phone, User, Loader2, LogOut, Building2, FileText, Pencil, FastForward } from "lucide-react";
 import { PaymentStatusBadge } from "@/components/ui/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LeaseTerminationDialog } from "@/components/tenant/LeaseTerminationDialog";
 import { LeaseDocumentsSection } from "@/components/tenant/LeaseDocumentsSection";
+import { AdvancePaymentDialog } from "@/components/rent/AdvancePaymentDialog";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ export default function TenantDetail() {
   const [showEdit, setShowEdit] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
+  const [showAdvance, setShowAdvance] = useState(false);
 
   const fetchData = () => {
     if (!id) return;
@@ -134,6 +136,11 @@ export default function TenantDetail() {
             <Button variant="outline" size="sm" onClick={openEdit}>
               <Pencil className="h-4 w-4 mr-2" /> Modifier
             </Button>
+            {tenant.is_active && (
+              <Button variant="outline" size="sm" onClick={() => setShowAdvance(true)}>
+                <FastForward className="h-4 w-4 mr-2" /> Paiement anticipé
+              </Button>
+            )}
             {tenant.is_active && (
               <Button variant="destructive" size="sm" onClick={() => setShowTermination(true)}>
                 <LogOut className="h-4 w-4 mr-2" /> Initier fin de bail
@@ -328,6 +335,18 @@ export default function TenantDetail() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <AdvancePaymentDialog
+          open={showAdvance}
+          onOpenChange={setShowAdvance}
+          tenant={tenant ? { id: tenant.id, full_name: tenant.full_name, rent: tenant.rent } : null}
+          existingPayments={payments.map((p: any) => ({
+            id: p.id, month: p.month, due_date: p.due_date, amount: p.amount, paid_amount: p.paid_amount, status: p.status,
+          }))}
+          rentDueDay={(orgSettings as any)?.rent_due_day ?? 5}
+          paymentMethods={orgSettings?.accepted_payment_methods ?? ["Espèces", "Virement bancaire", "Chèque", "Mobile Money"]}
+          onCompleted={fetchData}
+        />
       </div>
     </AppLayout>
   );

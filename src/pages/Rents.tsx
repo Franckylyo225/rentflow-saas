@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, AlertTriangle, CheckCircle2, Clock, Loader2, ListTodo, Plus, Check, FileText, Download } from "lucide-react";
+import { CreditCard, AlertTriangle, CheckCircle2, Clock, Loader2, ListTodo, Plus, Check, FileText, Download, FastForward } from "lucide-react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getEscalationInfo, defaultTasksByLevel, type EscalationInfo } from "@/lib/escalation";
 import { generateMiseEnDemeure } from "@/lib/generateMiseEnDemeure";
 import { QuittanceDialog } from "@/components/rent/QuittanceDialog";
+import { AdvancePaymentDialog } from "@/components/rent/AdvancePaymentDialog";
 import type { QuittanceData } from "@/lib/generateQuittance";
 import { downloadInvoice, generateInvoiceNumber, type InvoiceData } from "@/lib/generateInvoice";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
@@ -40,6 +41,8 @@ export default function Rents() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showQuittance, setShowQuittance] = useState(false);
   const [quittanceData, setQuittanceData] = useState<QuittanceData | null>(null);
+  const [showAdvance, setShowAdvance] = useState(false);
+  const [advanceTenant, setAdvanceTenant] = useState<{ id: string; full_name: string; rent: number } | null>(null);
 
   useEffect(() => {
     if (searchParams.get("action") === "new") {
@@ -229,6 +232,25 @@ export default function Rents() {
     refetchTasks();
   };
 
+  const openAdvance = (payment: any) => {
+    const tid = payment.tenants?.id ?? payment.tenant_id;
+    if (!tid) return;
+    setAdvanceTenant({
+      id: tid,
+      full_name: payment.tenants?.full_name ?? "Locataire",
+      rent: payment.tenants?.units?.rent ?? payment.tenants?.rent ?? payment.amount,
+    });
+    setShowAdvance(true);
+  };
+
+  // Échéances du locataire sélectionné pour le dialogue d'avance
+  const advanceTenantPayments = useMemo(() => {
+    if (!advanceTenant) return [];
+    return payments
+      .filter(p => (p.tenants?.id ?? p.tenant_id) === advanceTenant.id)
+      .map(p => ({ id: p.id, month: p.month, due_date: p.due_date, amount: p.amount, paid_amount: p.paid_amount, status: p.status }));
+  }, [advanceTenant, payments]);
+
   const pendingTasks = allTasks.filter(t => t.status === "pending" || t.status === "in_progress");
 
   return (
@@ -359,6 +381,14 @@ export default function Rents() {
                                 {payment.status !== "paid" && (
                                   <Button variant="outline" size="sm" onClick={() => openPayment(payment)}>Payer</Button>
                                 )}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openAdvance(payment)}
+                                  title="Paiement anticipé"
+                                >
+                                  <FastForward className="h-4 w-4" />
+                                </Button>
                                 {payment.escalation.level !== "none" && (
                                   <Button variant="ghost" size="sm" onClick={() => openTasks(payment)} title="Gérer les tâches">
                                     <ListTodo className="h-4 w-4" />
@@ -544,6 +574,16 @@ export default function Rents() {
       </Dialog>
 
       <QuittanceDialog open={showQuittance} onOpenChange={setShowQuittance} data={quittanceData} />
+
+      <AdvancePaymentDialog
+        open={showAdvance}
+        onOpenChange={setShowAdvance}
+        tenant={advanceTenant}
+        existingPayments={advanceTenantPayments}
+        rentDueDay={(orgSettings as any)?.rent_due_day ?? 5}
+        paymentMethods={orgSettings?.accepted_payment_methods ?? paymentMethods}
+        onCompleted={() => { refetch(); setAdvanceTenant(null); }}
+      />
     </AppLayout>
   );
 }
