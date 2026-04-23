@@ -83,6 +83,16 @@ export default function FinancialReports() {
     setPeriodValue("all");
   };
 
+  const periodLabel = useMemo(() => {
+    if (periodMode === "all" || periodValue === "all") {
+      if (periodMode === "all") return "Toutes périodes";
+      if (periodMode === "month") return "Tous les mois";
+      if (periodMode === "quarter") return "Tous les trimestres";
+      if (periodMode === "year") return "Toutes les années";
+    }
+    return formatPeriodLabel(periodValue);
+  }, [periodMode, periodValue]);
+
   // KPIs
   const ca = useMemo(() => filteredPayments.reduce((s, p) => s + p.paid_amount, 0), [filteredPayments]);
   const totalExpenses = useMemo(() => filteredExpenses.reduce((s, e) => s + e.amount, 0), [filteredExpenses]);
@@ -187,10 +197,10 @@ export default function FinancialReports() {
 
         {/* KPI cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Chiffre d'affaires" value={`${ca.toLocaleString("fr-FR")} FCFA`} icon={TrendingUp} variant="success" />
-          <StatCard title="Dépenses" value={`${totalExpenses.toLocaleString("fr-FR")} FCFA`} icon={TrendingDown} variant="destructive" />
-          <StatCard title="Bénéfice net" value={`${benefice.toLocaleString("fr-FR")} FCFA`} icon={Wallet} variant={benefice >= 0 ? "success" : "destructive"} />
-          <StatCard title="Marge" value={`${marge}%`} icon={Percent} variant={marge >= 50 ? "success" : marge >= 20 ? "warning" : "destructive"} />
+          <StatCard title="Chiffre d'affaires" value={`${ca.toLocaleString("fr-FR")} FCFA`} subtitle={periodLabel} icon={TrendingUp} variant="success" />
+          <StatCard title="Dépenses" value={`${totalExpenses.toLocaleString("fr-FR")} FCFA`} subtitle={periodLabel} icon={TrendingDown} variant="destructive" />
+          <StatCard title="Bénéfice net" value={`${benefice.toLocaleString("fr-FR")} FCFA`} subtitle={periodLabel} icon={Wallet} variant={benefice >= 0 ? "success" : "destructive"} />
+          <StatCard title="Marge" value={`${marge}%`} subtitle={periodLabel} icon={Percent} variant={marge >= 50 ? "success" : marge >= 20 ? "warning" : "destructive"} />
         </div>
 
         {/* Charts */}
@@ -198,7 +208,7 @@ export default function FinancialReports() {
           {/* CA vs Dépenses */}
           <Card className="border-border lg:col-span-2">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold">CA vs Dépenses</CardTitle>
+              <CardTitle className="text-base font-semibold">CA vs Dépenses <span className="text-xs font-normal text-muted-foreground ml-1">· {periodLabel}</span></CardTitle>
             </CardHeader>
             <CardContent>
               {monthlyComparison.length === 0 ? (
@@ -222,7 +232,7 @@ export default function FinancialReports() {
           {/* Dépenses par catégorie */}
           <Card className="border-border">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold">Dépenses par catégorie</CardTitle>
+              <CardTitle className="text-base font-semibold">Dépenses par catégorie <span className="text-xs font-normal text-muted-foreground ml-1">· {periodLabel}</span></CardTitle>
             </CardHeader>
             <CardContent>
               {categoryData.length === 0 ? (
@@ -256,7 +266,7 @@ export default function FinancialReports() {
         {/* Bénéfice par ville */}
         <Card className="border-border">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold">Bénéfice par ville</CardTitle>
+            <CardTitle className="text-base font-semibold">Bénéfice par ville <span className="text-xs font-normal text-muted-foreground ml-1">· {periodLabel}</span></CardTitle>
           </CardHeader>
           <CardContent>
             {cityProfitData.length === 0 ? (
