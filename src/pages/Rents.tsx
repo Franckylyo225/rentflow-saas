@@ -381,6 +381,14 @@ export default function Rents() {
                                 {payment.status !== "paid" && (
                                   <Button variant="outline" size="sm" onClick={() => openPayment(payment)}>Payer</Button>
                                 )}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openAdvance(payment)}
+                                  title="Paiement anticipé"
+                                >
+                                  <FastForward className="h-4 w-4" />
+                                </Button>
                                 {payment.escalation.level !== "none" && (
                                   <Button variant="ghost" size="sm" onClick={() => openTasks(payment)} title="Gérer les tâches">
                                     <ListTodo className="h-4 w-4" />
