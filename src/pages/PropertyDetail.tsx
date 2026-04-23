@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { BulkUnitDialog } from "@/components/property/BulkUnitDialog";
 
 export default function PropertyDetail() {
   const { id } = useParams();
@@ -180,8 +181,8 @@ export default function PropertyDetail() {
 
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">Unités locatives</h2>
-          <Button size="sm" className="gap-2" onClick={() => { setUnitForm({ name: "", rent: "", charges: "", rooms: "1", floor: "" }); setShowAddUnit(true); }}>
-            <Plus className="h-3.5 w-3.5" /> Ajouter une unité
+          <Button size="sm" className="gap-2" onClick={() => setShowAddUnit(true)}>
+            <Plus className="h-3.5 w-3.5" /> Ajouter des unités
           </Button>
         </div>
 
@@ -241,21 +242,14 @@ export default function PropertyDetail() {
         )}
       </div>
 
-      {/* Add unit */}
-      <Dialog open={showAddUnit} onOpenChange={setShowAddUnit}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader><DialogTitle>Ajouter une unité</DialogTitle></DialogHeader>
-          {unitFormFields}
-          <p className="text-xs text-muted-foreground">Statut par défaut : Vacant</p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddUnit(false)}>Annuler</Button>
-            <Button onClick={handleAddUnit} disabled={saving || !unitForm.name || !unitForm.rent}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Enregistrer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Add units (single / bulk identical / bulk custom) */}
+      <BulkUnitDialog
+        open={showAddUnit}
+        onOpenChange={setShowAddUnit}
+        propertyId={id!}
+        existingNames={propertyUnits.map(u => u.name)}
+        onCompleted={refetchUnits}
+      />
 
       {/* Edit unit */}
       <Dialog open={showEditUnit} onOpenChange={setShowEditUnit}>
