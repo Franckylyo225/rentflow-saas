@@ -232,7 +232,7 @@ export default function FinancialReports() {
           {/* Dépenses par catégorie */}
           <Card className="border-border">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold">Dépenses par catégorie</CardTitle>
+              <CardTitle className="text-base font-semibold">Dépenses par catégorie <span className="text-xs font-normal text-muted-foreground ml-1">· {periodLabel}</span></CardTitle>
             </CardHeader>
             <CardContent>
               {categoryData.length === 0 ? (
