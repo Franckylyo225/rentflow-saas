@@ -574,6 +574,16 @@ export default function Rents() {
       </Dialog>
 
       <QuittanceDialog open={showQuittance} onOpenChange={setShowQuittance} data={quittanceData} />
+
+      <AdvancePaymentDialog
+        open={showAdvance}
+        onOpenChange={setShowAdvance}
+        tenant={advanceTenant}
+        existingPayments={advanceTenantPayments}
+        rentDueDay={(orgSettings as any)?.rent_due_day ?? 5}
+        paymentMethods={orgSettings?.accepted_payment_methods ?? paymentMethods}
+        onCompleted={() => { refetch(); setAdvanceTenant(null); }}
+      />
     </AppLayout>
   );
 }
