@@ -2,9 +2,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Download, Loader2, ExternalLink, Mail } from "lucide-react";
 import { downloadQuittance, getQuittanceBlob, type QuittanceData } from "@/lib/generateQuittance";
+import { sendQuittanceEmail } from "@/lib/sendQuittanceEmail";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface QuittanceDialogProps {
   open: boolean;
