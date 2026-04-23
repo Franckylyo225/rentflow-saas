@@ -232,6 +232,24 @@ export default function Rents() {
     refetchTasks();
   };
 
+  const openAdvance = (payment: any) => {
+    if (!payment.tenants?.id) return;
+    setAdvanceTenant({
+      id: payment.tenants.id,
+      full_name: payment.tenants.full_name,
+      rent: payment.tenants.units?.rent ?? payment.amount,
+    });
+    setShowAdvance(true);
+  };
+
+  // Échéances du locataire sélectionné pour le dialogue d'avance
+  const advanceTenantPayments = useMemo(() => {
+    if (!advanceTenant) return [];
+    return payments
+      .filter(p => p.tenants?.id === advanceTenant.id)
+      .map(p => ({ id: p.id, month: p.month, due_date: p.due_date, amount: p.amount, paid_amount: p.paid_amount, status: p.status }));
+  }, [advanceTenant, payments]);
+
   const pendingTasks = allTasks.filter(t => t.status === "pending" || t.status === "in_progress");
 
   return (
