@@ -242,21 +242,14 @@ export default function PropertyDetail() {
         )}
       </div>
 
-      {/* Add unit */}
-      <Dialog open={showAddUnit} onOpenChange={setShowAddUnit}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader><DialogTitle>Ajouter une unité</DialogTitle></DialogHeader>
-          {unitFormFields}
-          <p className="text-xs text-muted-foreground">Statut par défaut : Vacant</p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddUnit(false)}>Annuler</Button>
-            <Button onClick={handleAddUnit} disabled={saving || !unitForm.name || !unitForm.rent}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Enregistrer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Add units (single / bulk identical / bulk custom) */}
+      <BulkUnitDialog
+        open={showAddUnit}
+        onOpenChange={setShowAddUnit}
+        propertyId={id!}
+        existingNames={propertyUnits.map(u => u.name)}
+        onCompleted={refetchUnits}
+      />
 
       {/* Edit unit */}
       <Dialog open={showEditUnit} onOpenChange={setShowEditUnit}>
