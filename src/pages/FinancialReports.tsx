@@ -208,7 +208,7 @@ export default function FinancialReports() {
           {/* CA vs Dépenses */}
           <Card className="border-border lg:col-span-2">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold">CA vs Dépenses</CardTitle>
+              <CardTitle className="text-base font-semibold">CA vs Dépenses <span className="text-xs font-normal text-muted-foreground ml-1">· {periodLabel}</span></CardTitle>
             </CardHeader>
             <CardContent>
               {monthlyComparison.length === 0 ? (
