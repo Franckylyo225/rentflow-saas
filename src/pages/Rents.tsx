@@ -20,7 +20,7 @@ import { getEscalationInfo, defaultTasksByLevel, type EscalationInfo } from "@/l
 import { generateMiseEnDemeure } from "@/lib/generateMiseEnDemeure";
 import { QuittanceDialog } from "@/components/rent/QuittanceDialog";
 import { AdvancePaymentDialog } from "@/components/rent/AdvancePaymentDialog";
-import type { QuittanceData } from "@/lib/generateQuittance";
+import { getQuittanceBlob, type QuittanceData } from "@/lib/generateQuittance";
 import { downloadInvoice, generateInvoiceNumber, type InvoiceData } from "@/lib/generateInvoice";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useProfile } from "@/hooks/useProfile";
@@ -206,6 +206,81 @@ export default function Rents() {
     }).eq("id", selectedPayment.id);
 
     toast.success("Paiement enregistré");
+
+    // Auto-send quittance email if payment is now fully paid
+    const wasNotPaidBefore = selectedPayment.status !== "paid";
+    if (newStatus === "paid" && wasNotPaidBefore) {
+      const tenantEmail = selectedPayment.tenants?.email;
+      if (!tenantEmail) {
+        toast.info("Locataire sans email — quittance non envoyée");
+      } else {
+        try {
+          const datePrefix = selectedPayment.due_date?.replace(/-/g, "").slice(2, 8) ?? "";
+          const idSuffix = selectedPayment.id?.slice(0, 6).toUpperCase() ?? "";
+          const quittanceNumber = `Q-${datePrefix}-${idSuffix}`;
+          const monthLabel = formatMonthLabel(selectedPayment.month);
+
+          const data: QuittanceData = {
+            quittanceNumber,
+            agentName: profile?.full_name || undefined,
+            tenantName: selectedPayment.tenants?.full_name ?? "",
+            tenantPhone: selectedPayment.tenants?.phone ?? "",
+            tenantEmail,
+            unitName: selectedPayment.tenants?.units?.name ?? "",
+            propertyName: selectedPayment.tenants?.units?.properties?.name ?? "",
+            propertyAddress: "",
+            amount: selectedPayment.amount,
+            paidAmount: newPaidTotal,
+            dueDate: selectedPayment.due_date,
+            month: monthLabel,
+            paymentDate: payForm.date,
+            paymentMethod: payForm.method,
+            organizationName: orgSettings?.name,
+            organizationAddress: orgSettings?.address ?? undefined,
+            organizationPhone: orgSettings?.phone ?? undefined,
+            organizationEmail: orgSettings?.email ?? undefined,
+            organizationLogoUrl: orgSettings?.logo_url ?? undefined,
+          };
+
+          const blob = await getQuittanceBlob(data);
+          const pdfBase64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              const base64 = result.split(",")[1] || "";
+              resolve(base64);
+            };
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(blob);
+          });
+
+          const { error: sendError } = await supabase.functions.invoke("send-quittance-email", {
+            body: {
+              recipientEmail: tenantEmail,
+              tenantName: data.tenantName,
+              month: monthLabel,
+              amount: newPaidTotal,
+              organizationName: orgSettings?.name,
+              pdfBase64,
+              pdfFilename: `Quittance_${quittanceNumber}.pdf`,
+              organizationId: profile?.organization_id,
+              rentPaymentId: selectedPayment.id,
+            },
+          });
+
+          if (sendError) {
+            console.error("Quittance email error:", sendError);
+            toast.warning("Paiement enregistré, échec envoi quittance");
+          } else {
+            toast.success(`Quittance envoyée à ${tenantEmail}`);
+          }
+        } catch (err) {
+          console.error("Failed to send quittance email:", err);
+          toast.warning("Paiement enregistré, échec envoi quittance");
+        }
+      }
+    }
+
     setShowPayment(false);
     setSelectedPayment(null);
     setSaving(false);
