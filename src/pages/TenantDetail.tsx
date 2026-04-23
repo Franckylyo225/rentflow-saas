@@ -335,6 +335,18 @@ export default function TenantDetail() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <AdvancePaymentDialog
+          open={showAdvance}
+          onOpenChange={setShowAdvance}
+          tenant={tenant ? { id: tenant.id, full_name: tenant.full_name, rent: tenant.rent } : null}
+          existingPayments={payments.map((p: any) => ({
+            id: p.id, month: p.month, due_date: p.due_date, amount: p.amount, paid_amount: p.paid_amount, status: p.status,
+          }))}
+          rentDueDay={(orgSettings as any)?.rent_due_day ?? 5}
+          paymentMethods={orgSettings?.accepted_payment_methods ?? ["Espèces", "Virement bancaire", "Chèque", "Mobile Money"]}
+          onCompleted={fetchData}
+        />
       </div>
     </AppLayout>
   );
