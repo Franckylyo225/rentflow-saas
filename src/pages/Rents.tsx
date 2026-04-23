@@ -233,11 +233,12 @@ export default function Rents() {
   };
 
   const openAdvance = (payment: any) => {
-    if (!payment.tenants?.id) return;
+    const tid = payment.tenants?.id ?? payment.tenant_id;
+    if (!tid) return;
     setAdvanceTenant({
-      id: payment.tenants.id,
-      full_name: payment.tenants.full_name,
-      rent: payment.tenants.units?.rent ?? payment.amount,
+      id: tid,
+      full_name: payment.tenants?.full_name ?? "Locataire",
+      rent: payment.tenants?.units?.rent ?? payment.tenants?.rent ?? payment.amount,
     });
     setShowAdvance(true);
   };
@@ -246,7 +247,7 @@ export default function Rents() {
   const advanceTenantPayments = useMemo(() => {
     if (!advanceTenant) return [];
     return payments
-      .filter(p => p.tenants?.id === advanceTenant.id)
+      .filter(p => (p.tenants?.id ?? p.tenant_id) === advanceTenant.id)
       .map(p => ({ id: p.id, month: p.month, due_date: p.due_date, amount: p.amount, paid_amount: p.paid_amount, status: p.status }));
   }, [advanceTenant, payments]);
 
