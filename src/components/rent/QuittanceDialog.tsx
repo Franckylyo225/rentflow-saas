@@ -1,7 +1,7 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
-import { downloadQuittance, getQuittanceDataUrl, type QuittanceData } from "@/lib/generateQuittance";
+import { Download, Loader2, ExternalLink } from "lucide-react";
+import { downloadQuittance, getQuittanceBlob, type QuittanceData } from "@/lib/generateQuittance";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 
@@ -25,15 +25,23 @@ export function QuittanceDialog({ open, onOpenChange, data }: QuittanceDialogPro
 
   useEffect(() => {
     let cancelled = false;
+    let createdUrl: string | null = null;
     if (open && data) {
       setLoading(true);
       setPreviewUrl(null);
-      getQuittanceDataUrl(data)
-        .then((url) => { if (!cancelled) setPreviewUrl(url); })
+      getQuittanceBlob(data)
+        .then((blob) => {
+          if (cancelled) return;
+          createdUrl = URL.createObjectURL(blob);
+          setPreviewUrl(createdUrl);
+        })
         .catch(() => { if (!cancelled) toast.error("Impossible de générer l'aperçu"); })
         .finally(() => { if (!cancelled) setLoading(false); });
     }
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      if (createdUrl) URL.revokeObjectURL(createdUrl);
+    };
   }, [open, data]);
 
   if (!data) return null;
@@ -43,6 +51,10 @@ export function QuittanceDialog({ open, onOpenChange, data }: QuittanceDialogPro
     toast.success("Quittance téléchargée");
   };
 
+  const handleOpenInNewTab = () => {
+    if (previewUrl) window.open(previewUrl, "_blank", "noopener,noreferrer");
+  };
+
   const monthLabel = formatMonthLabel(data.month);
 
   return (
@@ -50,6 +62,9 @@ export function QuittanceDialog({ open, onOpenChange, data }: QuittanceDialogPro
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="capitalize">Quittance de loyer — {monthLabel}</DialogTitle>
+          <DialogDescription>
+            Aperçu PDF de la quittance. Téléchargez ou ouvrez dans un nouvel onglet.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="p-3 rounded-lg bg-muted text-sm">
@@ -63,6 +78,10 @@ export function QuittanceDialog({ open, onOpenChange, data }: QuittanceDialogPro
             <Download className="h-4 w-4 mr-1.5" />
             Télécharger le PDF
           </Button>
+          <Button size="sm" variant="outline" onClick={handleOpenInNewTab} disabled={!previewUrl}>
+            <ExternalLink className="h-4 w-4 mr-1.5" />
+            Ouvrir dans un onglet
+          </Button>
         </div>
 
         {loading ? (
@@ -70,11 +89,20 @@ export function QuittanceDialog({ open, onOpenChange, data }: QuittanceDialogPro
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : previewUrl ? (
-          <iframe
-            src={previewUrl}
+          <object
+            data={previewUrl}
+            type="application/pdf"
             className="w-full h-[500px] rounded-lg border border-border mt-2"
-            title="Aperçu de la quittance"
-          />
+            aria-label="Aperçu de la quittance"
+          >
+            <div className="flex flex-col items-center justify-center h-full text-sm text-muted-foreground gap-2 p-4 text-center">
+              <p>L'aperçu PDF n'est pas pris en charge par votre navigateur.</p>
+              <Button size="sm" variant="outline" onClick={handleOpenInNewTab}>
+                <ExternalLink className="h-4 w-4 mr-1.5" />
+                Ouvrir dans un nouvel onglet
+              </Button>
+            </div>
+          </object>
         ) : null}
       </DialogContent>
     </Dialog>
