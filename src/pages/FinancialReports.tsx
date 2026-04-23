@@ -35,6 +35,11 @@ export default function FinancialReports() {
   const { data: cities } = useCities();
   const [periodMode, setPeriodMode] = useState<PeriodMode>("all");
   const [periodValue, setPeriodValue] = useState<string>("all");
+  const [exporting, setExporting] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
+  const { hasFeature, planName } = useFeatureAccess();
+  const { settings: orgSettings } = useOrganizationSettings();
+  const canExport = hasFeature("advanced_reports");
 
   const loading = expLoading || payLoading;
 
