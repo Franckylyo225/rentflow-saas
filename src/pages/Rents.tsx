@@ -21,6 +21,7 @@ import { generateMiseEnDemeure } from "@/lib/generateMiseEnDemeure";
 import { QuittanceDialog } from "@/components/rent/QuittanceDialog";
 import { AdvancePaymentDialog } from "@/components/rent/AdvancePaymentDialog";
 import { getQuittanceBlob, type QuittanceData } from "@/lib/generateQuittance";
+import { sendQuittanceEmail } from "@/lib/sendQuittanceEmail";
 import { downloadInvoice, generateInvoiceNumber, type InvoiceData } from "@/lib/generateInvoice";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useProfile } from "@/hooks/useProfile";
@@ -229,29 +230,27 @@ export default function Rents() {
         reader.readAsDataURL(blob);
       });
 
-      const { error: sendError } = await supabase.functions.invoke("send-quittance-email", {
-        body: {
-          recipientEmail: tenantEmail,
-          tenantName: data.tenantName,
-          month: monthLabel,
-          amount: payment.paid_amount,
-          organizationName: orgSettings?.name,
-          pdfBase64,
-          pdfFilename: `Quittance_${quittanceNumber}.pdf`,
-          organizationId: profile?.organization_id,
-          rentPaymentId: payment.id,
-        },
+      const result = await sendQuittanceEmail({
+        recipientEmail: tenantEmail,
+        tenantName: data.tenantName,
+        month: monthLabel,
+        amount: payment.paid_amount,
+        organizationName: orgSettings?.name,
+        pdfBase64,
+        pdfFilename: `Quittance_${quittanceNumber}.pdf`,
+        organizationId: profile?.organization_id,
+        rentPaymentId: payment.id,
       });
 
-      if (sendError) {
-        console.error("Quittance email error:", sendError);
-        toast.warning(`Échec envoi quittance ${monthLabel}`);
-      } else {
+      if (result.ok) {
         toast.success(`Quittance ${monthLabel} envoyée à ${tenantEmail}`);
+      } else {
+        toast.warning(`Quittance ${monthLabel} : ${result.message}`, { duration: 7000 });
       }
     } catch (err) {
       console.error("Failed to send quittance email:", err);
-      toast.warning("Échec envoi quittance");
+      const message = err instanceof Error ? err.message : "Erreur inconnue";
+      toast.warning(`Échec envoi quittance : ${message}`, { duration: 7000 });
     }
   };
 
