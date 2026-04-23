@@ -181,6 +181,92 @@ export default function Rents() {
     downloadInvoice(invoiceData);
   };
 
+  // Helper : envoie la quittance par email pour un rent_payment donné (statut = paid)
+  const sendQuittanceEmail = async (payment: any) => {
+    const tenantEmail = payment?.tenants?.email;
+    if (!tenantEmail) {
+      toast.info(`Locataire ${payment?.tenants?.full_name ?? ""} sans email — quittance non envoyée`);
+      return;
+    }
+    try {
+      const datePrefix = payment.due_date?.replace(/-/g, "").slice(2, 8) ?? "";
+      const idSuffix = payment.id?.slice(0, 6).toUpperCase() ?? "";
+      const quittanceNumber = `Q-${datePrefix}-${idSuffix}`;
+      const monthLabel = formatMonthLabel(payment.month);
+
+      const data: QuittanceData = {
+        quittanceNumber,
+        agentName: profile?.full_name || undefined,
+        tenantName: payment.tenants?.full_name ?? "",
+        tenantPhone: payment.tenants?.phone ?? "",
+        tenantEmail,
+        unitName: payment.tenants?.units?.name ?? "",
+        propertyName: payment.tenants?.units?.properties?.name ?? "",
+        propertyAddress: "",
+        amount: payment.amount,
+        paidAmount: payment.paid_amount,
+        dueDate: payment.due_date,
+        month: monthLabel,
+        paymentDate: new Date().toISOString().split("T")[0],
+        paymentMethod: payForm.method || "—",
+        organizationName: orgSettings?.name,
+        organizationAddress: orgSettings?.address ?? undefined,
+        organizationPhone: orgSettings?.phone ?? undefined,
+        organizationEmail: orgSettings?.email ?? undefined,
+        organizationLogoUrl: orgSettings?.logo_url ?? undefined,
+      };
+
+      const blob = await getQuittanceBlob(data);
+      const pdfBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          resolve(result.split(",")[1] || "");
+        };
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
+
+      const { error: sendError } = await supabase.functions.invoke("send-quittance-email", {
+        body: {
+          recipientEmail: tenantEmail,
+          tenantName: data.tenantName,
+          month: monthLabel,
+          amount: payment.paid_amount,
+          organizationName: orgSettings?.name,
+          pdfBase64,
+          pdfFilename: `Quittance_${quittanceNumber}.pdf`,
+          organizationId: profile?.organization_id,
+          rentPaymentId: payment.id,
+        },
+      });
+
+      if (sendError) {
+        console.error("Quittance email error:", sendError);
+        toast.warning(`Échec envoi quittance ${monthLabel}`);
+      } else {
+        toast.success(`Quittance ${monthLabel} envoyée à ${tenantEmail}`);
+      }
+    } catch (err) {
+      console.error("Failed to send quittance email:", err);
+      toast.warning("Échec envoi quittance");
+    }
+  };
+
+  // Envoie les quittances pour une liste d'IDs de paiements complétés (utilisé par le paiement anticipé)
+  const sendQuittancesForPaidIds = async (paidIds: string[]) => {
+    if (!paidIds.length) return;
+    // Recharge les paiements (avec relations) pour disposer des données à jour
+    const { data: freshPayments } = await supabase
+      .from("rent_payments")
+      .select("id, amount, paid_amount, due_date, month, tenants:tenant_id(full_name, phone, email, units:unit_id(name, properties:property_id(name)))")
+      .in("id", paidIds);
+    if (!freshPayments) return;
+    for (const p of freshPayments) {
+      await sendQuittanceEmail(p);
+    }
+  };
+
   const handleRecordPayment = async () => {
     if (!selectedPayment || !payForm.amount || !payForm.method) return;
     setSaving(true);
@@ -210,75 +296,7 @@ export default function Rents() {
     // Auto-send quittance email if payment is now fully paid
     const wasNotPaidBefore = selectedPayment.status !== "paid";
     if (newStatus === "paid" && wasNotPaidBefore) {
-      const tenantEmail = selectedPayment.tenants?.email;
-      if (!tenantEmail) {
-        toast.info("Locataire sans email — quittance non envoyée");
-      } else {
-        try {
-          const datePrefix = selectedPayment.due_date?.replace(/-/g, "").slice(2, 8) ?? "";
-          const idSuffix = selectedPayment.id?.slice(0, 6).toUpperCase() ?? "";
-          const quittanceNumber = `Q-${datePrefix}-${idSuffix}`;
-          const monthLabel = formatMonthLabel(selectedPayment.month);
-
-          const data: QuittanceData = {
-            quittanceNumber,
-            agentName: profile?.full_name || undefined,
-            tenantName: selectedPayment.tenants?.full_name ?? "",
-            tenantPhone: selectedPayment.tenants?.phone ?? "",
-            tenantEmail,
-            unitName: selectedPayment.tenants?.units?.name ?? "",
-            propertyName: selectedPayment.tenants?.units?.properties?.name ?? "",
-            propertyAddress: "",
-            amount: selectedPayment.amount,
-            paidAmount: newPaidTotal,
-            dueDate: selectedPayment.due_date,
-            month: monthLabel,
-            paymentDate: payForm.date,
-            paymentMethod: payForm.method,
-            organizationName: orgSettings?.name,
-            organizationAddress: orgSettings?.address ?? undefined,
-            organizationPhone: orgSettings?.phone ?? undefined,
-            organizationEmail: orgSettings?.email ?? undefined,
-            organizationLogoUrl: orgSettings?.logo_url ?? undefined,
-          };
-
-          const blob = await getQuittanceBlob(data);
-          const pdfBase64 = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              const result = reader.result as string;
-              const base64 = result.split(",")[1] || "";
-              resolve(base64);
-            };
-            reader.onerror = () => reject(reader.error);
-            reader.readAsDataURL(blob);
-          });
-
-          const { error: sendError } = await supabase.functions.invoke("send-quittance-email", {
-            body: {
-              recipientEmail: tenantEmail,
-              tenantName: data.tenantName,
-              month: monthLabel,
-              amount: newPaidTotal,
-              organizationName: orgSettings?.name,
-              pdfBase64,
-              pdfFilename: `Quittance_${quittanceNumber}.pdf`,
-              organizationId: profile?.organization_id,
-              rentPaymentId: selectedPayment.id,
-            },
-          });
-
-          if (sendError) {
-            console.error("Quittance email error:", sendError);
-            toast.warning("Paiement enregistré, échec envoi quittance");
-          } else {
-            toast.success(`Quittance envoyée à ${tenantEmail}`);
-          }
-        } catch (err) {
-          console.error("Failed to send quittance email:", err);
-          toast.warning("Paiement enregistré, échec envoi quittance");
-        }
-      }
+      await sendQuittanceEmail({ ...selectedPayment, paid_amount: newPaidTotal });
     }
 
     setShowPayment(false);
@@ -660,7 +678,11 @@ export default function Rents() {
         existingPayments={advanceTenantPayments}
         rentDueDay={(orgSettings as any)?.rent_due_day ?? 5}
         paymentMethods={orgSettings?.accepted_payment_methods ?? paymentMethods}
-        onCompleted={() => { refetch(); setAdvanceTenant(null); }}
+        onCompleted={async (paidIds) => {
+          await sendQuittancesForPaidIds(paidIds ?? []);
+          refetch();
+          setAdvanceTenant(null);
+        }}
       />
     </AppLayout>
   );
