@@ -21,7 +21,7 @@ import { generateMiseEnDemeure } from "@/lib/generateMiseEnDemeure";
 import { QuittanceDialog } from "@/components/rent/QuittanceDialog";
 import { AdvancePaymentDialog } from "@/components/rent/AdvancePaymentDialog";
 import { getQuittanceBlob, type QuittanceData } from "@/lib/generateQuittance";
-import { sendQuittanceEmail } from "@/lib/sendQuittanceEmail";
+import { sendQuittanceEmail as invokeSendQuittanceEmail } from "@/lib/sendQuittanceEmail";
 import { downloadInvoice, generateInvoiceNumber, type InvoiceData } from "@/lib/generateInvoice";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useProfile } from "@/hooks/useProfile";
@@ -230,7 +230,7 @@ export default function Rents() {
         reader.readAsDataURL(blob);
       });
 
-      const result = await sendQuittanceEmail({
+      const result = await invokeSendQuittanceEmail({
         recipientEmail: tenantEmail,
         tenantName: data.tenantName,
         month: monthLabel,
