@@ -181,8 +181,8 @@ export default function PropertyDetail() {
 
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">Unités locatives</h2>
-          <Button size="sm" className="gap-2" onClick={() => { setUnitForm({ name: "", rent: "", charges: "", rooms: "1", floor: "" }); setShowAddUnit(true); }}>
-            <Plus className="h-3.5 w-3.5" /> Ajouter une unité
+          <Button size="sm" className="gap-2" onClick={() => setShowAddUnit(true)}>
+            <Plus className="h-3.5 w-3.5" /> Ajouter des unités
           </Button>
         </div>
 
