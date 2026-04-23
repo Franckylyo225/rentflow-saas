@@ -3,6 +3,7 @@ import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
 import { PlanLimitBanner } from "./PlanLimitBanner";
 import { useProfile } from "@/hooks/useProfile";
+import { GuidedTour } from "@/components/onboarding/GuidedTour";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -24,6 +25,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </main>
       </div>
+      {/* Tour guidé — persistant sur toutes les pages tant qu'il n'est pas terminé/fermé */}
+      <GuidedTour />
     </div>
   );
 }
