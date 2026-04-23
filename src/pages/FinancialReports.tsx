@@ -266,7 +266,7 @@ export default function FinancialReports() {
         {/* Bénéfice par ville */}
         <Card className="border-border">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold">Bénéfice par ville</CardTitle>
+            <CardTitle className="text-base font-semibold">Bénéfice par ville <span className="text-xs font-normal text-muted-foreground ml-1">· {periodLabel}</span></CardTitle>
           </CardHeader>
           <CardContent>
             {cityProfitData.length === 0 ? (
