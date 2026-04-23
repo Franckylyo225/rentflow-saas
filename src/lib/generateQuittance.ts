@@ -20,6 +20,8 @@ export interface QuittanceData {
   organizationPhone?: string;
   organizationEmail?: string;
   organizationLogoUrl?: string;
+  rentPaymentId?: string;
+  organizationId?: string;
 }
 
 const formatNumber = (num: number) =>
