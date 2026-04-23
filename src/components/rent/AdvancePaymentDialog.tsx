@@ -30,7 +30,7 @@ interface AdvancePaymentDialogProps {
   rentDueDay?: number;
   /** Méthodes de paiement acceptées par l'organisation. */
   paymentMethods?: string[];
-  onCompleted: () => void;
+  onCompleted: (paidPaymentIds?: string[]) => void;
 }
 
 const MONTH_OPTIONS = [2, 3, 4, 6, 9, 12];
@@ -147,6 +147,7 @@ export function AdvancePaymentDialog({
     }
 
     setSaving(true);
+    const fullyPaidIds: string[] = [];
     try {
       // 1) Pour chaque mois couvert, soit on récupère l'échéance existante, soit on la crée
       const existingByMonth = new Map(existingPayments.map(p => [p.month, p]));
@@ -186,7 +187,9 @@ export function AdvancePaymentDialog({
 
         const apply = Math.min(remaining, due);
         const newPaid = alreadyPaid + apply;
+        const wasNotPaidBefore = (existing?.status ?? "pending") !== "paid";
         const newStatus = newPaid >= monthAmount ? "paid" : "partial";
+        if (newStatus === "paid" && wasNotPaidBefore) fullyPaidIds.push(pid);
 
         // Insert payment record
         const { error: prErr } = await supabase.from("payment_records").insert({
@@ -211,7 +214,7 @@ export function AdvancePaymentDialog({
         `Paiement anticipé enregistré sur ${coveredMonths.length} mois${remaining > 0 ? ` (reliquat non affecté : ${remaining.toLocaleString()} FCFA)` : ""}`
       );
       onOpenChange(false);
-      onCompleted();
+      onCompleted(fullyPaidIds);
     } catch (e: any) {
       console.error(e);
       toast.error(e?.message || "Erreur lors de l'enregistrement");
