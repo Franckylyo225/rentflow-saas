@@ -154,17 +154,35 @@ export default function FinancialReports() {
             <h1 className="text-2xl font-bold text-foreground tracking-tight">Rapports financiers</h1>
             <p className="text-muted-foreground text-sm mt-1">Performance financière globale</p>
           </div>
-          <Select value={periodFilter} onValueChange={setPeriodFilter}>
-            <SelectTrigger className="w-48"><SelectValue placeholder="Période" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les périodes</SelectItem>
-              {months.map(m => (
-                <SelectItem key={m} value={m}>
-                  {new Date(m + "-01").toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Select value={periodMode} onValueChange={(v) => handleModeChange(v as PeriodMode)}>
+              <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="Type" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes périodes</SelectItem>
+                <SelectItem value="month">Par mois</SelectItem>
+                <SelectItem value="quarter">Par trimestre</SelectItem>
+                <SelectItem value="year">Par année</SelectItem>
+              </SelectContent>
+            </Select>
+            {periodMode !== "all" && (
+              <Select value={periodValue} onValueChange={setPeriodValue}>
+                <SelectTrigger className="w-full sm:w-52">
+                  <SelectValue placeholder={
+                    periodMode === "month" ? "Choisir un mois" :
+                    periodMode === "quarter" ? "Choisir un trimestre" : "Choisir une année"
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    {periodMode === "month" ? "Tous les mois" : periodMode === "quarter" ? "Tous les trimestres" : "Toutes les années"}
+                  </SelectItem>
+                  {periodOptions.map(v => (
+                    <SelectItem key={v} value={v}>{formatPeriodLabel(v)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
         </div>
 
         {/* KPI cards */}
