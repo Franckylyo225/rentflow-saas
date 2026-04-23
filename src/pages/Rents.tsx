@@ -166,7 +166,7 @@ export default function Rents() {
       clientPhone: payment.tenants?.phone || undefined,
       clientEmail: payment.tenants?.email || undefined,
       items: [{
-        description: `Loyer - ${payment.month} — ${payment.tenants?.units?.name || ""} (${payment.tenants?.units?.properties?.name || ""})`,
+        description: `Loyer ${formatMonthLabel(payment.month)} — ${payment.tenants?.units?.name || ""} (${payment.tenants?.units?.properties?.name || ""}) · échéance ${new Date(payment.due_date).toLocaleDateString("fr-FR")}`,
         quantity: 1,
         unitPrice: payment.amount,
         total: payment.amount,
