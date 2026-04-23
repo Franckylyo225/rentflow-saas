@@ -2,9 +2,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Download, Loader2, ExternalLink, Mail } from "lucide-react";
 import { downloadQuittance, getQuittanceBlob, type QuittanceData } from "@/lib/generateQuittance";
+import { sendQuittanceEmail } from "@/lib/sendQuittanceEmail";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface QuittanceDialogProps {
   open: boolean;
@@ -77,29 +77,27 @@ export function QuittanceDialog({ open, onOpenChange, data }: QuittanceDialogPro
       });
 
       const monthLabel = formatMonthLabel(data.month);
-      const { error } = await supabase.functions.invoke("send-quittance-email", {
-        body: {
-          recipientEmail: data.tenantEmail,
-          tenantName: data.tenantName,
-          month: monthLabel,
-          amount: data.paidAmount,
-          organizationName: data.organizationName,
-          pdfBase64,
-          pdfFilename: `Quittance_${data.quittanceNumber ?? monthLabel}.pdf`,
-          organizationId: data.organizationId,
-          rentPaymentId: data.rentPaymentId,
-        },
+      const result = await sendQuittanceEmail({
+        recipientEmail: data.tenantEmail,
+        tenantName: data.tenantName,
+        month: monthLabel,
+        amount: data.paidAmount,
+        organizationName: data.organizationName,
+        pdfBase64,
+        pdfFilename: `Quittance_${data.quittanceNumber ?? monthLabel}.pdf`,
+        organizationId: data.organizationId,
+        rentPaymentId: data.rentPaymentId,
       });
 
-      if (error) {
-        console.error("Quittance email error:", error);
-        toast.error("Échec de l'envoi de la quittance");
+      if (result.ok) {
+        toast.success(result.message);
       } else {
-        toast.success(`Quittance envoyée à ${data.tenantEmail}`);
+        toast.error(result.message, { duration: 7000 });
       }
     } catch (err) {
       console.error("Failed to send quittance email:", err);
-      toast.error("Échec de l'envoi de la quittance");
+      const message = err instanceof Error ? err.message : "Erreur inconnue";
+      toast.error(`Échec de l'envoi : ${message}`, { duration: 7000 });
     } finally {
       setSending(false);
     }
