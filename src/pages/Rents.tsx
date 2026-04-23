@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, AlertTriangle, CheckCircle2, Clock, Loader2, ListTodo, Plus, Check, FileText, Download } from "lucide-react";
+import { CreditCard, AlertTriangle, CheckCircle2, Clock, Loader2, ListTodo, Plus, Check, FileText, Download, FastForward } from "lucide-react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -41,6 +41,8 @@ export default function Rents() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showQuittance, setShowQuittance] = useState(false);
   const [quittanceData, setQuittanceData] = useState<QuittanceData | null>(null);
+  const [showAdvance, setShowAdvance] = useState(false);
+  const [advanceTenant, setAdvanceTenant] = useState<{ id: string; full_name: string; rent: number } | null>(null);
 
   useEffect(() => {
     if (searchParams.get("action") === "new") {
