@@ -83,6 +83,16 @@ export default function FinancialReports() {
     setPeriodValue("all");
   };
 
+  const periodLabel = useMemo(() => {
+    if (periodMode === "all" || periodValue === "all") {
+      if (periodMode === "all") return "Toutes périodes";
+      if (periodMode === "month") return "Tous les mois";
+      if (periodMode === "quarter") return "Tous les trimestres";
+      if (periodMode === "year") return "Toutes les années";
+    }
+    return formatPeriodLabel(periodValue);
+  }, [periodMode, periodValue]);
+
   // KPIs
   const ca = useMemo(() => filteredPayments.reduce((s, p) => s + p.paid_amount, 0), [filteredPayments]);
   const totalExpenses = useMemo(() => filteredExpenses.reduce((s, e) => s + e.amount, 0), [filteredExpenses]);
