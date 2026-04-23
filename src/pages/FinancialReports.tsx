@@ -1,11 +1,18 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useExpenses, useExpenseCategories } from "@/hooks/useExpenses";
 import { useRentPayments, useProperties, useCities } from "@/hooks/useData";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TrendingUp, TrendingDown, Wallet, Percent, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TrendingUp, TrendingDown, Wallet, Percent, Loader2, FileDown, Lock } from "lucide-react";
+import { toast } from "sonner";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell,
