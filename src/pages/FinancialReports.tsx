@@ -401,6 +401,7 @@ export default function FinancialReports() {
             )}
           </CardContent>
         </Card>
+        </div>
       </div>
     </AppLayout>
   );
