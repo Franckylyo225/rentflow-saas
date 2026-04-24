@@ -125,7 +125,7 @@ export function ReminderHistoryTable() {
         .limit(500),
       supabase
         .from("email_reminder_logs")
-        .select("id,sent_at,recipient_email,template_key,status,error_message")
+        .select("id,sent_at,recipient_email,template_key,status,error_message,audit_context")
         .eq("organization_id", orgId)
         .gte("sent_at", start)
         .lte("sent_at", end)
@@ -133,7 +133,24 @@ export function ReminderHistoryTable() {
         .limit(500),
     ]);
 
-    setSmsRows((smsRes.data || []) as SmsRow[]);
+    const smsList = (smsRes.data || []) as SmsRow[];
+
+    // Fetch audit logs for these SMS in one query
+    if (smsList.length > 0) {
+      const { data: logs } = await supabase
+        .from("sms_logs")
+        .select("sms_message_id, details")
+        .eq("event_type", "targeting_audit")
+        .in(
+          "sms_message_id",
+          smsList.map((s) => s.id)
+        );
+      const auditBySms = new Map<string, AuditContext>();
+      for (const l of logs || []) auditBySms.set(l.sms_message_id, l.details as AuditContext);
+      for (const s of smsList) s.audit = auditBySms.get(s.id) || null;
+    }
+
+    setSmsRows(smsList);
     setEmailRows((emailRes.data || []) as EmailRow[]);
     setLoading(false);
   };
