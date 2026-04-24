@@ -495,6 +495,35 @@ export function BulkSmsDialog({
                 </div>
               </ScrollArea>
             </div>
+
+            {showSoftWarn && (
+              <Alert className="py-2">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle className="text-xs">Envoi volumineux</AlertTitle>
+                <AlertDescription className="text-xs">
+                  Vous vous apprêtez à envoyer {selectedRecipients.length} SMS. L'envoi sera étalé par lots de {THROTTLE_BATCH_SIZE} pour éviter de saturer l'opérateur.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {requiresConfirm && (
+              <div className="flex items-start gap-2 rounded-md border border-warning/50 bg-warning/10 p-3">
+                <Checkbox
+                  id="bulk-confirm"
+                  checked={confirmAck}
+                  onCheckedChange={(c) => setConfirmAck(!!c)}
+                  disabled={sending}
+                />
+                <Label htmlFor="bulk-confirm" className="text-xs cursor-pointer leading-relaxed">
+                  <span className="flex items-center gap-1 font-medium mb-1">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Confirmation requise
+                  </span>
+                  Je confirme avoir vérifié le contenu et la liste de destinataires. Je comprends que cet envoi consommera <strong>{totalSms} SMS</strong> sur mon quota.
+                </Label>
+              </div>
+            )}
+
             {sending && progress.total > 0 && (
               <p className="text-xs text-center text-muted-foreground">
                 Envoi en cours… {progress.done}/{progress.total}
