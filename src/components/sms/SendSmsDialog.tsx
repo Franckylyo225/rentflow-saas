@@ -101,7 +101,7 @@ export function SendSmsDialog({
 
     // Déclencher l'envoi immédiat
     const { error: sendErr } = await supabase.functions.invoke("sms-send", {
-      body: { messageId: msg.id },
+      body: { sms_message_id: msg.id },
     });
 
     setSending(false);
