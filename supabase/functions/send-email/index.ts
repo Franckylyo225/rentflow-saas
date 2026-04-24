@@ -121,6 +121,12 @@ Deno.serve(async (req) => {
       throw new Error("Missing API keys");
     }
 
+    // Resolve which logo variant (white/color) to use for this send
+    LOGO_URL = await resolveLogoUrl();
+    LOGO_IMG = buildLogoImg(LOGO_URL);
+    const swapLogo = (s: string) =>
+      s.replaceAll(LOGO_WHITE_URL, LOGO_URL).replaceAll(LOGO_COLOR_URL, LOGO_URL);
+
     const { templateName, recipientEmail, templateData, adminEmail, inlineSubject, inlineHtml, organizationId, userId } =
       await req.json();
 
