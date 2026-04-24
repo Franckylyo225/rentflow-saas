@@ -403,6 +403,9 @@ function EmailTab() {
         </CardContent>
       </Card>
 
+      {/* Email logo variant */}
+      <EmailLogoCard />
+
       {/* Editable Templates grouped by category */}
       <Card>
         <CardHeader>
