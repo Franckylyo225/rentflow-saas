@@ -347,7 +347,7 @@ const AdminOrganizationDetail = () => {
                     <div className="text-[10px] text-muted-foreground uppercase">Total</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-xl font-bold text-emerald-600 flex items-center justify-center gap-1">
+                    <div className="text-xl font-bold text-success flex items-center justify-center gap-1">
                       <CheckCircle2 className="h-4 w-4" />{reminders.smsSent}
                     </div>
                     <div className="text-[10px] text-muted-foreground uppercase">Envoyés</div>
@@ -378,7 +378,7 @@ const AdminOrganizationDetail = () => {
                     <div className="text-[10px] text-muted-foreground uppercase">Total</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-xl font-bold text-emerald-600 flex items-center justify-center gap-1">
+                    <div className="text-xl font-bold text-success flex items-center justify-center gap-1">
                       <CheckCircle2 className="h-4 w-4" />{reminders.emailSent}
                     </div>
                     <div className="text-[10px] text-muted-foreground uppercase">Envoyés</div>
