@@ -180,50 +180,61 @@ export function SmsTemplatesEditor({ canEdit }: Props) {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          {templates.map((tpl) => (
-            <div
-              key={tpl.id}
-              className="border border-border rounded-lg p-4 space-y-2 bg-card hover:border-primary/30 transition-colors"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-medium text-sm">{tpl.label}</p>
-                    {tpl.is_system && (
-                      <Badge variant="outline" className="text-[10px] font-normal">
-                        Système
-                      </Badge>
-                    )}
+          {templates.map((tpl) => {
+            const preview = renderPreview(tpl.content, sampleVars);
+            return (
+              <div
+                key={tpl.id}
+                className="border border-border rounded-lg p-4 space-y-2 bg-card hover:border-primary/30 transition-colors"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-medium text-sm">{tpl.label}</p>
+                      {tpl.is_system && (
+                        <Badge variant="outline" className="text-[10px] font-normal">
+                          Système
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground/80 font-mono whitespace-pre-wrap break-words">
+                      {tpl.content}
+                    </p>
+                    <div className="mt-2 p-2.5 rounded-md bg-muted/40 border border-border/50">
+                      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                        <Eye className="h-2.5 w-2.5" /> Aperçu
+                      </div>
+                      <p className="text-sm text-foreground whitespace-pre-wrap break-words">
+                        {preview}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
-                    {tpl.content}
-                  </p>
-                </div>
-                {canEdit && (
-                  <div className="flex gap-1 shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => setEditing(tpl)}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    {!tpl.is_system && (
+                  {canEdit && (
+                    <div className="flex gap-1 shrink-0">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => setDeleting(tpl)}
+                        className="h-8 w-8"
+                        onClick={() => setEditing(tpl)}
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Pencil className="h-3.5 w-3.5" />
                       </Button>
-                    )}
-                  </div>
-                )}
+                      {!tpl.is_system && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => setDeleting(tpl)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {templates.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-6">
               Aucun modèle pour le moment.
