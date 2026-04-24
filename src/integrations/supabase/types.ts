@@ -447,6 +447,7 @@ export type Database = {
       }
       email_reminder_logs: {
         Row: {
+          audit_context: Json | null
           error_message: string | null
           id: string
           organization_id: string
@@ -457,6 +458,7 @@ export type Database = {
           template_key: string
         }
         Insert: {
+          audit_context?: Json | null
           error_message?: string | null
           id?: string
           organization_id: string
@@ -467,6 +469,7 @@ export type Database = {
           template_key: string
         }
         Update: {
+          audit_context?: Json | null
           error_message?: string | null
           id?: string
           organization_id?: string
