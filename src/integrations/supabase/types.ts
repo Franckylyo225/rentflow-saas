@@ -1589,33 +1589,45 @@ export type Database = {
       sms_schedules: {
         Row: {
           created_at: string
+          day_of_month: number
           id: string
           is_active: boolean
           label: string
           offset_days: number
           organization_id: string
+          send_hour: number
+          send_minute: number
+          slot_index: number
           sort_order: number
           template_id: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
+          day_of_month?: number
           id?: string
           is_active?: boolean
           label: string
           offset_days: number
           organization_id: string
+          send_hour?: number
+          send_minute?: number
+          slot_index?: number
           sort_order?: number
           template_id?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
+          day_of_month?: number
           id?: string
           is_active?: boolean
           label?: string
           offset_days?: number
           organization_id?: string
+          send_hour?: number
+          send_minute?: number
+          slot_index?: number
           sort_order?: number
           template_id?: string | null
           updated_at?: string
