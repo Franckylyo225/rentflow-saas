@@ -70,6 +70,17 @@ interface UsageStats {
   users: number;
 }
 
+interface ReminderStats {
+  smsTotal: number;
+  smsSent: number;
+  smsFailed: number;
+  smsLast30: number;
+  emailTotal: number;
+  emailSent: number;
+  emailFailed: number;
+  emailLast30: number;
+}
+
 const AdminOrganizationDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
