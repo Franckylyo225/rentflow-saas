@@ -20,11 +20,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, MessageSquare, Send, ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Loader2, MessageSquare, Send, ArrowRight, ArrowLeft, CheckCircle2, AlertTriangle, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
+
+// ============================================================
+// Limites de sécurité — envoi groupé
+// ============================================================
+const MAX_RECIPIENTS_PER_SEND = 200;       // hard cap
+const SOFT_WARN_RECIPIENTS = 100;          // avertissement visuel
+const REQUIRE_CONFIRM_ABOVE = 50;          // checkbox de confirmation requise
+const MAX_SMS_CHARS = 480;                 // 3 segments max
+const THROTTLE_BATCH_SIZE = 10;            // SMS envoyés en parallèle par lot
+const THROTTLE_DELAY_MS = 500;             // pause entre 2 lots
+
+// E.164 simplifié : optionnel +, 8 à 15 chiffres
+const PHONE_REGEX = /^\+?[1-9]\d{7,14}$/;
+
+function normalizePhone(phone: string): string {
+  return phone.replace(/[\s\-.()]/g, "");
+}
+
+function isValidPhone(phone: string | null | undefined): boolean {
+  if (!phone) return false;
+  return PHONE_REGEX.test(normalizePhone(phone));
+}
+
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 export interface BulkSmsRecipient {
   tenantId: string;
