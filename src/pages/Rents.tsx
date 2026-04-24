@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, AlertTriangle, CheckCircle2, Clock, Loader2, ListTodo, Plus, Check, FileText, Download, FastForward, MessageSquare } from "lucide-react";
+import { CreditCard, AlertTriangle, CheckCircle2, Clock, Loader2, ListTodo, Plus, Check, FileText, Download, FastForward, MessageSquare, Lock as LockIcon } from "lucide-react";
 import { SendSmsDialog } from "@/components/sms/SendSmsDialog";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { useState, useMemo, useEffect } from "react";
@@ -400,17 +400,23 @@ export default function Rents() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {hasUnpaidWithPhone && (
-              <Button
-                variant="outline"
-                onClick={handleBulkClick}
-                className="gap-2"
-                title={canBulkSend ? "Envoyer un SMS de relance à tous les impayés" : "Disponible avec l'offre Pro"}
-              >
-                <MessageSquare className="h-4 w-4" />
-                Relancer les impayés
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              onClick={handleBulkClick}
+              disabled={canBulkSend && !hasUnpaidWithPhone}
+              className="gap-2"
+              title={
+                canBulkSend
+                  ? hasUnpaidWithPhone
+                    ? "Envoyer un SMS de relance à tous les impayés"
+                    : "Aucun impayé avec téléphone pour ce filtre"
+                  : "Disponible avec l'offre Pro"
+              }
+            >
+              <MessageSquare className="h-4 w-4" />
+              Relancer les impayés
+              {!canBulkSend && <LockIcon className="h-3 w-3 ml-1 opacity-70" />}
+            </Button>
             <Select value={monthFilter} onValueChange={setMonthFilter}>
               <SelectTrigger className="w-full sm:w-56">
                 <SelectValue placeholder="Toutes les périodes" />
