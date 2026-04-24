@@ -286,16 +286,19 @@ serve(async (req) => {
     }
 
     console.log(
-      `[sms-generate-reminders] day=${matchDay} hour=${matchHour} generated=${generated} skipped_plan=${skippedPlan} skipped_existing=${skippedExisting} skipped_no_tenants=${skippedNoTenants}`
+      `[sms-generate-reminders] day=${matchDay} hour=${matchHour} sms=${generated} emails=${emailsSent} skipped_plan=${skippedPlan} skipped_sms_existing=${skippedExisting} skipped_no_tenants=${skippedNoTenants} skipped_email_no_address=${skippedEmailNoAddress} skipped_email_existing=${skippedEmailExisting}`
     );
 
     return new Response(
       JSON.stringify({
         success: true,
-        generated,
+        sms_generated: generated,
+        emails_sent: emailsSent,
         skipped_plan: skippedPlan,
-        skipped_existing: skippedExisting,
+        skipped_sms_existing: skippedExisting,
         skipped_no_tenants: skippedNoTenants,
+        skipped_email_no_address: skippedEmailNoAddress,
+        skipped_email_existing: skippedEmailExisting,
         matched_day: matchDay,
         matched_hour: matchHour,
       }),
