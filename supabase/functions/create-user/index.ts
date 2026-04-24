@@ -134,8 +134,9 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
+    const msg = err instanceof Error ? err.message : "Erreur interne";
     return new Response(
-      JSON.stringify({ error: err.message || "Erreur interne" }),
+      JSON.stringify({ error: msg }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

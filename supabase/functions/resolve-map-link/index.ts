@@ -57,6 +57,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ error: "Coordonnées non trouvées dans le lien" }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const msg = error instanceof Error ? error.message : "Erreur interne";
+    return new Response(JSON.stringify({ error: msg }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
