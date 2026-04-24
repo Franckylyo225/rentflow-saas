@@ -5,7 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Search, Loader2, ShieldAlert, UserX, Building2 } from "lucide-react";
+import { Plus, Search, Loader2, ShieldAlert, UserX, Building2, MessageSquare } from "lucide-react";
+import { BulkSmsDialog, type BulkSmsRecipient } from "@/components/sms/BulkSmsDialog";
+import { FeatureLockedCard } from "@/components/auth/FeatureLockedCard";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -51,6 +54,9 @@ export default function Tenants() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { expired } = usePlanLimits();
+  const { hasFeature } = useFeatureAccess();
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [lockedOpen, setLockedOpen] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("action") === "new") {
