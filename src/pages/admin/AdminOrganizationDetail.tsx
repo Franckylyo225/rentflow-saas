@@ -90,6 +90,10 @@ const AdminOrganizationDetail = () => {
   const [plans, setPlans] = useState<PlanOption[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [usage, setUsage] = useState<UsageStats>({ properties: 0, units: 0, tenants: 0, users: 0 });
+  const [reminders, setReminders] = useState<ReminderStats>({
+    smsTotal: 0, smsSent: 0, smsFailed: 0, smsLast30: 0,
+    emailTotal: 0, emailSent: 0, emailFailed: 0, emailLast30: 0,
+  });
   const [notes, setNotes] = useState<AdminNote[]>([]);
   const [newNote, setNewNote] = useState("");
   const [loading, setLoading] = useState(true);
