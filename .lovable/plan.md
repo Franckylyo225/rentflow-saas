@@ -1,79 +1,76 @@
+# Plan d'implémentation — SMS simplifié et automatisé
 
+## 🎯 Objectif
 
-## Envoi groupé SMS — `BulkSmsDialog` sur Rents & Tenants
+Remplacer le système actuel (offset_days + envoi manuel groupé) par un système **100% automatique** où chaque agence configure :
+- **Starter** : 1 SMS/mois (modèle + jour + heure)
+- **Pro/Business** : 3 SMS/mois (modèle + jour + heure pour chacun)
 
-Ajout d'un composant d'envoi groupé multi-étapes avec prévisualisation par destinataire, intégré aux pages Rents (cible : impayés) et Tenants (cible : locataires actifs), avec verrouillage par plan.
+---
 
-### 1. Nouveau composant `BulkSmsDialog`
+## 1. Migration base de données
 
-`src/components/sms/BulkSmsDialog.tsx` — dialog en 3 étapes :
+**Schéma `sms_schedules`** :
+- ➕ `day_of_month` SMALLINT (1-31, contraint par trigger)
+- ➕ `send_hour` SMALLINT (0-23, défaut 9)
+- ➕ `send_minute` SMALLINT (0-59, défaut 0)
+- ➕ `slot_index` SMALLINT (1, 2 ou 3) → identifie le créneau Pro
+- 🔄 `offset_days` reste pour compatibilité descendante (sera ignoré par la nouvelle logique)
 
-**Étape 1 — Sélection des destinataires**
-- Liste des cibles passées en prop (`recipients: { tenantId, name, phone, rentPaymentId?, rentAmount?, dueDate? }[]`).
-- Cases à cocher individuelles + "Tout sélectionner".
-- Filtre automatique des destinataires sans téléphone (badge "Sans numéro" désactivé).
+**Backfill des données existantes** (21 lignes) :
+- `Rappel J-5` → `day_of_month = (rent_due_day - 5)` clampé entre 1 et 28, `slot_index = 1`
+- `Rappel J-1` → `day_of_month = (rent_due_day - 1)`, `slot_index = 2`
+- `Relance J+3` → `day_of_month = (rent_due_day + 3)`, `slot_index = 3`
+- `send_hour = 9`, `send_minute = 0` partout
 
-**Étape 2 — Modèle & contenu**
-- Choix du modèle SMS (depuis `sms_templates` de l'organisation) ou message libre.
-- Variables supportées : `{{tenant_name}}`, `{{rent_amount}}`, `{{due_date}}`, `{{agency_name}}`.
-- Compteur caractères/segments en temps réel.
+**Plans (mise à jour `feature_flags`)** :
+- 🗑 Retirer `sms_bulk_send` de Pro et Business
+- 🗑 Retirer `sms_before_only` (devenu inutile)
+- ✅ Garder `sms_auto_basic` (Starter = 1 SMS) et `sms_auto_full` (Pro/Business = 3 SMS)
 
-**Étape 3 — Prévisualisation & confirmation**
-- Aperçu rendu pour les 3 premiers destinataires (variables substituées).
-- Récap : nombre de destinataires × segments = total SMS.
-- Bouton "Confirmer l'envoi" → insertion en lot dans `sms_messages` (status `scheduled`, `scheduled_for: now()`, `trigger_type: 'manual'`), puis appel `sms-send` pour chaque message.
-- Toast de progression + fermeture à la fin.
+## 2. Edge function `sms-generate-reminders`
 
-### 2. Intégration `Rents.tsx`
+Réécriture complète de la logique de matching :
+- Cron passe de **quotidien** à **horaire** (`0 * * * *`)
+- Pour chaque schedule actif : si `day_of_month == today.day` ET `send_hour == current_hour`, alors générer
+- Le SMS est envoyé pour chaque locataire actif ayant un loyer pour le mois courant (statut `pending`, `late` ou `partial`)
+- Anti-doublon : clé unique (`schedule_id` + `tenant_id` + `month YYYY-MM`)
+- Limitation par plan :
+  - Starter (`sms_auto_basic` sans `sms_auto_full`) : seul `slot_index = 1` est traité
+  - Pro/Business (`sms_auto_full`) : les 3 slots sont traités
 
-- Nouveau bouton header **"Relancer les impayés"** (icône `MessageSquare`).
-- Visible uniquement si au moins un loyer `late` ou `pending` avec téléphone.
-- Cibles pré-remplies : tous les loyers non payés avec tenant + phone.
-- Verrou : `sms_bulk_send` requis. Sans ce flag → bouton ouvre `FeatureLockedCard` modale (upgrade Pro).
+## 3. Cron job
 
-### 3. Intégration `Tenants.tsx`
+Mettre à jour le cron `pg_cron` existant pour `sms-generate-reminders` : passer de `0 6 * * *` (quotidien) à `0 * * * *` (horaire).
 
-- Nouveau bouton header **"Envoyer SMS groupé"**.
-- Cibles pré-remplies : locataires actifs avec téléphone (filtre courant respecté si l'utilisateur a appliqué un filtre ville/bien/risque).
-- Même logique de verrou `sms_bulk_send`.
+## 4. Refonte UI `SmsSchedulesEditor.tsx`
 
-### 4. Gating (feature flag)
+Nouvelle interface **inline** sans dialog de création :
+- 1 ligne fixe pour Starter, 3 lignes fixes pour Pro/Business
+- Chaque ligne = `Switch actif | Select modèle | Select jour 1-31 | Select heure HH:MM`
+- Bouton "Enregistrer" global
+- Pour Starter, les slots 2 et 3 sont affichés grisés avec badge "Pro"
+- Suppression du bouton "Ajouter" et du dialog
 
-Réutilisation de `useFeatureAccess()` :
-- `hasFeature("sms_bulk_send")` → autorise l'envoi groupé.
-- Si absent : bouton affiché en grisé avec icône cadenas, clic ouvre une modale `UpgradePrompt` réutilisant `FeatureLockedCard` (titre "Envoi groupé", plan requis "Pro").
+Ajustements `SmsSettingsTab.tsx` : retirer la logique `canEditAllSchedules` séparée — la nouvelle UI gère tout via `slot_index`.
 
-Aucune migration DB requise — le flag `sms_bulk_send` sera ajouté manuellement aux plans Pro+ via l'admin (ou via update SQL ponctuel si tu le demandes ensuite).
+## 5. Suppression de l'envoi manuel groupé
 
-### Détails techniques
+- 🗑 **Supprimer** `src/components/sms/BulkSmsDialog.tsx`
+- 🗑 **Rents.tsx** : retirer le DropdownMenu "Relances SMS" (et l'import BulkSmsDialog). Garder éventuellement un raccourci vers Settings → SMS.
+- 🗑 **Tenants.tsx** : retirer le bouton "SMS groupé" et l'import BulkSmsDialog
+- ✅ Conserver `SendSmsDialog.tsx` (envoi individuel sur fiche locataire — utile pour cas exceptionnels)
 
-**Fichier créé :**
-- `src/components/sms/BulkSmsDialog.tsx`
+## 6. Mise à jour mémoire projet
 
-**Fichiers modifiés :**
-- `src/pages/Rents.tsx` — bouton "Relancer les impayés" + state `bulkOpen`
-- `src/pages/Tenants.tsx` — bouton "Envoyer SMS groupé" + state `bulkOpen`
+Mettre à jour `mem://features/relances-automatiques` pour refléter la nouvelle règle (jour + heure choisis par l'agence, plus d'envoi manuel groupé).
 
-**Logique d'envoi (extrait) :**
-```ts
-// Insertion en lot
-const rows = selected.map(r => ({
-  organization_id: orgId,
-  recipient_phone: r.phone,
-  recipient_name: r.name,
-  content: render(template, varsFor(r)),
-  tenant_id: r.tenantId,
-  rent_payment_id: r.rentPaymentId ?? null,
-  trigger_type: "manual",
-  status: "scheduled",
-  scheduled_for: new Date().toISOString(),
-}));
-const { data: msgs } = await supabase.from("sms_messages").insert(rows).select("id");
-// Déclenche immédiatement
-await Promise.all(msgs.map(m => 
-  supabase.functions.invoke("sms-send", { body: { sms_message_id: m.id } })
-));
-```
+---
 
-**Pas de changement** sur les edge functions (Phase 1A déjà compatible : `sms-send` accepte `sms_message_id`).
+## ⚠️ Impacts à confirmer
 
+- **Compatibilité** : la colonne `offset_days` reste présente mais n'est plus lue par l'edge function. Aucune perte de données.
+- **Locataire test "Konan Test"** créé précédemment : restera fonctionnel pour valider le nouveau cron horaire.
+- **`SendSmsDialog`** (envoi unitaire depuis fiche locataire) : conservé car utile, pas concerné par la simplification.
+
+Confirmes-tu ce plan avant que je passe en mode implémentation ?
