@@ -207,17 +207,38 @@ export function BulkSmsDialog({
   const segments = Math.max(1, Math.ceil(charCount / 160));
   const totalSms = selectedRecipients.length * segments;
 
-  const canGoStep2 = selected.size > 0;
-  const canGoStep3 = content.trim().length > 0;
+  const overContentLimit = charCount > MAX_SMS_CHARS;
+  const overRecipientLimit = selectedRecipients.length > MAX_RECIPIENTS_PER_SEND;
+  const requiresConfirm = selectedRecipients.length > REQUIRE_CONFIRM_ABOVE;
+  const showSoftWarn = selectedRecipients.length > SOFT_WARN_RECIPIENTS;
+
+  const canGoStep2 = selected.size > 0 && selected.size <= MAX_RECIPIENTS_PER_SEND;
+  const canGoStep3 = content.trim().length > 0 && !overContentLimit;
+  const canConfirmSend =
+    !sending &&
+    selectedRecipients.length > 0 &&
+    !overRecipientLimit &&
+    !overContentLimit &&
+    (!requiresConfirm || confirmAck);
 
   const handleSend = async () => {
-    if (!orgId || selectedRecipients.length === 0 || !content.trim()) return;
+    if (!orgId || !canConfirmSend) return;
+
+    // Re-valide tous les numéros côté client juste avant l'envoi
+    const invalid = selectedRecipients.filter((r) => !isValidPhone(r.phone));
+    if (invalid.length > 0) {
+      toast.error(`${invalid.length} numéro(s) invalide(s) détecté(s)`, {
+        description: "Veuillez corriger les fiches concernées avant de relancer l'envoi.",
+      });
+      return;
+    }
+
     setSending(true);
     setProgress({ done: 0, total: selectedRecipients.length });
 
     const rows = selectedRecipients.map((r) => ({
       organization_id: orgId,
-      recipient_phone: r.phone!,
+      recipient_phone: normalizePhone(r.phone!),
       recipient_name: r.name,
       content: renderTemplate(content, buildVars(r, agencyName)),
       tenant_id: r.tenantId,
@@ -239,18 +260,26 @@ export function BulkSmsDialog({
       return;
     }
 
+    // Throttling : envoi par lots de THROTTLE_BATCH_SIZE avec pause entre chaque
     let done = 0;
     let failed = 0;
-    await Promise.all(
-      msgs.map(async (m) => {
-        const { error } = await supabase.functions.invoke("sms-send", {
-          body: { sms_message_id: m.id },
-        });
-        if (error) failed += 1;
-        done += 1;
-        setProgress({ done, total: msgs.length });
-      })
-    );
+    for (let i = 0; i < msgs.length; i += THROTTLE_BATCH_SIZE) {
+      const batch = msgs.slice(i, i + THROTTLE_BATCH_SIZE);
+      await Promise.all(
+        batch.map(async (m) => {
+          const { error } = await supabase.functions.invoke("sms-send", {
+            body: { sms_message_id: m.id },
+          });
+          if (error) failed += 1;
+          done += 1;
+          setProgress({ done, total: msgs.length });
+        })
+      );
+      // Pause entre les lots (sauf après le dernier)
+      if (i + THROTTLE_BATCH_SIZE < msgs.length) {
+        await sleep(THROTTLE_DELAY_MS);
+      }
+    }
 
     setSending(false);
     if (failed === 0) {
