@@ -102,19 +102,37 @@ const AdminOrganizationDetail = () => {
   const fetchAll = async () => {
     if (!id) return;
 
-    const [orgRes, subRes, notesRes, profilesRes, propsRes, plansRes] = await Promise.all([
+    const since30 = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+
+    const [orgRes, subRes, notesRes, profilesRes, propsRes, plansRes, smsRes, emailRes] = await Promise.all([
       supabase.from("organizations").select("id, name, email, phone, address, is_active, created_at, currency").eq("id", id).single(),
       supabase.from("subscriptions").select("*").eq("organization_id", id).maybeSingle(),
       supabase.from("admin_notes").select("*").eq("organization_id", id).order("created_at", { ascending: false }),
       supabase.from("profiles").select("id").eq("organization_id", id),
       supabase.from("properties").select("id").eq("organization_id", id),
       supabase.from("plans").select("slug, name, price_monthly").order("sort_order"),
+      supabase.from("sms_messages").select("status, created_at").eq("organization_id", id),
+      supabase.from("email_reminder_logs").select("status, sent_at").eq("organization_id", id),
     ]);
 
     setPlans((plansRes.data || []) as PlanOption[]);
 
     if (orgRes.data) setOrg(orgRes.data);
     if (subRes.data) setSubscription(subRes.data);
+    setNotes(notesRes.data || []);
+
+    const sms = smsRes.data || [];
+    const emails = emailRes.data || [];
+    setReminders({
+      smsTotal: sms.length,
+      smsSent: sms.filter((s: any) => s.status === "sent" || s.status === "delivered").length,
+      smsFailed: sms.filter((s: any) => s.status === "failed").length,
+      smsLast30: sms.filter((s: any) => s.created_at >= since30).length,
+      emailTotal: emails.length,
+      emailSent: emails.filter((e: any) => e.status === "sent").length,
+      emailFailed: emails.filter((e: any) => e.status === "failed").length,
+      emailLast30: emails.filter((e: any) => e.sent_at >= since30).length,
+    });
     setNotes(notesRes.data || []);
 
     const propIds = (propsRes.data || []).map((p: any) => p.id);
