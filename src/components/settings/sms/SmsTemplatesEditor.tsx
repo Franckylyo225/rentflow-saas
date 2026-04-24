@@ -23,20 +23,31 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Pencil, Plus, Trash2, FileText, Variable } from "lucide-react";
+import { Loader2, Pencil, Plus, Trash2, FileText, Variable, Eye, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { toast } from "@/hooks/use-toast";
 
-const AVAILABLE_VARS = [
-  { key: "{{tenant_name}}", desc: "Nom du locataire" },
-  { key: "{{rent_amount}}", desc: "Montant du loyer" },
-  { key: "{{due_date}}", desc: "Date d'échéance" },
-  { key: "{{month}}", desc: "Mois concerné" },
-  { key: "{{agency_name}}", desc: "Nom de l'agence" },
-  { key: "{{remaining_days}}", desc: "Jours restants" },
-  { key: "{{late_days}}", desc: "Jours de retard" },
+type VarDef = { key: string; token: string; desc: string; sample: string };
+
+const AVAILABLE_VARS: VarDef[] = [
+  { key: "tenant_name", token: "{{tenant_name}}", desc: "Nom du locataire", sample: "Awa Koné" },
+  { key: "rent_amount", token: "{{rent_amount}}", desc: "Montant du loyer", sample: "150 000" },
+  { key: "due_date", token: "{{due_date}}", desc: "Date d'échéance", sample: "05/05/2026" },
+  { key: "month", token: "{{month}}", desc: "Mois concerné", sample: "Mai 2026" },
+  { key: "agency_name", token: "{{agency_name}}", desc: "Nom de l'agence", sample: "Mon agence" },
+  { key: "remaining_days", token: "{{remaining_days}}", desc: "Jours restants", sample: "3" },
+  { key: "late_days", token: "{{late_days}}", desc: "Jours de retard", sample: "7" },
 ];
+
+function renderPreview(content: string, vars: Record<string, string>): string {
+  let result = content;
+  for (const [key, value] of Object.entries(vars)) {
+    result = result.replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, "g"), value);
+  }
+  return result;
+}
 
 type SmsTemplate = {
   id: string;
@@ -52,12 +63,23 @@ interface Props {
 
 export function SmsTemplatesEditor({ canEdit }: Props) {
   const { profile } = useProfile();
+  const { settings } = useOrganizationSettings();
   const orgId = profile?.organization_id;
   const [templates, setTemplates] = useState<SmsTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<SmsTemplate | null>(null);
   const [deleting, setDeleting] = useState<SmsTemplate | null>(null);
   const [saving, setSaving] = useState(false);
+  const [sampleVars, setSampleVars] = useState<Record<string, string>>(() =>
+    Object.fromEntries(AVAILABLE_VARS.map((v) => [v.key, v.sample])),
+  );
+
+  // Sync agency name from org settings when available
+  useEffect(() => {
+    if (settings?.name) {
+      setSampleVars((prev) => ({ ...prev, agency_name: settings.name }));
+    }
+  }, [settings?.name]);
 
   const fetchTemplates = async () => {
     if (!orgId) return;
@@ -158,50 +180,61 @@ export function SmsTemplatesEditor({ canEdit }: Props) {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          {templates.map((tpl) => (
-            <div
-              key={tpl.id}
-              className="border border-border rounded-lg p-4 space-y-2 bg-card hover:border-primary/30 transition-colors"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-medium text-sm">{tpl.label}</p>
-                    {tpl.is_system && (
-                      <Badge variant="outline" className="text-[10px] font-normal">
-                        Système
-                      </Badge>
-                    )}
+          {templates.map((tpl) => {
+            const preview = renderPreview(tpl.content, sampleVars);
+            return (
+              <div
+                key={tpl.id}
+                className="border border-border rounded-lg p-4 space-y-2 bg-card hover:border-primary/30 transition-colors"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-medium text-sm">{tpl.label}</p>
+                      {tpl.is_system && (
+                        <Badge variant="outline" className="text-[10px] font-normal">
+                          Système
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground/80 font-mono whitespace-pre-wrap break-words">
+                      {tpl.content}
+                    </p>
+                    <div className="mt-2 p-2.5 rounded-md bg-muted/40 border border-border/50">
+                      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                        <Eye className="h-2.5 w-2.5" /> Aperçu
+                      </div>
+                      <p className="text-sm text-foreground whitespace-pre-wrap break-words">
+                        {preview}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
-                    {tpl.content}
-                  </p>
-                </div>
-                {canEdit && (
-                  <div className="flex gap-1 shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => setEditing(tpl)}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    {!tpl.is_system && (
+                  {canEdit && (
+                    <div className="flex gap-1 shrink-0">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => setDeleting(tpl)}
+                        className="h-8 w-8"
+                        onClick={() => setEditing(tpl)}
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Pencil className="h-3.5 w-3.5" />
                       </Button>
-                    )}
-                  </div>
-                )}
+                      {!tpl.is_system && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => setDeleting(tpl)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {templates.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-6">
               Aucun modèle pour le moment.
@@ -211,64 +244,125 @@ export function SmsTemplatesEditor({ canEdit }: Props) {
       </Card>
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing?.id ? "Modifier le modèle" : "Nouveau modèle"}</DialogTitle>
             <DialogDescription>
-              Insérez des variables dynamiques en cliquant sur les jetons ci-dessous.
+              Insérez des variables dynamiques en cliquant sur les jetons. L'aperçu se met à jour
+              en temps réel avec des valeurs d'exemple.
             </DialogDescription>
           </DialogHeader>
 
           {editing && (
-            <div className="space-y-4">
-              <div>
-                <Label className="text-xs">Nom du modèle</Label>
-                <Input
-                  value={editing.label}
-                  onChange={(e) => setEditing({ ...editing, label: e.target.value })}
-                  placeholder="Ex : Rappel J-3"
-                  disabled={editing.is_system}
-                />
-              </div>
+            <div className="grid lg:grid-cols-2 gap-5">
+              {/* Editor column */}
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-xs">Nom du modèle</Label>
+                  <Input
+                    value={editing.label}
+                    onChange={(e) => setEditing({ ...editing, label: e.target.value })}
+                    placeholder="Ex : Rappel J-3"
+                    disabled={editing.is_system}
+                  />
+                </div>
 
-              <div>
-                <Label className="text-xs flex items-center gap-1">
-                  <Variable className="h-3 w-3" /> Variables disponibles
-                </Label>
-                <div className="flex flex-wrap gap-1.5 mt-1.5">
-                  {AVAILABLE_VARS.map((v) => (
-                    <Button
-                      key={v.key}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-xs font-mono gap-1"
-                      onClick={() => insertVar(v.key)}
-                      title={v.desc}
-                    >
-                      {v.key}
-                    </Button>
-                  ))}
+                <div>
+                  <Label className="text-xs flex items-center gap-1">
+                    <Variable className="h-3 w-3" /> Variables disponibles
+                  </Label>
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {AVAILABLE_VARS.map((v) => (
+                      <Button
+                        key={v.key}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs font-mono gap-1"
+                        onClick={() => insertVar(v.token)}
+                        title={v.desc}
+                      >
+                        {v.token}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-xs">Contenu du SMS</Label>
+                  <Textarea
+                    value={editing.content}
+                    onChange={(e) => setEditing({ ...editing, content: e.target.value })}
+                    rows={6}
+                    className="font-mono text-sm"
+                  />
+                  <div className="flex items-center justify-between mt-1.5 text-xs text-muted-foreground">
+                    <span>
+                      {charCount} caractère{charCount > 1 ? "s" : ""} • {smsCount} SMS
+                    </span>
+                    {charCount > 160 && (
+                      <span className="text-warning">
+                        Au-delà de 160 caractères = SMS multi-segments
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <Label className="text-xs">Contenu du SMS</Label>
-                <Textarea
-                  value={editing.content}
-                  onChange={(e) => setEditing({ ...editing, content: e.target.value })}
-                  rows={5}
-                  className="font-mono text-sm"
-                />
-                <div className="flex items-center justify-between mt-1.5 text-xs text-muted-foreground">
-                  <span>
-                    {charCount} caractère{charCount > 1 ? "s" : ""} • {smsCount} SMS
-                  </span>
-                  {charCount > 160 && (
-                    <span className="text-warning">
-                      Au-delà de 160 caractères = SMS multi-segments
-                    </span>
-                  )}
+              {/* Live preview column */}
+              <div className="space-y-4">
+                <div className="rounded-lg border border-primary/30 bg-gradient-to-br from-primary/5 to-transparent p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 rounded-md bg-primary/10">
+                      <MessageSquare className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+                        Aperçu live
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Rendu avec les valeurs d'exemple ci-dessous
+                      </p>
+                    </div>
+                  </div>
+                  <div className="rounded-md bg-card border border-border p-3 min-h-[100px]">
+                    <p className="text-sm whitespace-pre-wrap break-words">
+                      {editing.content
+                        ? renderPreview(editing.content, sampleVars)
+                        : (
+                          <span className="text-muted-foreground italic">
+                            Le contenu du SMS apparaîtra ici…
+                          </span>
+                        )}
+                    </p>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-2">
+                    {renderPreview(editing.content, sampleVars).length} caractère
+                    {renderPreview(editing.content, sampleVars).length > 1 ? "s" : ""} après
+                    substitution
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs flex items-center gap-1">
+                    <Eye className="h-3 w-3" /> Valeurs d'exemple
+                  </Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {AVAILABLE_VARS.map((v) => (
+                      <div key={v.key} className="space-y-0.5">
+                        <Label className="text-[10px] font-mono text-muted-foreground">
+                          {v.token}
+                        </Label>
+                        <Input
+                          value={sampleVars[v.key] ?? ""}
+                          onChange={(e) =>
+                            setSampleVars({ ...sampleVars, [v.key]: e.target.value })
+                          }
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
