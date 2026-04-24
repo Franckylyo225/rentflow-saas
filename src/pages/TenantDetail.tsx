@@ -2,7 +2,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, CreditCard, Home, Mail, Phone, User, Loader2, LogOut, Building2, FileText, Pencil, FastForward } from "lucide-react";
+import { ArrowLeft, Calendar, CreditCard, Home, Mail, Phone, User, Loader2, LogOut, Building2, FileText, Pencil, FastForward, MessageSquare } from "lucide-react";
+import { SendSmsDialog } from "@/components/sms/SendSmsDialog";
 import { PaymentStatusBadge } from "@/components/ui/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
@@ -29,6 +30,7 @@ export default function TenantDetail() {
   const [editForm, setEditForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [showAdvance, setShowAdvance] = useState(false);
+  const [showSms, setShowSms] = useState(false);
 
   const fetchData = () => {
     if (!id) return;
@@ -136,6 +138,11 @@ export default function TenantDetail() {
             <Button variant="outline" size="sm" onClick={openEdit}>
               <Pencil className="h-4 w-4 mr-2" /> Modifier
             </Button>
+            {tenant.is_active && tenant.phone && (
+              <Button variant="outline" size="sm" onClick={() => setShowSms(true)}>
+                <MessageSquare className="h-4 w-4 mr-2" /> Envoyer SMS
+              </Button>
+            )}
             {tenant.is_active && (
               <Button variant="outline" size="sm" onClick={() => setShowAdvance(true)}>
                 <FastForward className="h-4 w-4 mr-2" /> Paiement anticipé
@@ -346,6 +353,14 @@ export default function TenantDetail() {
           rentDueDay={(orgSettings as any)?.rent_due_day ?? 5}
           paymentMethods={orgSettings?.accepted_payment_methods ?? ["Espèces", "Virement bancaire", "Chèque", "Mobile Money"]}
           onCompleted={fetchData}
+        />
+
+        <SendSmsDialog
+          open={showSms}
+          onOpenChange={setShowSms}
+          defaultPhone={tenant?.phone}
+          defaultName={tenant?.full_name}
+          tenantId={tenant?.id}
         />
       </div>
     </AppLayout>
