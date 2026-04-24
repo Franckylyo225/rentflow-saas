@@ -218,6 +218,28 @@ export default function Tenants() {
     refetch();
   };
 
+
+  const bulkRecipients: BulkSmsRecipient[] = useMemo(
+    () =>
+      filtered.map(t => ({
+        tenantId: t.id,
+        name: t.tenant_type === "company" ? (t.company_name || t.full_name) : t.full_name,
+        phone: t.phone || null,
+        rentAmount: t.rent ?? null,
+      })),
+    [filtered]
+  );
+  const hasAnyPhone = bulkRecipients.some(r => !!r.phone);
+  const canBulkSend = hasFeature("sms_bulk_send");
+
+  const handleBulkClick = () => {
+    if (!canBulkSend) {
+      setLockedOpen(true);
+      return;
+    }
+    setBulkOpen(true);
+  };
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -226,15 +248,28 @@ export default function Tenants() {
             <h1 className="text-2xl font-bold text-foreground tracking-tight">Locataires</h1>
             <p className="text-muted-foreground text-sm mt-1">{tenants.length} actifs · {formerTenants.length > 0 ? `${formerTenants.length} anciens` : ""}</p>
           </div>
-          <Button className="gap-2 self-start" disabled={expired} onClick={() => {
-            if (expired) {
-              toast.error("Abonnement expiré", { description: "Renouvelez votre abonnement pour continuer.", action: { label: "Renouveler", onClick: () => navigate("/settings") } });
-              return;
-            }
-            setShowAdd(true);
-          }}>
-            <Plus className="h-4 w-4" /> Ajouter un locataire
-          </Button>
+          <div className="flex flex-wrap items-center gap-2 self-start">
+            {activeTab === "active" && hasAnyPhone && (
+              <Button
+                variant="outline"
+                onClick={handleBulkClick}
+                className="gap-2"
+                title={canBulkSend ? "Envoyer un SMS à tous les locataires filtrés" : "Disponible avec l'offre Pro"}
+              >
+                <MessageSquare className="h-4 w-4" />
+                Envoyer SMS groupé
+              </Button>
+            )}
+            <Button className="gap-2" disabled={expired} onClick={() => {
+              if (expired) {
+                toast.error("Abonnement expiré", { description: "Renouvelez votre abonnement pour continuer.", action: { label: "Renouveler", onClick: () => navigate("/settings") } });
+                return;
+              }
+              setShowAdd(true);
+            }}>
+              <Plus className="h-4 w-4" /> Ajouter un locataire
+            </Button>
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -549,6 +584,27 @@ export default function Tenants() {
               Valider
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <BulkSmsDialog
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        recipients={bulkRecipients}
+        title="Envoi groupé de SMS"
+        description="Envoyez un SMS à tous les locataires sélectionnés (filtres respectés)."
+      />
+
+      <Dialog open={lockedOpen} onOpenChange={setLockedOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Envoi groupé</DialogTitle>
+          </DialogHeader>
+          <FeatureLockedCard
+            title="Envoi groupé de SMS"
+            description="Communiquez avec plusieurs locataires en un seul envoi. Disponible à partir de l'offre Pro."
+            requiredPlan="Pro"
+          />
         </DialogContent>
       </Dialog>
     </AppLayout>
