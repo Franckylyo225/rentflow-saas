@@ -166,8 +166,15 @@ export function BulkSmsDialog({
   const toggleOne = (key: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        if (next.size >= MAX_RECIPIENTS_PER_SEND) {
+          toast.error(`Maximum ${MAX_RECIPIENTS_PER_SEND} destinataires par envoi`);
+          return prev;
+        }
+        next.add(key);
+      }
       return next;
     });
   };
