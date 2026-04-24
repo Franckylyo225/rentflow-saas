@@ -175,11 +175,35 @@ serve(async (req) => {
       for (const payment of orgPayments) {
         const tenant = (payment as any).tenants;
         const dueDate = new Date(payment.due_date);
+        const amountDue = Number(payment.amount || 0);
+        const amountPaid = Number(payment.paid_amount || 0);
+        const remaining = amountDue - amountPaid;
         const variables = {
           tenant_name: tenant.full_name,
           rent_amount: fmtAmount(payment.amount),
           due_date: fmtDate(dueDate),
           agency_name: orgNameById.get(orgId) || "RentFlow",
+        };
+
+        // Audit context: explains WHY this tenant was targeted
+        const auditContext = {
+          reason: "rent_unpaid_for_month",
+          month: monthKey,
+          payment_status: payment.status,
+          amount_due: amountDue,
+          amount_paid: amountPaid,
+          remaining_balance: remaining,
+          due_date: payment.due_date,
+          rent_payment_id: payment.id,
+          tenant_id: tenant.id,
+          tenant_name: tenant.full_name,
+          tenant_is_active: tenant.is_active,
+          schedule_id: sched.id,
+          schedule_slot: sched.slot_index,
+          schedule_day: sched.day_of_month,
+          schedule_hour: sched.send_hour,
+          plan_slug: planSlug,
+          triggered_at: new Date().toISOString(),
         };
 
         // ============= SMS =============
@@ -198,23 +222,35 @@ serve(async (req) => {
             skippedExisting++;
           } else {
             const finalContent = renderTemplate(tplContent, variables);
-            const { error: insErr } = await supabase.from("sms_messages").insert({
-              organization_id: orgId,
-              recipient_phone: tenant.phone,
-              recipient_name: tenant.full_name,
-              content: finalContent,
-              template_id: sched.template_id,
-              schedule_id: sched.id,
-              tenant_id: tenant.id,
-              rent_payment_id: payment.id,
-              trigger_type: "auto",
-              status: "scheduled",
-              scheduled_for: new Date().toISOString(),
-            });
+            const { data: newSms, error: insErr } = await supabase
+              .from("sms_messages")
+              .insert({
+                organization_id: orgId,
+                recipient_phone: tenant.phone,
+                recipient_name: tenant.full_name,
+                content: finalContent,
+                template_id: sched.template_id,
+                schedule_id: sched.id,
+                tenant_id: tenant.id,
+                rent_payment_id: payment.id,
+                trigger_type: "auto",
+                status: "scheduled",
+                scheduled_for: new Date().toISOString(),
+              })
+              .select("id")
+              .single();
             if (insErr) {
               console.error(`[generate] sms insert error for payment ${payment.id}:`, insErr);
             } else {
               generated++;
+              // Audit log: why this SMS was created
+              if (newSms?.id) {
+                await supabase.from("sms_logs").insert({
+                  sms_message_id: newSms.id,
+                  event_type: "targeting_audit",
+                  details: auditContext,
+                });
+              }
             }
           }
         }
@@ -224,7 +260,6 @@ serve(async (req) => {
           if (!tenant?.email) {
             skippedEmailNoAddress++;
           } else {
-            // Anti-dup email: check email_reminder_logs for (rent_payment_id, template_key=schedule.id) this month
             const templateKey = `auto_schedule_${sched.id}`;
             const { data: existingEmail } = await supabase
               .from("email_reminder_logs")
@@ -266,6 +301,7 @@ serve(async (req) => {
                   template_key: templateKey,
                   status,
                   error_message: errMsg,
+                  audit_context: auditContext,
                 });
                 if (resp.ok) emailsSent++;
               } catch (emailErr) {
@@ -277,6 +313,7 @@ serve(async (req) => {
                   template_key: templateKey,
                   status: "failed",
                   error_message: String(emailErr),
+                  audit_context: auditContext,
                 });
               }
             }

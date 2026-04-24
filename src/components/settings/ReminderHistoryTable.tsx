@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Info } from "lucide-react";
 import {
   Loader2,
   RefreshCw,
@@ -22,6 +24,23 @@ import { useProfile } from "@/hooks/useProfile";
 import { format, startOfMonth, endOfMonth, subMonths, addMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 
+type AuditContext = {
+  reason?: string;
+  month?: string;
+  payment_status?: string;
+  amount_due?: number;
+  amount_paid?: number;
+  remaining_balance?: number;
+  due_date?: string;
+  rent_payment_id?: string;
+  tenant_name?: string;
+  schedule_slot?: number;
+  schedule_day?: number;
+  schedule_hour?: number;
+  plan_slug?: string;
+  triggered_at?: string;
+} | null;
+
 type SmsRow = {
   id: string;
   created_at: string;
@@ -31,6 +50,7 @@ type SmsRow = {
   status: string;
   trigger_type: string;
   error_message: string | null;
+  audit?: AuditContext;
 };
 
 type EmailRow = {
@@ -40,6 +60,7 @@ type EmailRow = {
   template_key: string;
   status: string;
   error_message: string | null;
+  audit_context: AuditContext;
 };
 
 const SMS_STATUS: Record<string, { label: string; icon: typeof CheckCircle2; className: string }> = {
@@ -104,7 +125,7 @@ export function ReminderHistoryTable() {
         .limit(500),
       supabase
         .from("email_reminder_logs")
-        .select("id,sent_at,recipient_email,template_key,status,error_message")
+        .select("id,sent_at,recipient_email,template_key,status,error_message,audit_context")
         .eq("organization_id", orgId)
         .gte("sent_at", start)
         .lte("sent_at", end)
@@ -112,7 +133,24 @@ export function ReminderHistoryTable() {
         .limit(500),
     ]);
 
-    setSmsRows((smsRes.data || []) as SmsRow[]);
+    const smsList = (smsRes.data || []) as SmsRow[];
+
+    // Fetch audit logs for these SMS in one query
+    if (smsList.length > 0) {
+      const { data: logs } = await supabase
+        .from("sms_logs")
+        .select("sms_message_id, details")
+        .eq("event_type", "targeting_audit")
+        .in(
+          "sms_message_id",
+          smsList.map((s) => s.id)
+        );
+      const auditBySms = new Map<string, AuditContext>();
+      for (const l of logs || []) auditBySms.set(l.sms_message_id, l.details as AuditContext);
+      for (const s of smsList) s.audit = auditBySms.get(s.id) || null;
+    }
+
+    setSmsRows(smsList);
     setEmailRows((emailRes.data || []) as EmailRow[]);
     setLoading(false);
   };
@@ -264,6 +302,65 @@ function EmptyState({ label }: { label: string }) {
   return <p className="text-sm text-muted-foreground text-center py-8">{label}</p>;
 }
 
+const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  pending: "En attente",
+  late: "En retard",
+  partial: "Partiel",
+  paid: "Payé",
+};
+
+function AuditCell({ audit }: { audit: AuditContext }) {
+  if (!audit) return <span className="text-[11px] text-muted-foreground">—</span>;
+  const fmt = (n?: number) => (n != null ? Number(n).toLocaleString("fr-FR") : "—");
+  const statusLabel = audit.payment_status
+    ? PAYMENT_STATUS_LABELS[audit.payment_status] || audit.payment_status
+    : "—";
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-[11px]">
+          <Info className="h-3 w-3" />
+          {statusLabel} · {fmt(audit.remaining_balance)} FCFA
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-3 text-xs space-y-2">
+        <div className="font-medium text-sm">Pourquoi cette relance ?</div>
+        <div className="text-muted-foreground">
+          Le locataire avait un loyer non soldé pour le mois sélectionné.
+        </div>
+        <div className="grid grid-cols-2 gap-y-1 gap-x-2 pt-2 border-t border-border">
+          <span className="text-muted-foreground">Mois</span>
+          <span className="font-medium">{audit.month || "—"}</span>
+          <span className="text-muted-foreground">Statut paiement</span>
+          <span className="font-medium">{statusLabel}</span>
+          <span className="text-muted-foreground">Montant dû</span>
+          <span className="font-medium">{fmt(audit.amount_due)} FCFA</span>
+          <span className="text-muted-foreground">Déjà payé</span>
+          <span className="font-medium">{fmt(audit.amount_paid)} FCFA</span>
+          <span className="text-muted-foreground">Solde restant</span>
+          <span className="font-medium text-destructive">{fmt(audit.remaining_balance)} FCFA</span>
+          <span className="text-muted-foreground">Échéance</span>
+          <span className="font-medium">{audit.due_date || "—"}</span>
+          {audit.schedule_slot != null && (
+            <>
+              <span className="text-muted-foreground">Créneau</span>
+              <span className="font-medium">
+                #{audit.schedule_slot} (jour {audit.schedule_day}, {audit.schedule_hour}h)
+              </span>
+            </>
+          )}
+          {audit.plan_slug && (
+            <>
+              <span className="text-muted-foreground">Plan</span>
+              <span className="font-medium capitalize">{audit.plan_slug}</span>
+            </>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function EmailTable({ rows }: { rows: EmailRow[] }) {
   if (rows.length === 0) return <EmptyState label="Aucun email pour cette période." />;
   return (
@@ -275,6 +372,7 @@ function EmailTable({ rows }: { rows: EmailRow[] }) {
             <TableHead>Destinataire</TableHead>
             <TableHead>Modèle</TableHead>
             <TableHead>Statut</TableHead>
+            <TableHead>Audit</TableHead>
             <TableHead>Erreur</TableHead>
           </TableRow>
         </TableHeader>
@@ -297,6 +395,9 @@ function EmailTable({ rows }: { rows: EmailRow[] }) {
                   <Badge variant="outline" className={`gap-1 text-xs font-normal ${conf.className}`}>
                     <Icon className="h-3 w-3" /> {conf.label}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  <AuditCell audit={r.audit_context} />
                 </TableCell>
                 <TableCell>
                   {r.error_message ? (
@@ -331,6 +432,7 @@ function SmsTable({ rows }: { rows: SmsRow[] }) {
             <TableHead>Message</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Statut</TableHead>
+            <TableHead>Audit</TableHead>
             <TableHead>Erreur</TableHead>
           </TableRow>
         </TableHeader>
@@ -359,6 +461,9 @@ function SmsTable({ rows }: { rows: SmsRow[] }) {
                   <Badge variant="outline" className={`gap-1 text-xs font-normal ${conf.className}`}>
                     <Icon className="h-3 w-3" /> {conf.label}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  <AuditCell audit={r.audit ?? null} />
                 </TableCell>
                 <TableCell>
                   {r.error_message ? (
