@@ -98,14 +98,9 @@ function TemplateEditorDialog({
 
   if (!template) return null;
 
-  const VARIABLES: Record<string, string[]> = {
-    "signup-confirmation": ["{{name}}"],
-    "new-user-admin": ["{{name}}", "{{email}}", "{{organization}}"],
-    "payment-confirmation": ["{{name}}", "{{plan}}", "{{amount}}", "{{period}}"],
-    "payment-admin": ["{{organization}}", "{{plan}}", "{{amount}}"],
-  };
-
-  const vars = VARIABLES[template.template_key] || [];
+  const vars = (template.available_variables && template.available_variables.length > 0)
+    ? template.available_variables.map((v) => `{{${v}}}`)
+    : [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
