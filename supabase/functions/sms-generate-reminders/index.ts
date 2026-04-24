@@ -128,12 +128,14 @@ serve(async (req) => {
         continue;
       }
 
-      // Find all tenants of this org with an open rent payment for the current month
+      // Find all tenants of this org with an UNPAID rent payment for the current month.
+      // Only target tenants who haven't fully paid yet (paid_amount < amount).
+      // Status 'paid' is excluded explicitly + paid_amount check covers any desync.
       const { data: payments, error: payErr } = await supabase
         .from("rent_payments")
         .select(`
-          id, amount, due_date, status, month,
-          tenants!inner(id, full_name, phone, unit_id,
+          id, amount, paid_amount, due_date, status, month,
+          tenants!inner(id, full_name, phone, is_active, unit_id,
             units!inner(property_id,
               properties!inner(organization_id)
             )
@@ -146,9 +148,15 @@ serve(async (req) => {
         console.error(`[generate] error fetching payments for sched ${sched.id}:`, payErr);
         continue;
       }
-      const orgPayments = (payments || []).filter(
-        (p: any) => p.tenants?.units?.properties?.organization_id === orgId
-      );
+      const orgPayments = (payments || []).filter((p: any) => {
+        if (p.tenants?.units?.properties?.organization_id !== orgId) return false;
+        // Skip inactive tenants (lease ended)
+        if (p.tenants?.is_active === false) return false;
+        // Double-check: only unpaid balance
+        const amount = Number(p.amount || 0);
+        const paid = Number(p.paid_amount || 0);
+        return paid < amount;
+      });
 
       if (orgPayments.length === 0) {
         skippedNoTenants++;
