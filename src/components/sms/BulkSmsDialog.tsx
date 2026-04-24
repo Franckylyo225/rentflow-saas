@@ -108,9 +108,20 @@ export function BulkSmsDialog({
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
+  const [confirmAck, setConfirmAck] = useState(false);
 
+  // Filtre : numéro présent ET valide (E.164)
   const eligible = useMemo(
-    () => recipients.filter((r) => !!r.phone && r.phone.trim().length > 0),
+    () => recipients.filter((r) => isValidPhone(r.phone)),
+    [recipients]
+  );
+
+  // Destinataires avec numéro mais format invalide → affichés en grisé avec badge
+  const invalidPhoneCount = useMemo(
+    () =>
+      recipients.filter(
+        (r) => !!r.phone && r.phone.trim().length > 0 && !isValidPhone(r.phone)
+      ).length,
     [recipients]
   );
 
@@ -118,10 +129,13 @@ export function BulkSmsDialog({
   useEffect(() => {
     if (!open) return;
     setStep(1);
-    setSelected(new Set(eligible.map((r) => r.tenantId + (r.rentPaymentId ?? ""))));
+    // Pré-sélection limitée au hard cap
+    const pre = eligible.slice(0, MAX_RECIPIENTS_PER_SEND);
+    setSelected(new Set(pre.map((r) => r.tenantId + (r.rentPaymentId ?? ""))));
     setTemplateId("none");
     setContent("");
     setProgress({ done: 0, total: 0 });
+    setConfirmAck(false);
   }, [open, eligible]);
 
   // Fetch templates
