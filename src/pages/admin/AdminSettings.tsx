@@ -16,7 +16,7 @@ import {
   Mail, Key, Globe, Shield, Bell, Database, Server,
   CheckCircle2, Send, RefreshCw, Save, Settings2,
   Pencil, Eye, X, Code, ToggleLeft, Megaphone, Plus, Trash2,
-  MessageSquare, Image as ImageIcon,
+  MessageSquare, Image as ImageIcon, Upload,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
