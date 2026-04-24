@@ -372,6 +372,7 @@ function EmailTable({ rows }: { rows: EmailRow[] }) {
             <TableHead>Destinataire</TableHead>
             <TableHead>Modèle</TableHead>
             <TableHead>Statut</TableHead>
+            <TableHead>Audit</TableHead>
             <TableHead>Erreur</TableHead>
           </TableRow>
         </TableHeader>
