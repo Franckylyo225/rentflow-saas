@@ -48,8 +48,6 @@ export default function Rents() {
   const [showAdvance, setShowAdvance] = useState(false);
   const [advanceTenant, setAdvanceTenant] = useState<{ id: string; full_name: string; rent: number } | null>(null);
   const [smsTarget, setSmsTarget] = useState<{ phone: string; name: string; tenantId: string; rentPaymentId: string } | null>(null);
-  const [bulkOpen, setBulkOpen] = useState(false);
-  const [lockedOpen, setLockedOpen] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("action") === "new") {
@@ -353,39 +351,6 @@ export default function Rents() {
   }, [advanceTenant, payments]);
 
   const pendingTasks = allTasks.filter(t => t.status === "pending" || t.status === "in_progress");
-
-  // Destinataires pour l'envoi groupé : impayés (late + pending + partial) avec téléphone
-  const bulkRecipients: BulkSmsRecipient[] = useMemo(() => {
-    const seen = new Set<string>();
-    const out: BulkSmsRecipient[] = [];
-    paymentsWithEscalation
-      .filter(p => p.status !== "paid")
-      .forEach(p => {
-        const key = (p.tenant_id ?? "") + p.id;
-        if (seen.has(key)) return;
-        seen.add(key);
-        out.push({
-          tenantId: p.tenant_id,
-          name: p.tenants?.full_name ?? "Locataire",
-          phone: p.tenants?.phone ?? null,
-          rentPaymentId: p.id,
-          rentAmount: p.amount - p.paid_amount,
-          dueDate: p.due_date,
-        });
-      });
-    return out;
-  }, [paymentsWithEscalation]);
-
-  const hasUnpaidWithPhone = bulkRecipients.some(r => !!r.phone);
-  const canBulkSend = hasFeature("sms_bulk_send");
-
-  const handleBulkClick = () => {
-    if (!canBulkSend) {
-      setLockedOpen(true);
-      return;
-    }
-    setBulkOpen(true);
-  };
 
   return (
     <AppLayout>
