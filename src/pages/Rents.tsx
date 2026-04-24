@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, AlertTriangle, CheckCircle2, Clock, Loader2, ListTodo, Plus, Check, FileText, Download, FastForward } from "lucide-react";
+import { CreditCard, AlertTriangle, CheckCircle2, Clock, Loader2, ListTodo, Plus, Check, FileText, Download, FastForward, MessageSquare } from "lucide-react";
+import { SendSmsDialog } from "@/components/sms/SendSmsDialog";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -44,6 +45,7 @@ export default function Rents() {
   const [quittanceData, setQuittanceData] = useState<QuittanceData | null>(null);
   const [showAdvance, setShowAdvance] = useState(false);
   const [advanceTenant, setAdvanceTenant] = useState<{ id: string; full_name: string; rent: number } | null>(null);
+  const [smsTarget, setSmsTarget] = useState<{ phone: string; name: string; tenantId: string; rentPaymentId: string } | null>(null);
 
   useEffect(() => {
     if (searchParams.get("action") === "new") {
@@ -478,6 +480,21 @@ export default function Rents() {
                                 {payment.status !== "paid" && (
                                   <Button variant="outline" size="sm" onClick={() => openPayment(payment)}>Payer</Button>
                                 )}
+                                {payment.status !== "paid" && payment.tenants?.phone && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setSmsTarget({
+                                      phone: payment.tenants.phone,
+                                      name: payment.tenants.full_name,
+                                      tenantId: payment.tenant_id,
+                                      rentPaymentId: payment.id,
+                                    })}
+                                    title="Envoyer un SMS de relance"
+                                  >
+                                    <MessageSquare className="h-4 w-4" />
+                                  </Button>
+                                )}
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -671,6 +688,15 @@ export default function Rents() {
       </Dialog>
 
       <QuittanceDialog open={showQuittance} onOpenChange={setShowQuittance} data={quittanceData} />
+
+      <SendSmsDialog
+        open={!!smsTarget}
+        onOpenChange={(o) => !o && setSmsTarget(null)}
+        defaultPhone={smsTarget?.phone}
+        defaultName={smsTarget?.name}
+        tenantId={smsTarget?.tenantId}
+        rentPaymentId={smsTarget?.rentPaymentId}
+      />
 
       <AdvancePaymentDialog
         open={showAdvance}
