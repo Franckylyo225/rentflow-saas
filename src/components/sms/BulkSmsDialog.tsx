@@ -20,11 +20,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, MessageSquare, Send, ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Loader2, MessageSquare, Send, ArrowRight, ArrowLeft, CheckCircle2, AlertTriangle, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
+
+// ============================================================
+// Limites de sécurité — envoi groupé
+// ============================================================
+const MAX_RECIPIENTS_PER_SEND = 200;       // hard cap
+const SOFT_WARN_RECIPIENTS = 100;          // avertissement visuel
+const REQUIRE_CONFIRM_ABOVE = 50;          // checkbox de confirmation requise
+const MAX_SMS_CHARS = 480;                 // 3 segments max
+const THROTTLE_BATCH_SIZE = 10;            // SMS envoyés en parallèle par lot
+const THROTTLE_DELAY_MS = 500;             // pause entre 2 lots
+
+// E.164 simplifié : optionnel +, 8 à 15 chiffres
+const PHONE_REGEX = /^\+?[1-9]\d{7,14}$/;
+
+function normalizePhone(phone: string): string {
+  return phone.replace(/[\s\-.()]/g, "");
+}
+
+function isValidPhone(phone: string | null | undefined): boolean {
+  if (!phone) return false;
+  return PHONE_REGEX.test(normalizePhone(phone));
+}
+
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 export interface BulkSmsRecipient {
   tenantId: string;
@@ -81,9 +108,20 @@ export function BulkSmsDialog({
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
+  const [confirmAck, setConfirmAck] = useState(false);
 
+  // Filtre : numéro présent ET valide (E.164)
   const eligible = useMemo(
-    () => recipients.filter((r) => !!r.phone && r.phone.trim().length > 0),
+    () => recipients.filter((r) => isValidPhone(r.phone)),
+    [recipients]
+  );
+
+  // Destinataires avec numéro mais format invalide → affichés en grisé avec badge
+  const invalidPhoneCount = useMemo(
+    () =>
+      recipients.filter(
+        (r) => !!r.phone && r.phone.trim().length > 0 && !isValidPhone(r.phone)
+      ).length,
     [recipients]
   );
 
@@ -91,10 +129,13 @@ export function BulkSmsDialog({
   useEffect(() => {
     if (!open) return;
     setStep(1);
-    setSelected(new Set(eligible.map((r) => r.tenantId + (r.rentPaymentId ?? ""))));
+    // Pré-sélection limitée au hard cap
+    const pre = eligible.slice(0, MAX_RECIPIENTS_PER_SEND);
+    setSelected(new Set(pre.map((r) => r.tenantId + (r.rentPaymentId ?? ""))));
     setTemplateId("none");
     setContent("");
     setProgress({ done: 0, total: 0 });
+    setConfirmAck(false);
   }, [open, eligible]);
 
   // Fetch templates
@@ -110,15 +151,30 @@ export function BulkSmsDialog({
   const recipientKey = (r: BulkSmsRecipient) => r.tenantId + (r.rentPaymentId ?? "");
 
   const toggleAll = (checked: boolean) => {
-    if (checked) setSelected(new Set(eligible.map(recipientKey)));
-    else setSelected(new Set());
+    if (checked) {
+      // Limite la sélection au plafond
+      const capped = eligible.slice(0, MAX_RECIPIENTS_PER_SEND);
+      setSelected(new Set(capped.map(recipientKey)));
+      if (eligible.length > MAX_RECIPIENTS_PER_SEND) {
+        toast.warning(`Sélection limitée à ${MAX_RECIPIENTS_PER_SEND} destinataires`, {
+          description: `Pour des raisons de sécurité, un envoi groupé ne peut dépasser ${MAX_RECIPIENTS_PER_SEND} destinataires.`,
+        });
+      }
+    } else setSelected(new Set());
   };
 
   const toggleOne = (key: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        if (next.size >= MAX_RECIPIENTS_PER_SEND) {
+          toast.error(`Maximum ${MAX_RECIPIENTS_PER_SEND} destinataires par envoi`);
+          return prev;
+        }
+        next.add(key);
+      }
       return next;
     });
   };
@@ -151,17 +207,38 @@ export function BulkSmsDialog({
   const segments = Math.max(1, Math.ceil(charCount / 160));
   const totalSms = selectedRecipients.length * segments;
 
-  const canGoStep2 = selected.size > 0;
-  const canGoStep3 = content.trim().length > 0;
+  const overContentLimit = charCount > MAX_SMS_CHARS;
+  const overRecipientLimit = selectedRecipients.length > MAX_RECIPIENTS_PER_SEND;
+  const requiresConfirm = selectedRecipients.length > REQUIRE_CONFIRM_ABOVE;
+  const showSoftWarn = selectedRecipients.length > SOFT_WARN_RECIPIENTS;
+
+  const canGoStep2 = selected.size > 0 && selected.size <= MAX_RECIPIENTS_PER_SEND;
+  const canGoStep3 = content.trim().length > 0 && !overContentLimit;
+  const canConfirmSend =
+    !sending &&
+    selectedRecipients.length > 0 &&
+    !overRecipientLimit &&
+    !overContentLimit &&
+    (!requiresConfirm || confirmAck);
 
   const handleSend = async () => {
-    if (!orgId || selectedRecipients.length === 0 || !content.trim()) return;
+    if (!orgId || !canConfirmSend) return;
+
+    // Re-valide tous les numéros côté client juste avant l'envoi
+    const invalid = selectedRecipients.filter((r) => !isValidPhone(r.phone));
+    if (invalid.length > 0) {
+      toast.error(`${invalid.length} numéro(s) invalide(s) détecté(s)`, {
+        description: "Veuillez corriger les fiches concernées avant de relancer l'envoi.",
+      });
+      return;
+    }
+
     setSending(true);
     setProgress({ done: 0, total: selectedRecipients.length });
 
     const rows = selectedRecipients.map((r) => ({
       organization_id: orgId,
-      recipient_phone: r.phone!,
+      recipient_phone: normalizePhone(r.phone!),
       recipient_name: r.name,
       content: renderTemplate(content, buildVars(r, agencyName)),
       tenant_id: r.tenantId,
@@ -183,18 +260,26 @@ export function BulkSmsDialog({
       return;
     }
 
+    // Throttling : envoi par lots de THROTTLE_BATCH_SIZE avec pause entre chaque
     let done = 0;
     let failed = 0;
-    await Promise.all(
-      msgs.map(async (m) => {
-        const { error } = await supabase.functions.invoke("sms-send", {
-          body: { sms_message_id: m.id },
-        });
-        if (error) failed += 1;
-        done += 1;
-        setProgress({ done, total: msgs.length });
-      })
-    );
+    for (let i = 0; i < msgs.length; i += THROTTLE_BATCH_SIZE) {
+      const batch = msgs.slice(i, i + THROTTLE_BATCH_SIZE);
+      await Promise.all(
+        batch.map(async (m) => {
+          const { error } = await supabase.functions.invoke("sms-send", {
+            body: { sms_message_id: m.id },
+          });
+          if (error) failed += 1;
+          done += 1;
+          setProgress({ done, total: msgs.length });
+        })
+      );
+      // Pause entre les lots (sauf après le dernier)
+      if (i + THROTTLE_BATCH_SIZE < msgs.length) {
+        await sleep(THROTTLE_DELAY_MS);
+      }
+    }
 
     setSending(false);
     if (failed === 0) {
@@ -259,6 +344,16 @@ export function BulkSmsDialog({
                 </Label>
               </div>
             </div>
+
+            {invalidPhoneCount > 0 && (
+              <Alert variant="default" className="py-2">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  {invalidPhoneCount} numéro(s) au format invalide ont été ignoré(s). Format attendu : international (+225XXXXXXXX).
+                </AlertDescription>
+              </Alert>
+            )}
+
             <ScrollArea className="h-72 rounded-md border">
               <div className="p-2 space-y-1">
                 {recipients.length === 0 ? (
@@ -269,17 +364,18 @@ export function BulkSmsDialog({
                   recipients.map((r) => {
                     const key = recipientKey(r);
                     const hasPhone = !!r.phone && r.phone.trim().length > 0;
+                    const validPhone = hasPhone && isValidPhone(r.phone);
                     return (
                       <div
                         key={key}
                         className={`flex items-center justify-between gap-2 rounded-md p-2 ${
-                          hasPhone ? "hover:bg-muted/50" : "opacity-60"
+                          validPhone ? "hover:bg-muted/50" : "opacity-60"
                         }`}
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <Checkbox
                             checked={selected.has(key)}
-                            disabled={!hasPhone}
+                            disabled={!validPhone}
                             onCheckedChange={() => toggleOne(key)}
                           />
                           <div className="min-w-0">
@@ -295,15 +391,25 @@ export function BulkSmsDialog({
                             Sans numéro
                           </Badge>
                         )}
+                        {hasPhone && !validPhone && (
+                          <Badge variant="destructive" className="text-xs">
+                            Format invalide
+                          </Badge>
+                        )}
                       </div>
                     );
                   })
                 )}
               </div>
             </ScrollArea>
-            <p className="text-xs text-muted-foreground">
-              {selected.size} destinataire(s) sélectionné(s)
-            </p>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">
+                {selected.size} / {Math.min(eligible.length, MAX_RECIPIENTS_PER_SEND)} destinataire(s) sélectionné(s)
+              </span>
+              <span className="text-muted-foreground">
+                Max : {MAX_RECIPIENTS_PER_SEND}
+              </span>
+            </div>
           </div>
         )}
 
@@ -332,19 +438,25 @@ export function BulkSmsDialog({
               <Label className="text-xs">Message</Label>
               <Textarea
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={(e) => setContent(e.target.value.slice(0, MAX_SMS_CHARS + 1))}
                 rows={6}
                 placeholder="Saisissez votre message…"
+                className={overContentLimit ? "border-destructive" : ""}
               />
-              <div className="flex items-center justify-between mt-1">
-                <p className="text-xs text-muted-foreground">
+              <div className="flex items-center justify-between mt-1 gap-3">
+                <p className="text-xs text-muted-foreground flex-1">
                   Variables : <code>{"{{tenant_name}}"}</code>, <code>{"{{rent_amount}}"}</code>,{" "}
                   <code>{"{{due_date}}"}</code>, <code>{"{{agency_name}}"}</code>
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  {charCount} car. · {segments} segment(s)
+                <p className={`text-xs whitespace-nowrap ${overContentLimit ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                  {charCount}/{MAX_SMS_CHARS} car. · {segments} segment(s)
                 </p>
               </div>
+              {overContentLimit && (
+                <p className="text-xs text-destructive mt-1">
+                  Message trop long. Maximum {MAX_SMS_CHARS} caractères ({Math.ceil(MAX_SMS_CHARS / 160)} segments).
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -383,6 +495,35 @@ export function BulkSmsDialog({
                 </div>
               </ScrollArea>
             </div>
+
+            {showSoftWarn && (
+              <Alert className="py-2">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle className="text-xs">Envoi volumineux</AlertTitle>
+                <AlertDescription className="text-xs">
+                  Vous vous apprêtez à envoyer {selectedRecipients.length} SMS. L'envoi sera étalé par lots de {THROTTLE_BATCH_SIZE} pour éviter de saturer l'opérateur.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {requiresConfirm && (
+              <div className="flex items-start gap-2 rounded-md border border-warning/50 bg-warning/10 p-3">
+                <Checkbox
+                  id="bulk-confirm"
+                  checked={confirmAck}
+                  onCheckedChange={(c) => setConfirmAck(!!c)}
+                  disabled={sending}
+                />
+                <Label htmlFor="bulk-confirm" className="text-xs cursor-pointer leading-relaxed">
+                  <span className="flex items-center gap-1 font-medium mb-1">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Confirmation requise
+                  </span>
+                  Je confirme avoir vérifié le contenu et la liste de destinataires. Je comprends que cet envoi consommera <strong>{totalSms} SMS</strong> sur mon quota.
+                </Label>
+              </div>
+            )}
+
             {sending && progress.total > 0 && (
               <p className="text-xs text-center text-muted-foreground">
                 Envoi en cours… {progress.done}/{progress.total}
@@ -425,7 +566,7 @@ export function BulkSmsDialog({
             </Button>
           )}
           {step === 3 && (
-            <Button onClick={handleSend} disabled={sending} className="gap-2">
+            <Button onClick={handleSend} disabled={!canConfirmSend} className="gap-2">
               {sending ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
