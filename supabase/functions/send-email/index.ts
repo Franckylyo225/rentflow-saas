@@ -252,6 +252,7 @@ Deno.serve(async (req) => {
       }
 
       if (adminSubject && adminHtml && adminEnabled) {
+        adminHtml = swapLogo(adminHtml);
         const { ok: aOk, result: aResult, retries: aRetries } = await sendWithRetry(
           { from: FROM_EMAIL, to: [adminEmail], subject: adminSubject, html: adminHtml },
           headers
