@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Calendar, Lock, Save, Clock } from "lucide-react";
+import { Loader2, Calendar, Lock, Save, Clock, Mail, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { toast } from "@/hooks/use-toast";
@@ -20,7 +20,9 @@ type Schedule = {
   id: string;
   label: string;
   template_id: string | null;
+  email_template_id: string | null;
   is_active: boolean;
+  send_email: boolean;
   slot_index: number;
   day_of_month: number;
   send_hour: number;
