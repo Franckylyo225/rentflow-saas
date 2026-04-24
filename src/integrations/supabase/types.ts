@@ -493,6 +493,50 @@ export type Database = {
           },
         ]
       }
+      email_templates: {
+        Row: {
+          created_at: string
+          html_content: string
+          id: string
+          is_system: boolean
+          label: string
+          organization_id: string
+          subject: string
+          template_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          html_content?: string
+          id?: string
+          is_system?: boolean
+          label: string
+          organization_id: string
+          subject?: string
+          template_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          html_content?: string
+          id?: string
+          is_system?: boolean
+          label?: string
+          organization_id?: string
+          subject?: string
+          template_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           city_id: string | null
@@ -1590,11 +1634,13 @@ export type Database = {
         Row: {
           created_at: string
           day_of_month: number
+          email_template_id: string | null
           id: string
           is_active: boolean
           label: string
           offset_days: number
           organization_id: string
+          send_email: boolean
           send_hour: number
           send_minute: number
           slot_index: number
@@ -1605,11 +1651,13 @@ export type Database = {
         Insert: {
           created_at?: string
           day_of_month?: number
+          email_template_id?: string | null
           id?: string
           is_active?: boolean
           label: string
           offset_days: number
           organization_id: string
+          send_email?: boolean
           send_hour?: number
           send_minute?: number
           slot_index?: number
@@ -1620,11 +1668,13 @@ export type Database = {
         Update: {
           created_at?: string
           day_of_month?: number
+          email_template_id?: string | null
           id?: string
           is_active?: boolean
           label?: string
           offset_days?: number
           organization_id?: string
+          send_email?: boolean
           send_hour?: number
           send_minute?: number
           slot_index?: number
@@ -1633,6 +1683,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sms_schedules_email_template_id_fkey"
+            columns: ["email_template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sms_schedules_organization_id_fkey"
             columns: ["organization_id"]

@@ -47,7 +47,8 @@ Deno.serve(async (req) => {
       throw new Error("Missing API keys");
     }
 
-    const { templateName, recipientEmail, templateData, adminEmail } = await req.json();
+    const { templateName, recipientEmail, templateData, adminEmail, inlineSubject, inlineHtml } =
+      await req.json();
 
     if (!templateName || !recipientEmail) {
       return new Response(
@@ -56,43 +57,55 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Try to fetch template from DB
     let subject: string;
     let html: string;
     let useDb = false;
 
-    try {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const supabase = createClient(supabaseUrl, supabaseKey);
-
-      const { data: dbTemplate } = await supabase
-        .from("platform_email_templates")
-        .select("subject, html_content, is_active")
-        .eq("template_key", templateName)
-        .maybeSingle();
-
-      if (dbTemplate && dbTemplate.is_active) {
-        subject = replaceVariables(dbTemplate.subject, templateData || {});
-        html = replaceVariables(dbTemplate.html_content, templateData || {});
-        useDb = true;
-      }
-    } catch (dbErr) {
-      console.error("DB template fetch failed, using fallback:", dbErr);
-    }
-
-    // Fallback to hardcoded templates
-    if (!useDb) {
-      const templateFn = fallbackTemplates[templateName];
-      if (!templateFn) {
+    // Inline mode: caller provides subject + html directly (used by relance emails)
+    if (templateName === "__inline__") {
+      if (!inlineSubject || !inlineHtml) {
         return new Response(
-          JSON.stringify({ error: `Unknown template: ${templateName}` }),
+          JSON.stringify({ error: "inlineSubject and inlineHtml are required for inline mode" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const result = templateFn(templateData || {});
-      subject = result.subject;
-      html = result.html;
+      subject = replaceVariables(inlineSubject, templateData || {});
+      html = replaceVariables(inlineHtml, templateData || {});
+    } else {
+      // Try to fetch template from DB
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        const { data: dbTemplate } = await supabase
+          .from("platform_email_templates")
+          .select("subject, html_content, is_active")
+          .eq("template_key", templateName)
+          .maybeSingle();
+
+        if (dbTemplate && dbTemplate.is_active) {
+          subject = replaceVariables(dbTemplate.subject, templateData || {});
+          html = replaceVariables(dbTemplate.html_content, templateData || {});
+          useDb = true;
+        }
+      } catch (dbErr) {
+        console.error("DB template fetch failed, using fallback:", dbErr);
+      }
+
+      // Fallback to hardcoded templates
+      if (!useDb) {
+        const templateFn = fallbackTemplates[templateName];
+        if (!templateFn) {
+          return new Response(
+            JSON.stringify({ error: `Unknown template: ${templateName}` }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        const result = templateFn(templateData || {});
+        subject = result.subject;
+        html = result.html;
+      }
     }
 
     // Send to recipient

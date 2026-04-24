@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Calendar, Lock, Save, Clock } from "lucide-react";
+import { Loader2, Calendar, Lock, Save, Clock, Mail, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { toast } from "@/hooks/use-toast";
@@ -20,7 +20,9 @@ type Schedule = {
   id: string;
   label: string;
   template_id: string | null;
+  email_template_id: string | null;
   is_active: boolean;
+  send_email: boolean;
   slot_index: number;
   day_of_month: number;
   send_hour: number;
@@ -54,19 +56,21 @@ export function SmsSchedulesEditor({ canEditAll, canEditBasic, planName }: Props
   const orgId = profile?.organization_id;
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [emailTemplates, setEmailTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
 
   const fetchData = async () => {
     if (!orgId) return;
     setLoading(true);
-    const [schedRes, tplRes] = await Promise.all([
+    const [schedRes, tplRes, emailTplRes] = await Promise.all([
       supabase
         .from("sms_schedules")
         .select("*")
         .eq("organization_id", orgId)
         .order("slot_index"),
       supabase.from("sms_templates").select("id, label").eq("organization_id", orgId),
+      supabase.from("email_templates").select("id, label").eq("organization_id", orgId),
     ]);
 
     let rows = (schedRes.data || []) as Schedule[];
@@ -99,6 +103,7 @@ export function SmsSchedulesEditor({ canEditAll, canEditBasic, planName }: Props
 
     setSchedules(rows);
     setTemplates(tplRes.data || []);
+    setEmailTemplates(emailTplRes.data || []);
     setLoading(false);
   };
 
@@ -123,15 +128,23 @@ export function SmsSchedulesEditor({ canEditAll, canEditBasic, planName }: Props
     if (!isSlotAllowed(s.slot_index)) {
       toast({
         title: "Plan insuffisant",
-        description: `Avec ${planName}, seul le SMS principal est disponible.`,
+        description: `Avec ${planName}, seul le créneau principal est disponible.`,
         variant: "destructive",
       });
       return;
     }
     if (s.is_active && !s.template_id) {
       toast({
-        title: "Modèle requis",
+        title: "Modèle SMS requis",
         description: "Choisissez un modèle de SMS avant d'activer ce créneau.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (s.send_email && !s.email_template_id) {
+      toast({
+        title: "Modèle email requis",
+        description: "Choisissez un modèle d'email avant d'activer l'envoi par email.",
         variant: "destructive",
       });
       return;
@@ -141,6 +154,8 @@ export function SmsSchedulesEditor({ canEditAll, canEditBasic, planName }: Props
       .from("sms_schedules")
       .update({
         template_id: s.template_id,
+        email_template_id: s.email_template_id,
+        send_email: s.send_email,
         day_of_month: s.day_of_month,
         send_hour: s.send_hour,
         send_minute: 0,
@@ -220,7 +235,9 @@ export function SmsSchedulesEditor({ canEditAll, canEditBasic, planName }: Props
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <Label className="text-xs">Modèle de SMS</Label>
+                  <Label className="text-xs flex items-center gap-1">
+                    <MessageSquare className="h-3 w-3" /> Modèle de SMS
+                  </Label>
                   <Select
                     value={s.template_id || "none"}
                     onValueChange={(v) =>
@@ -285,6 +302,52 @@ export function SmsSchedulesEditor({ canEditAll, canEditBasic, planName }: Props
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              {/* Sous-bloc email : envoi parallèle au même horaire */}
+              <div className="rounded-md border border-dashed border-border bg-muted/20 p-3 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                    <Label className="text-xs font-medium">
+                      Envoyer aussi par email
+                    </Label>
+                  </div>
+                  <Switch
+                    checked={s.send_email && allowed}
+                    onCheckedChange={(v) => updateLocal(s.slot_index, { send_email: v })}
+                    disabled={!allowed}
+                  />
+                </div>
+                {s.send_email && allowed && (
+                  <div>
+                    <Label className="text-xs">Modèle d'email</Label>
+                    <Select
+                      value={s.email_template_id || "none"}
+                      onValueChange={(v) =>
+                        updateLocal(s.slot_index, {
+                          email_template_id: v === "none" ? null : v,
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choisir un modèle d'email" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— Aucun —</SelectItem>
+                        {emailTemplates.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      L'email sera envoyé à la même heure que le SMS, uniquement aux locataires
+                      ayant un email renseigné.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {allowed && (
