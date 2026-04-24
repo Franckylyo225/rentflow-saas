@@ -438,19 +438,25 @@ export function BulkSmsDialog({
               <Label className="text-xs">Message</Label>
               <Textarea
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={(e) => setContent(e.target.value.slice(0, MAX_SMS_CHARS + 1))}
                 rows={6}
                 placeholder="Saisissez votre message…"
+                className={overContentLimit ? "border-destructive" : ""}
               />
-              <div className="flex items-center justify-between mt-1">
-                <p className="text-xs text-muted-foreground">
+              <div className="flex items-center justify-between mt-1 gap-3">
+                <p className="text-xs text-muted-foreground flex-1">
                   Variables : <code>{"{{tenant_name}}"}</code>, <code>{"{{rent_amount}}"}</code>,{" "}
                   <code>{"{{due_date}}"}</code>, <code>{"{{agency_name}}"}</code>
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  {charCount} car. · {segments} segment(s)
+                <p className={`text-xs whitespace-nowrap ${overContentLimit ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                  {charCount}/{MAX_SMS_CHARS} car. · {segments} segment(s)
                 </p>
               </div>
+              {overContentLimit && (
+                <p className="text-xs text-destructive mt-1">
+                  Message trop long. Maximum {MAX_SMS_CHARS} caractères ({Math.ceil(MAX_SMS_CHARS / 160)} segments).
+                </p>
+              )}
             </div>
           </div>
         )}
