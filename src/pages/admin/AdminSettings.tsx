@@ -16,7 +16,7 @@ import {
   Mail, Key, Globe, Shield, Bell, Database, Server,
   CheckCircle2, Send, RefreshCw, Save, Settings2,
   Pencil, Eye, X, Code, ToggleLeft, Megaphone, Plus, Trash2,
-  MessageSquare, Image as ImageIcon,
+  MessageSquare, Image as ImageIcon, Upload,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
@@ -195,13 +195,21 @@ function TemplateEditorDialog({
 /* ------------------------------------------------------------------ */
 const LOGO_BUCKET = "logos";
 const LOGO_CONFIG_PATH = "platform/email-logo-config.json";
-const LOGO_WHITE_URL = "https://dljpgpplvqhhfndpsihz.supabase.co/storage/v1/object/public/logos/platform%2Frentflow-logo-white.png";
-const LOGO_COLOR_URL = "https://dljpgpplvqhhfndpsihz.supabase.co/storage/v1/object/public/logos/platform%2Frentflow-logo.png";
+const LOGO_WHITE_PATH = "platform/rentflow-logo-white.png";
+const LOGO_COLOR_PATH = "platform/rentflow-logo.png";
+const LOGO_WHITE_URL = `https://dljpgpplvqhhfndpsihz.supabase.co/storage/v1/object/public/logos/platform%2Frentflow-logo-white.png`;
+const LOGO_COLOR_URL = `https://dljpgpplvqhhfndpsihz.supabase.co/storage/v1/object/public/logos/platform%2Frentflow-logo.png`;
+
+const ACCEPTED_LOGO_MIME = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
+const MAX_LOGO_SIZE = 2 * 1024 * 1024; // 2 MB
 
 function EmailLogoCard() {
   const [variant, setVariant] = useState<"white" | "color">("white");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState<"white" | "color" | null>(null);
+  // Cache-buster timestamp to force preview reload after upload
+  const [bust, setBust] = useState<number>(() => Date.now());
 
   useEffect(() => {
     (async () => {
@@ -246,6 +254,52 @@ function EmailLogoCard() {
     }
   };
 
+  const handleUpload = async (which: "white" | "color", file: File) => {
+    if (!ACCEPTED_LOGO_MIME.includes(file.type)) {
+      toast.error("Format non supporté. Utilisez PNG, JPEG, WEBP ou SVG.");
+      return;
+    }
+    if (file.size > MAX_LOGO_SIZE) {
+      toast.error("Fichier trop volumineux (max 2 Mo).");
+      return;
+    }
+    setUploading(which);
+    try {
+      const path = which === "white" ? LOGO_WHITE_PATH : LOGO_COLOR_PATH;
+      const { error } = await supabase.storage
+        .from(LOGO_BUCKET)
+        .upload(path, file, {
+          upsert: true,
+          contentType: file.type,
+          cacheControl: "0",
+        });
+      if (error) throw error;
+      setBust(Date.now());
+      toast.success(`Logo ${which === "white" ? "Blanc" : "Couleur"} mis à jour`);
+    } catch (e: any) {
+      toast.error("Erreur upload : " + (e.message || "Échec"));
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  const options = [
+    {
+      key: "white" as const,
+      label: "Blanc",
+      desc: "Idéal pour fonds colorés (vert, rouge)",
+      bg: "hsl(160,84%,39%)",
+      url: LOGO_WHITE_URL,
+    },
+    {
+      key: "color" as const,
+      label: "Couleur",
+      desc: "Logo original sur fond clair",
+      bg: "#f5f5f7",
+      url: LOGO_COLOR_URL,
+    },
+  ];
+
   return (
     <Card>
       <CardHeader>
@@ -253,7 +307,7 @@ function EmailLogoCard() {
           <ImageIcon className="h-5 w-5 text-primary" /> Logo des emails
         </CardTitle>
         <CardDescription>
-          Choisissez la version du logo affichée dans l'en-tête des emails envoyés depuis la plateforme.
+          Téléversez chaque version du logo et choisissez celle qui apparaîtra dans l'en-tête des emails.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -263,51 +317,87 @@ function EmailLogoCard() {
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 gap-4">
-            {([
-              { key: "white", label: "Blanc", desc: "Idéal pour fonds colorés (vert, rouge)", bg: "hsl(160,84%,39%)", url: LOGO_WHITE_URL },
-              { key: "color", label: "Couleur", desc: "Logo original sur fond clair", bg: "#f5f5f7", url: LOGO_COLOR_URL },
-            ] as const).map((opt) => {
+            {options.map((opt) => {
               const active = variant === opt.key;
+              const isUploading = uploading === opt.key;
               return (
-                <button
+                <div
                   key={opt.key}
-                  type="button"
-                  disabled={saving || active}
-                  onClick={() => save(opt.key)}
-                  className={`relative text-left rounded-lg border-2 transition-all overflow-hidden ${
+                  className={`relative rounded-lg border-2 transition-all overflow-hidden ${
                     active
                       ? "border-primary ring-2 ring-primary/20"
-                      : "border-border hover:border-primary/50"
-                  } disabled:cursor-not-allowed`}
+                      : "border-border"
+                  }`}
                 >
                   <div
                     className="flex items-center justify-center h-24"
                     style={{ background: opt.bg }}
                   >
                     <img
-                      src={opt.url}
+                      src={`${opt.url}?t=${bust}`}
                       alt={`Logo ${opt.label}`}
                       className="h-9 w-auto"
                     />
                   </div>
-                  <div className="p-3 bg-card">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-foreground">{opt.label}</p>
-                      {active && (
-                        <Badge variant="default" className="gap-1 text-[10px]">
-                          <CheckCircle2 className="h-3 w-3" /> Actif
-                        </Badge>
+                  <div className="p-3 bg-card space-y-3">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-foreground">{opt.label}</p>
+                        {active && (
+                          <Badge variant="default" className="gap-1 text-[10px]">
+                            <CheckCircle2 className="h-3 w-3" /> Actif
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5 flex-1"
+                        disabled={isUploading}
+                        asChild
+                      >
+                        <label className="cursor-pointer">
+                          {isUploading ? (
+                            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Upload className="h-3.5 w-3.5" />
+                          )}
+                          {isUploading ? "Envoi..." : "Téléverser"}
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) handleUpload(opt.key, f);
+                              e.target.value = "";
+                            }}
+                          />
+                        </label>
+                      </Button>
+                      {!active && (
+                        <Button
+                          size="sm"
+                          className="gap-1.5"
+                          disabled={saving}
+                          onClick={() => save(opt.key)}
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Activer
+                        </Button>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
         )}
         <p className="text-xs text-muted-foreground mt-4">
-          La modification est appliquée immédiatement aux prochains envois — aucun redéploiement nécessaire.
+          Formats acceptés : PNG, JPEG, WEBP, SVG (max 2 Mo). Les changements s'appliquent immédiatement aux prochains envois.
         </p>
       </CardContent>
     </Card>
