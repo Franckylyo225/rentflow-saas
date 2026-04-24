@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SmsSettingsTab } from "@/components/settings/SmsSettingsTab";
+import { EmailLogsPanel } from "@/components/admin/EmailLogsPanel";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                             */
@@ -35,8 +36,20 @@ interface EmailTemplate {
   html_content: string;
   description: string | null;
   is_active: boolean;
+  category: string;
+  is_admin_alert: boolean;
+  available_variables: string[];
   updated_at: string;
 }
+
+const CATEGORY_LABELS: Record<string, { label: string; description: string }> = {
+  onboarding: { label: "Onboarding", description: "Inscription, bienvenue, création d'agence" },
+  billing: { label: "Abonnement & facturation", description: "Essai, paiements, renouvellement" },
+  activity: { label: "Activité métier", description: "Loyers, contrats, locataires" },
+  security: { label: "Sécurité", description: "Connexions, alertes de sécurité" },
+  admin: { label: "Alertes admin SaaS", description: "Notifications internes pour les super admins" },
+};
+const CATEGORY_ORDER = ["onboarding", "billing", "activity", "security", "admin"];
 
 /* ------------------------------------------------------------------ */
 /*  Template Editor Dialog                                            */
