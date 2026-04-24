@@ -415,7 +415,7 @@ export default function Rents() {
             >
               <MessageSquare className="h-4 w-4" />
               Relancer les impayés
-              {!canBulkSend && <Lock className="h-3 w-3 ml-1 opacity-70" />}
+              {!canBulkSend && <LockIcon className="h-3 w-3 ml-1 opacity-70" />}
             </Button>
             <Select value={monthFilter} onValueChange={setMonthFilter}>
               <SelectTrigger className="w-full sm:w-56">
