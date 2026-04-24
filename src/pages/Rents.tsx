@@ -720,27 +720,6 @@ export default function Rents() {
           setAdvanceTenant(null);
         }}
       />
-
-      <BulkSmsDialog
-        open={bulkOpen}
-        onOpenChange={setBulkOpen}
-        recipients={bulkRecipients}
-        title="Relancer les impayés"
-        description="Envoyez un SMS de relance personnalisé à tous les locataires sélectionnés."
-      />
-
-      <Dialog open={lockedOpen} onOpenChange={setLockedOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Envoi groupé</DialogTitle>
-          </DialogHeader>
-          <FeatureLockedCard
-            title="Envoi groupé de SMS"
-            description="Relancez tous vos locataires impayés en un seul clic. Disponible à partir de l'offre Pro."
-            requiredPlan="Pro"
-          />
-        </DialogContent>
-      </Dialog>
     </AppLayout>
   );
 }
