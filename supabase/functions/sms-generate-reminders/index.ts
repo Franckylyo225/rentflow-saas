@@ -106,9 +106,12 @@ serve(async (req) => {
     for (const o of orgs || []) orgNameById.set(o.id, o.sms_sender_name || o.name || "RentFlow");
 
     let generated = 0;
+    let emailsSent = 0;
     let skippedPlan = 0;
     let skippedExisting = 0;
     let skippedNoTenants = 0;
+    let skippedEmailNoAddress = 0;
+    let skippedEmailExisting = 0;
 
     for (const sched of schedules) {
       const orgId = sched.organization_id;
@@ -119,25 +122,31 @@ serve(async (req) => {
 
       const hasBasic = flags.includes(BASIC_AUTO_FLAG);
       const hasFull = flags.includes(FULL_AUTO_FLAG);
+      const hasEmail = flags.includes("email_reminders");
 
       if (!hasBasic && !hasFull) {
         skippedPlan++;
         continue;
       }
-      // Starter (basic only) → only slot_index = 1
+      // Starter (basic only) → only slot_index = 1 (applies to SMS AND email)
       if (!hasFull && sched.slot_index !== 1) {
         skippedPlan++;
         continue;
       }
 
+      // Email config for this slot
+      const wantEmail = !!(sched as any).send_email && hasEmail;
+      const emailTpl = (sched as any).email_templates as
+        | { id: string; subject: string; html_content: string }
+        | null;
+      const canSendEmail = wantEmail && !!emailTpl?.html_content;
+
       // Find all tenants of this org with an UNPAID rent payment for the current month.
-      // Only target tenants who haven't fully paid yet (paid_amount < amount).
-      // Status 'paid' is excluded explicitly + paid_amount check covers any desync.
       const { data: payments, error: payErr } = await supabase
         .from("rent_payments")
         .select(`
           id, amount, paid_amount, due_date, status, month,
-          tenants!inner(id, full_name, phone, is_active, unit_id,
+          tenants!inner(id, full_name, phone, email, is_active, unit_id,
             units!inner(property_id,
               properties!inner(organization_id)
             )
@@ -152,9 +161,7 @@ serve(async (req) => {
       }
       const orgPayments = (payments || []).filter((p: any) => {
         if (p.tenants?.units?.properties?.organization_id !== orgId) return false;
-        // Skip inactive tenants (lease ended)
         if (p.tenants?.is_active === false) return false;
-        // Double-check: only unpaid balance
         const amount = Number(p.amount || 0);
         const paid = Number(p.paid_amount || 0);
         return paid < amount;
@@ -167,23 +174,6 @@ serve(async (req) => {
 
       for (const payment of orgPayments) {
         const tenant = (payment as any).tenants;
-        if (!tenant?.phone) continue;
-
-        // Anti-dup: one SMS per (schedule, tenant, month)
-        const { data: existing } = await supabase
-          .from("sms_messages")
-          .select("id")
-          .eq("schedule_id", sched.id)
-          .eq("tenant_id", tenant.id)
-          .eq("trigger_type", "auto")
-          .gte("created_at", `${monthKey}-01T00:00:00Z`)
-          .maybeSingle();
-
-        if (existing) {
-          skippedExisting++;
-          continue;
-        }
-
         const dueDate = new Date(payment.due_date);
         const variables = {
           tenant_name: tenant.full_name,
@@ -191,27 +181,107 @@ serve(async (req) => {
           due_date: fmtDate(dueDate),
           agency_name: orgNameById.get(orgId) || "RentFlow",
         };
-        const finalContent = renderTemplate(tplContent, variables);
 
-        const { error: insErr } = await supabase.from("sms_messages").insert({
-          organization_id: orgId,
-          recipient_phone: tenant.phone,
-          recipient_name: tenant.full_name,
-          content: finalContent,
-          template_id: sched.template_id,
-          schedule_id: sched.id,
-          tenant_id: tenant.id,
-          rent_payment_id: payment.id,
-          trigger_type: "auto",
-          status: "scheduled",
-          scheduled_for: new Date().toISOString(),
-        });
+        // ============= SMS =============
+        if (tenant?.phone) {
+          // Anti-dup: one SMS per (schedule, tenant, month)
+          const { data: existing } = await supabase
+            .from("sms_messages")
+            .select("id")
+            .eq("schedule_id", sched.id)
+            .eq("tenant_id", tenant.id)
+            .eq("trigger_type", "auto")
+            .gte("created_at", `${monthKey}-01T00:00:00Z`)
+            .maybeSingle();
 
-        if (insErr) {
-          console.error(`[generate] insert error for payment ${payment.id}:`, insErr);
-          continue;
+          if (existing) {
+            skippedExisting++;
+          } else {
+            const finalContent = renderTemplate(tplContent, variables);
+            const { error: insErr } = await supabase.from("sms_messages").insert({
+              organization_id: orgId,
+              recipient_phone: tenant.phone,
+              recipient_name: tenant.full_name,
+              content: finalContent,
+              template_id: sched.template_id,
+              schedule_id: sched.id,
+              tenant_id: tenant.id,
+              rent_payment_id: payment.id,
+              trigger_type: "auto",
+              status: "scheduled",
+              scheduled_for: new Date().toISOString(),
+            });
+            if (insErr) {
+              console.error(`[generate] sms insert error for payment ${payment.id}:`, insErr);
+            } else {
+              generated++;
+            }
+          }
         }
-        generated++;
+
+        // ============= Email (mirror) =============
+        if (canSendEmail) {
+          if (!tenant?.email) {
+            skippedEmailNoAddress++;
+          } else {
+            // Anti-dup email: check email_reminder_logs for (rent_payment_id, template_key=schedule.id) this month
+            const templateKey = `auto_schedule_${sched.id}`;
+            const { data: existingEmail } = await supabase
+              .from("email_reminder_logs")
+              .select("id")
+              .eq("rent_payment_id", payment.id)
+              .eq("template_key", templateKey)
+              .gte("sent_at", `${monthKey}-01T00:00:00Z`)
+              .maybeSingle();
+
+            if (existingEmail) {
+              skippedEmailExisting++;
+            } else {
+              const subject = renderTemplate(emailTpl!.subject || "Rappel de loyer", variables);
+              const html = renderTemplate(emailTpl!.html_content, variables);
+
+              try {
+                const sendUrl = `${SUPABASE_URL}/functions/v1/send-email`;
+                const resp = await fetch(sendUrl, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                  },
+                  body: JSON.stringify({
+                    templateName: "__inline__",
+                    recipientEmail: tenant.email,
+                    inlineSubject: subject,
+                    inlineHtml: html,
+                    templateData: variables,
+                  }),
+                });
+                const status = resp.ok ? "sent" : "failed";
+                const errMsg = resp.ok ? null : `HTTP ${resp.status}: ${await resp.text()}`;
+
+                await supabase.from("email_reminder_logs").insert({
+                  organization_id: orgId,
+                  recipient_email: tenant.email,
+                  rent_payment_id: payment.id,
+                  template_key: templateKey,
+                  status,
+                  error_message: errMsg,
+                });
+                if (resp.ok) emailsSent++;
+              } catch (emailErr) {
+                console.error(`[generate] email error for payment ${payment.id}:`, emailErr);
+                await supabase.from("email_reminder_logs").insert({
+                  organization_id: orgId,
+                  recipient_email: tenant.email,
+                  rent_payment_id: payment.id,
+                  template_key: templateKey,
+                  status: "failed",
+                  error_message: String(emailErr),
+                });
+              }
+            }
+          }
+        }
       }
     }
 
