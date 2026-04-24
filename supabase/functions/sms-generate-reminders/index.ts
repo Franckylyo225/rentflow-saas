@@ -321,7 +321,6 @@ serve(async (req) => {
         }
       }
     }
-    }
 
     console.log(
       `[sms-generate-reminders] day=${matchDay} hour=${matchHour} sms=${generated} emails=${emailsSent} skipped_plan=${skippedPlan} skipped_sms_existing=${skippedExisting} skipped_no_tenants=${skippedNoTenants} skipped_email_no_address=${skippedEmailNoAddress} skipped_email_existing=${skippedEmailExisting}`
