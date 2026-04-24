@@ -397,6 +397,9 @@ function EmailTable({ rows }: { rows: EmailRow[] }) {
                   </Badge>
                 </TableCell>
                 <TableCell>
+                  <AuditCell audit={r.audit_context} />
+                </TableCell>
+                <TableCell>
                   {r.error_message ? (
                     <p
                       className="text-[11px] text-destructive truncate max-w-[260px]"
