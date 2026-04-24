@@ -128,15 +128,23 @@ export function SmsSchedulesEditor({ canEditAll, canEditBasic, planName }: Props
     if (!isSlotAllowed(s.slot_index)) {
       toast({
         title: "Plan insuffisant",
-        description: `Avec ${planName}, seul le SMS principal est disponible.`,
+        description: `Avec ${planName}, seul le créneau principal est disponible.`,
         variant: "destructive",
       });
       return;
     }
     if (s.is_active && !s.template_id) {
       toast({
-        title: "Modèle requis",
+        title: "Modèle SMS requis",
         description: "Choisissez un modèle de SMS avant d'activer ce créneau.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (s.send_email && !s.email_template_id) {
+      toast({
+        title: "Modèle email requis",
+        description: "Choisissez un modèle d'email avant d'activer l'envoi par email.",
         variant: "destructive",
       });
       return;
@@ -146,6 +154,8 @@ export function SmsSchedulesEditor({ canEditAll, canEditBasic, planName }: Props
       .from("sms_schedules")
       .update({
         template_id: s.template_id,
+        email_template_id: s.email_template_id,
+        send_email: s.send_email,
         day_of_month: s.day_of_month,
         send_hour: s.send_hour,
         send_minute: 0,
