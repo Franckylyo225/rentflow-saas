@@ -566,7 +566,7 @@ export function BulkSmsDialog({
             </Button>
           )}
           {step === 3 && (
-            <Button onClick={handleSend} disabled={sending} className="gap-2">
+            <Button onClick={handleSend} disabled={!canConfirmSend} className="gap-2">
               {sending ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
