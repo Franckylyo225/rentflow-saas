@@ -7,8 +7,29 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
 const FROM_EMAIL = "RentFlow <noreply@rent-flow.net>";
 const MAX_RETRIES = 2;
-const LOGO_URL = "https://dljpgpplvqhhfndpsihz.supabase.co/storage/v1/object/public/logos/platform%2Frentflow-logo-white.png";
-const LOGO_IMG = `<img src="${LOGO_URL}" alt="RentFlow" height="36" style="display:block;margin:0 auto 12px;max-height:36px;width:auto;border:0;outline:none;text-decoration:none" />`;
+const LOGO_BASE = "https://dljpgpplvqhhfndpsihz.supabase.co/storage/v1/object/public/logos/platform";
+const LOGO_WHITE_URL = `${LOGO_BASE}%2Frentflow-logo-white.png`;
+const LOGO_COLOR_URL = `${LOGO_BASE}%2Frentflow-logo.png`;
+const LOGO_CONFIG_URL = `${LOGO_BASE}%2Femail-logo-config.json`;
+
+async function resolveLogoUrl(): Promise<string> {
+  try {
+    const r = await fetch(`${LOGO_CONFIG_URL}?t=${Date.now()}`, { cache: "no-store" as RequestCache });
+    if (!r.ok) return LOGO_WHITE_URL;
+    const cfg = await r.json();
+    return cfg?.variant === "color" ? LOGO_COLOR_URL : LOGO_WHITE_URL;
+  } catch {
+    return LOGO_WHITE_URL;
+  }
+}
+
+function buildLogoImg(url: string): string {
+  return `<img src="${url}" alt="RentFlow" height="36" style="display:block;margin:0 auto 12px;max-height:36px;width:auto;border:0;outline:none;text-decoration:none" />`;
+}
+
+// Defaults used by fallbackTemplates declaration; overridden per-request below.
+let LOGO_URL = LOGO_WHITE_URL;
+let LOGO_IMG = buildLogoImg(LOGO_URL);
 
 // Fallback templates (used if DB fetch fails)
 const fallbackTemplates: Record<string, (data: Record<string, any>) => { subject: string; html: string }> = {
