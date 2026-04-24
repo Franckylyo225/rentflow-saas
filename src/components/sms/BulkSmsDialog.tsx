@@ -344,6 +344,16 @@ export function BulkSmsDialog({
                 </Label>
               </div>
             </div>
+
+            {invalidPhoneCount > 0 && (
+              <Alert variant="default" className="py-2">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  {invalidPhoneCount} numéro(s) au format invalide ont été ignoré(s). Format attendu : international (+225XXXXXXXX).
+                </AlertDescription>
+              </Alert>
+            )}
+
             <ScrollArea className="h-72 rounded-md border">
               <div className="p-2 space-y-1">
                 {recipients.length === 0 ? (
@@ -354,17 +364,18 @@ export function BulkSmsDialog({
                   recipients.map((r) => {
                     const key = recipientKey(r);
                     const hasPhone = !!r.phone && r.phone.trim().length > 0;
+                    const validPhone = hasPhone && isValidPhone(r.phone);
                     return (
                       <div
                         key={key}
                         className={`flex items-center justify-between gap-2 rounded-md p-2 ${
-                          hasPhone ? "hover:bg-muted/50" : "opacity-60"
+                          validPhone ? "hover:bg-muted/50" : "opacity-60"
                         }`}
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <Checkbox
                             checked={selected.has(key)}
-                            disabled={!hasPhone}
+                            disabled={!validPhone}
                             onCheckedChange={() => toggleOne(key)}
                           />
                           <div className="min-w-0">
@@ -380,15 +391,25 @@ export function BulkSmsDialog({
                             Sans numéro
                           </Badge>
                         )}
+                        {hasPhone && !validPhone && (
+                          <Badge variant="destructive" className="text-xs">
+                            Format invalide
+                          </Badge>
+                        )}
                       </div>
                     );
                   })
                 )}
               </div>
             </ScrollArea>
-            <p className="text-xs text-muted-foreground">
-              {selected.size} destinataire(s) sélectionné(s)
-            </p>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">
+                {selected.size} / {Math.min(eligible.length, MAX_RECIPIENTS_PER_SEND)} destinataire(s) sélectionné(s)
+              </span>
+              <span className="text-muted-foreground">
+                Max : {MAX_RECIPIENTS_PER_SEND}
+              </span>
+            </div>
           </div>
         )}
 
