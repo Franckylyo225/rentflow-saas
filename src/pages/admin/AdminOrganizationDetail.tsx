@@ -106,14 +106,13 @@ const AdminOrganizationDetail = () => {
     let tenantCount = 0;
 
     if (propIds.length > 0) {
-      const [unitsRes, tenantsRes] = await Promise.all([
-        supabase.from("units").select("id").in("property_id", propIds),
-        supabase.from("tenants").select("id").in("unit_id",
-          (await supabase.from("units").select("id").in("property_id", propIds)).data?.map((u: any) => u.id) || []
-        ),
-      ]);
-      unitCount = unitsRes.data?.length || 0;
-      tenantCount = tenantsRes.data?.length || 0;
+      const unitsRes = await supabase.from("units").select("id").in("property_id", propIds);
+      const unitIds = (unitsRes.data || []).map((u: any) => u.id);
+      unitCount = unitIds.length;
+      if (unitIds.length > 0) {
+        const tenantsRes = await supabase.from("tenants").select("id").in("unit_id", unitIds);
+        tenantCount = tenantsRes.data?.length || 0;
+      }
     }
 
     setUsage({
