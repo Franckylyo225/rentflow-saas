@@ -15,6 +15,7 @@ import {
 import {
   ArrowLeft, Building2, Users, Home, DoorOpen, UserCheck,
   Loader2, Power, PowerOff, Send, Calendar, Mail, Phone,
+  MessageSquare, AlertCircle, CheckCircle2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
