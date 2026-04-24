@@ -63,12 +63,23 @@ interface Props {
 
 export function SmsTemplatesEditor({ canEdit }: Props) {
   const { profile } = useProfile();
+  const { settings } = useOrganizationSettings();
   const orgId = profile?.organization_id;
   const [templates, setTemplates] = useState<SmsTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<SmsTemplate | null>(null);
   const [deleting, setDeleting] = useState<SmsTemplate | null>(null);
   const [saving, setSaving] = useState(false);
+  const [sampleVars, setSampleVars] = useState<Record<string, string>>(() =>
+    Object.fromEntries(AVAILABLE_VARS.map((v) => [v.key, v.sample])),
+  );
+
+  // Sync agency name from org settings when available
+  useEffect(() => {
+    if (settings?.name) {
+      setSampleVars((prev) => ({ ...prev, agency_name: settings.name }));
+    }
+  }, [settings?.name]);
 
   const fetchTemplates = async () => {
     if (!orgId) return;
