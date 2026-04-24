@@ -302,6 +302,65 @@ function EmptyState({ label }: { label: string }) {
   return <p className="text-sm text-muted-foreground text-center py-8">{label}</p>;
 }
 
+const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  pending: "En attente",
+  late: "En retard",
+  partial: "Partiel",
+  paid: "Payé",
+};
+
+function AuditCell({ audit }: { audit: AuditContext }) {
+  if (!audit) return <span className="text-[11px] text-muted-foreground">—</span>;
+  const fmt = (n?: number) => (n != null ? Number(n).toLocaleString("fr-FR") : "—");
+  const statusLabel = audit.payment_status
+    ? PAYMENT_STATUS_LABELS[audit.payment_status] || audit.payment_status
+    : "—";
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-[11px]">
+          <Info className="h-3 w-3" />
+          {statusLabel} · {fmt(audit.remaining_balance)} FCFA
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-3 text-xs space-y-2">
+        <div className="font-medium text-sm">Pourquoi cette relance ?</div>
+        <div className="text-muted-foreground">
+          Le locataire avait un loyer non soldé pour le mois sélectionné.
+        </div>
+        <div className="grid grid-cols-2 gap-y-1 gap-x-2 pt-2 border-t border-border">
+          <span className="text-muted-foreground">Mois</span>
+          <span className="font-medium">{audit.month || "—"}</span>
+          <span className="text-muted-foreground">Statut paiement</span>
+          <span className="font-medium">{statusLabel}</span>
+          <span className="text-muted-foreground">Montant dû</span>
+          <span className="font-medium">{fmt(audit.amount_due)} FCFA</span>
+          <span className="text-muted-foreground">Déjà payé</span>
+          <span className="font-medium">{fmt(audit.amount_paid)} FCFA</span>
+          <span className="text-muted-foreground">Solde restant</span>
+          <span className="font-medium text-destructive">{fmt(audit.remaining_balance)} FCFA</span>
+          <span className="text-muted-foreground">Échéance</span>
+          <span className="font-medium">{audit.due_date || "—"}</span>
+          {audit.schedule_slot != null && (
+            <>
+              <span className="text-muted-foreground">Créneau</span>
+              <span className="font-medium">
+                #{audit.schedule_slot} (jour {audit.schedule_day}, {audit.schedule_hour}h)
+              </span>
+            </>
+          )}
+          {audit.plan_slug && (
+            <>
+              <span className="text-muted-foreground">Plan</span>
+              <span className="font-medium capitalize">{audit.plan_slug}</span>
+            </>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function EmailTable({ rows }: { rows: EmailRow[] }) {
   if (rows.length === 0) return <EmptyState label="Aucun email pour cette période." />;
   return (
