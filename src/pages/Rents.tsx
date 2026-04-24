@@ -27,6 +27,9 @@ import { downloadInvoice, generateInvoiceNumber, type InvoiceData } from "@/lib/
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useProfile } from "@/hooks/useProfile";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { BulkSmsDialog, type BulkSmsRecipient } from "@/components/sms/BulkSmsDialog";
+import { FeatureLockedCard } from "@/components/auth/FeatureLockedCard";
 
 const paymentMethods = ["Espèces", "Virement bancaire", "Chèque", "Mobile Money", "Carte bancaire"];
 
@@ -46,6 +49,8 @@ export default function Rents() {
   const [showAdvance, setShowAdvance] = useState(false);
   const [advanceTenant, setAdvanceTenant] = useState<{ id: string; full_name: string; rent: number } | null>(null);
   const [smsTarget, setSmsTarget] = useState<{ phone: string; name: string; tenantId: string; rentPaymentId: string } | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [lockedOpen, setLockedOpen] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("action") === "new") {
@@ -60,6 +65,7 @@ export default function Rents() {
   const { settings: orgSettings } = useOrganizationSettings();
   const { profile } = useProfile();
   const { expired } = usePlanLimits();
+  const { hasFeature } = useFeatureAccess();
   const navigate = useNavigate();
 
   // Compute escalation info for each payment
@@ -349,6 +355,39 @@ export default function Rents() {
 
   const pendingTasks = allTasks.filter(t => t.status === "pending" || t.status === "in_progress");
 
+  // Destinataires pour l'envoi groupé : impayés (late + pending + partial) avec téléphone
+  const bulkRecipients: BulkSmsRecipient[] = useMemo(() => {
+    const seen = new Set<string>();
+    const out: BulkSmsRecipient[] = [];
+    paymentsWithEscalation
+      .filter(p => p.status !== "paid")
+      .forEach(p => {
+        const key = (p.tenant_id ?? "") + p.id;
+        if (seen.has(key)) return;
+        seen.add(key);
+        out.push({
+          tenantId: p.tenant_id,
+          name: p.tenants?.full_name ?? "Locataire",
+          phone: p.tenants?.phone ?? null,
+          rentPaymentId: p.id,
+          rentAmount: p.amount - p.paid_amount,
+          dueDate: p.due_date,
+        });
+      });
+    return out;
+  }, [paymentsWithEscalation]);
+
+  const hasUnpaidWithPhone = bulkRecipients.some(r => !!r.phone);
+  const canBulkSend = hasFeature("sms_bulk_send");
+
+  const handleBulkClick = () => {
+    if (!canBulkSend) {
+      setLockedOpen(true);
+      return;
+    }
+    setBulkOpen(true);
+  };
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -360,17 +399,30 @@ export default function Rents() {
               {monthFilter !== "all" && <span className="ml-1">· {formatMonthLabel(monthFilter)}</span>}
             </p>
           </div>
-          <Select value={monthFilter} onValueChange={setMonthFilter}>
-            <SelectTrigger className="w-full sm:w-56">
-              <SelectValue placeholder="Toutes les périodes" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les périodes</SelectItem>
-              {availableMonths.map(m => (
-                <SelectItem key={m} value={m}>{formatMonthLabel(m)}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-wrap items-center gap-2">
+            {hasUnpaidWithPhone && (
+              <Button
+                variant="outline"
+                onClick={handleBulkClick}
+                className="gap-2"
+                title={canBulkSend ? "Envoyer un SMS de relance à tous les impayés" : "Disponible avec l'offre Pro"}
+              >
+                <MessageSquare className="h-4 w-4" />
+                Relancer les impayés
+              </Button>
+            )}
+            <Select value={monthFilter} onValueChange={setMonthFilter}>
+              <SelectTrigger className="w-full sm:w-56">
+                <SelectValue placeholder="Toutes les périodes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes les périodes</SelectItem>
+                {availableMonths.map(m => (
+                  <SelectItem key={m} value={m}>{formatMonthLabel(m)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -711,6 +763,27 @@ export default function Rents() {
           setAdvanceTenant(null);
         }}
       />
+
+      <BulkSmsDialog
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        recipients={bulkRecipients}
+        title="Relancer les impayés"
+        description="Envoyez un SMS de relance personnalisé à tous les locataires sélectionnés."
+      />
+
+      <Dialog open={lockedOpen} onOpenChange={setLockedOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Envoi groupé</DialogTitle>
+          </DialogHeader>
+          <FeatureLockedCard
+            title="Envoi groupé de SMS"
+            description="Relancez tous vos locataires impayés en un seul clic. Disponible à partir de l'offre Pro."
+            requiredPlan="Pro"
+          />
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
