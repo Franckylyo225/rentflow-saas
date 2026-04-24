@@ -24,6 +24,23 @@ import { useProfile } from "@/hooks/useProfile";
 import { format, startOfMonth, endOfMonth, subMonths, addMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 
+type AuditContext = {
+  reason?: string;
+  month?: string;
+  payment_status?: string;
+  amount_due?: number;
+  amount_paid?: number;
+  remaining_balance?: number;
+  due_date?: string;
+  rent_payment_id?: string;
+  tenant_name?: string;
+  schedule_slot?: number;
+  schedule_day?: number;
+  schedule_hour?: number;
+  plan_slug?: string;
+  triggered_at?: string;
+} | null;
+
 type SmsRow = {
   id: string;
   created_at: string;
@@ -33,6 +50,7 @@ type SmsRow = {
   status: string;
   trigger_type: string;
   error_message: string | null;
+  audit?: AuditContext;
 };
 
 type EmailRow = {
@@ -42,6 +60,7 @@ type EmailRow = {
   template_key: string;
   status: string;
   error_message: string | null;
+  audit_context: AuditContext;
 };
 
 const SMS_STATUS: Record<string, { label: string; icon: typeof CheckCircle2; className: string }> = {
