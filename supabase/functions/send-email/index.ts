@@ -198,6 +198,7 @@ Deno.serve(async (req) => {
     }
 
     logSubject = subject!;
+    html = swapLogo(html!);
 
     const headers = {
       "Content-Type": "application/json",
