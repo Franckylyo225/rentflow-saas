@@ -804,53 +804,6 @@ export type Database = {
           },
         ]
       }
-      notification_templates: {
-        Row: {
-          created_at: string
-          email_content: string
-          email_enabled: boolean
-          id: string
-          label: string
-          organization_id: string
-          sms_content: string
-          sms_enabled: boolean
-          template_key: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          email_content?: string
-          email_enabled?: boolean
-          id?: string
-          label: string
-          organization_id: string
-          sms_content?: string
-          sms_enabled?: boolean
-          template_key: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          email_content?: string
-          email_enabled?: boolean
-          id?: string
-          label?: string
-          organization_id?: string
-          sms_content?: string
-          sms_enabled?: boolean
-          template_key?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "notification_templates_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       notifications: {
         Row: {
           created_at: string
@@ -1499,49 +1452,225 @@ export type Database = {
           },
         ]
       }
-      sms_history: {
+      sms_logs: {
         Row: {
           created_at: string
-          error_message: string | null
+          details: Json | null
+          event_type: string
           id: string
-          message: string
-          orange_message_id: string | null
-          organization_id: string
-          recipient_name: string | null
-          recipient_phone: string
-          sender_name: string | null
-          status: string
-          template_key: string | null
+          sms_message_id: string
         }
         Insert: {
           created_at?: string
-          error_message?: string | null
+          details?: Json | null
+          event_type: string
           id?: string
-          message: string
-          orange_message_id?: string | null
-          organization_id: string
-          recipient_name?: string | null
-          recipient_phone: string
-          sender_name?: string | null
-          status?: string
-          template_key?: string | null
+          sms_message_id: string
         }
         Update: {
           created_at?: string
-          error_message?: string | null
+          details?: Json | null
+          event_type?: string
           id?: string
-          message?: string
-          orange_message_id?: string | null
-          organization_id?: string
-          recipient_name?: string | null
-          recipient_phone?: string
-          sender_name?: string | null
-          status?: string
-          template_key?: string | null
+          sms_message_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "sms_history_organization_id_fkey"
+            foreignKeyName: "sms_logs_sms_message_id_fkey"
+            columns: ["sms_message_id"]
+            isOneToOne: false
+            referencedRelation: "sms_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_messages: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          id: string
+          organization_id: string
+          provider_message_id: string | null
+          recipient_name: string | null
+          recipient_phone: string
+          rent_payment_id: string | null
+          retry_count: number
+          schedule_id: string | null
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+          template_id: string | null
+          tenant_id: string | null
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          organization_id: string
+          provider_message_id?: string | null
+          recipient_name?: string | null
+          recipient_phone: string
+          rent_payment_id?: string | null
+          retry_count?: number
+          schedule_id?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          tenant_id?: string | null
+          trigger_type?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          organization_id?: string
+          provider_message_id?: string | null
+          recipient_name?: string | null
+          recipient_phone?: string
+          rent_payment_id?: string | null
+          retry_count?: number
+          schedule_id?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          tenant_id?: string | null
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_messages_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_messages_rent_payment_id_fkey"
+            columns: ["rent_payment_id"]
+            isOneToOne: false
+            referencedRelation: "rent_payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_messages_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "sms_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_messages_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "sms_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_messages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_schedules: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          offset_days: number
+          organization_id: string
+          sort_order: number
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          offset_days: number
+          organization_id: string
+          sort_order?: number
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          offset_days?: number
+          organization_id?: string
+          sort_order?: number
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_schedules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_schedules_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "sms_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_templates: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_system: boolean
+          label: string
+          organization_id: string
+          template_key: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_system?: boolean
+          label: string
+          organization_id: string
+          template_key: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_system?: boolean
+          label?: string
+          organization_id?: string
+          template_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_templates_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
