@@ -76,13 +76,6 @@ export function SmsSettingsTab() {
             canEditBasic={canEditBasicSchedules}
             planName={planName}
           />
-          {!canEditAllSchedules && canEditBasicSchedules && (
-            <FeatureLockedCard
-              title="Rappels avancés"
-              description="Avec votre offre actuelle, seul le rappel J-5 est disponible. Passez à l'offre Pro pour activer les rappels J-3, J-1, J+3, J+7 et créer vos propres échéances."
-              requiredPlan="Pro"
-            />
-          )}
         </TabsContent>
 
         <TabsContent value="templates" className="space-y-4">
