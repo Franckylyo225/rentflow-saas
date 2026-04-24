@@ -401,23 +401,60 @@ export default function Rents() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={handleBulkClick}
-              disabled={canBulkSend && !hasUnpaidWithPhone}
-              className="gap-2"
-              title={
-                canBulkSend
-                  ? hasUnpaidWithPhone
-                    ? "Envoyer un SMS de relance à tous les impayés"
-                    : "Aucun impayé avec téléphone pour ce filtre"
-                  : "Disponible avec l'offre Pro"
-              }
-            >
-              <MessageSquare className="h-4 w-4" />
-              Relancer les impayés
-              {!canBulkSend && <LockIcon className="h-3 w-3 ml-1 opacity-70" />}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  Relances SMS
+                  {!canBulkSend && <LockIcon className="h-3 w-3 ml-1 opacity-70" />}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-72">
+                <DropdownMenuLabel>Mode de relance</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleBulkClick}
+                  disabled={canBulkSend && !hasUnpaidWithPhone}
+                  className="flex items-start gap-2 py-2.5"
+                >
+                  <Send className="h-4 w-4 mt-0.5 text-primary" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm flex items-center gap-1.5">
+                      Envoi manuel groupé
+                      {!canBulkSend && <LockIcon className="h-3 w-3 opacity-60" />}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {canBulkSend
+                        ? hasUnpaidWithPhone
+                          ? "Sélectionnez les impayés et envoyez maintenant"
+                          : "Aucun impayé avec téléphone à relancer"
+                        : "Disponible avec l'offre Pro"}
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => navigate("/settings?tab=sms")}
+                  className="flex items-start gap-2 py-2.5"
+                >
+                  <Zap className="h-4 w-4 mt-0.5 text-primary" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm">Rappels automatiques</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      Programmez des envois récurrents (J-5, J-1, J+3…)
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => navigate("/settings?tab=sms")}
+                  className="text-xs text-muted-foreground gap-2"
+                >
+                  <SettingsIcon className="h-3.5 w-3.5" />
+                  Paramètres SMS & modèles
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Select value={monthFilter} onValueChange={setMonthFilter}>
               <SelectTrigger className="w-full sm:w-56">
                 <SelectValue placeholder="Toutes les périodes" />
