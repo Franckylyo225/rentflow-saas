@@ -23,20 +23,31 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Pencil, Plus, Trash2, FileText, Variable } from "lucide-react";
+import { Loader2, Pencil, Plus, Trash2, FileText, Variable, Eye, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { toast } from "@/hooks/use-toast";
 
-const AVAILABLE_VARS = [
-  { key: "{{tenant_name}}", desc: "Nom du locataire" },
-  { key: "{{rent_amount}}", desc: "Montant du loyer" },
-  { key: "{{due_date}}", desc: "Date d'échéance" },
-  { key: "{{month}}", desc: "Mois concerné" },
-  { key: "{{agency_name}}", desc: "Nom de l'agence" },
-  { key: "{{remaining_days}}", desc: "Jours restants" },
-  { key: "{{late_days}}", desc: "Jours de retard" },
+type VarDef = { key: string; token: string; desc: string; sample: string };
+
+const AVAILABLE_VARS: VarDef[] = [
+  { key: "tenant_name", token: "{{tenant_name}}", desc: "Nom du locataire", sample: "Awa Koné" },
+  { key: "rent_amount", token: "{{rent_amount}}", desc: "Montant du loyer", sample: "150 000" },
+  { key: "due_date", token: "{{due_date}}", desc: "Date d'échéance", sample: "05/05/2026" },
+  { key: "month", token: "{{month}}", desc: "Mois concerné", sample: "Mai 2026" },
+  { key: "agency_name", token: "{{agency_name}}", desc: "Nom de l'agence", sample: "Mon agence" },
+  { key: "remaining_days", token: "{{remaining_days}}", desc: "Jours restants", sample: "3" },
+  { key: "late_days", token: "{{late_days}}", desc: "Jours de retard", sample: "7" },
 ];
+
+function renderPreview(content: string, vars: Record<string, string>): string {
+  let result = content;
+  for (const [key, value] of Object.entries(vars)) {
+    result = result.replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, "g"), value);
+  }
+  return result;
+}
 
 type SmsTemplate = {
   id: string;
