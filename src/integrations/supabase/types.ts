@@ -1240,35 +1240,86 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_email_logs: {
+        Row: {
+          context: Json
+          created_at: string
+          error_message: string | null
+          id: string
+          organization_id: string | null
+          recipient_email: string
+          retry_count: number
+          status: string
+          subject: string
+          template_key: string
+          user_id: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          organization_id?: string | null
+          recipient_email: string
+          retry_count?: number
+          status?: string
+          subject?: string
+          template_key: string
+          user_id?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          organization_id?: string | null
+          recipient_email?: string
+          retry_count?: number
+          status?: string
+          subject?: string
+          template_key?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       platform_email_templates: {
         Row: {
+          available_variables: string[]
+          category: string
           created_at: string
           description: string | null
           html_content: string
           id: string
           is_active: boolean
+          is_admin_alert: boolean
           label: string
           subject: string
           template_key: string
           updated_at: string
         }
         Insert: {
+          available_variables?: string[]
+          category?: string
           created_at?: string
           description?: string | null
           html_content?: string
           id?: string
           is_active?: boolean
+          is_admin_alert?: boolean
           label: string
           subject?: string
           template_key: string
           updated_at?: string
         }
         Update: {
+          available_variables?: string[]
+          category?: string
           created_at?: string
           description?: string | null
           html_content?: string
           id?: string
           is_active?: boolean
+          is_admin_alert?: boolean
           label?: string
           subject?: string
           template_key?: string
