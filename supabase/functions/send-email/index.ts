@@ -6,6 +6,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
 const FROM_EMAIL = "RentFlow <noreply@rent-flow.net>";
+const MAX_RETRIES = 2;
 
 // Fallback templates (used if DB fetch fails)
 const fallbackTemplates: Record<string, (data: Record<string, any>) => { subject: string; html: string }> = {
@@ -27,16 +28,66 @@ const fallbackTemplates: Record<string, (data: Record<string, any>) => { subject
   }),
 };
 
-// Replace {{variable}} placeholders in HTML/subject
 function replaceVariables(template: string, data: Record<string, any>): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => {
     return data[key] !== undefined && data[key] !== null ? String(data[key]) : "—";
   });
 }
 
+async function sendWithRetry(payload: any, headers: Record<string, string>): Promise<{ ok: boolean; result: any; retries: number }> {
+  let lastResult: any = null;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const r = await fetch(`${GATEWAY_URL}/emails`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+      });
+      const result = await r.json();
+      if (r.ok) return { ok: true, result, retries: attempt };
+      lastResult = result;
+      // exponential backoff
+      if (attempt < MAX_RETRIES) await new Promise((res) => setTimeout(res, 500 * (attempt + 1)));
+    } catch (err) {
+      lastResult = { error: err instanceof Error ? err.message : String(err) };
+      if (attempt < MAX_RETRIES) await new Promise((res) => setTimeout(res, 500 * (attempt + 1)));
+    }
+  }
+  return { ok: false, result: lastResult, retries: MAX_RETRIES };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  let logTemplateKey = "";
+  let logRecipient = "";
+  let logSubject = "";
+  let logContext: Record<string, any> = {};
+  let logOrgId: string | null = null;
+  let logUserId: string | null = null;
+
+  async function writeLog(status: string, errorMessage: string | null, retries: number) {
+    try {
+      await supabase.from("platform_email_logs").insert({
+        template_key: logTemplateKey || "unknown",
+        recipient_email: logRecipient || "unknown",
+        subject: logSubject,
+        status,
+        error_message: errorMessage,
+        retry_count: retries,
+        organization_id: logOrgId,
+        user_id: logUserId,
+        context: logContext,
+      });
+    } catch (logErr) {
+      console.error("Failed to write platform_email_logs:", logErr);
+    }
   }
 
   try {
@@ -47,7 +98,7 @@ Deno.serve(async (req) => {
       throw new Error("Missing API keys");
     }
 
-    const { templateName, recipientEmail, templateData, adminEmail, inlineSubject, inlineHtml } =
+    const { templateName, recipientEmail, templateData, adminEmail, inlineSubject, inlineHtml, organizationId, userId } =
       await req.json();
 
     if (!templateName || !recipientEmail) {
@@ -56,6 +107,12 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    logTemplateKey = templateName;
+    logRecipient = recipientEmail;
+    logContext = templateData || {};
+    logOrgId = organizationId || null;
+    logUserId = userId || null;
 
     let subject: string;
     let html: string;
@@ -72,19 +129,22 @@ Deno.serve(async (req) => {
       subject = replaceVariables(inlineSubject, templateData || {});
       html = replaceVariables(inlineHtml, templateData || {});
     } else {
-      // Try to fetch template from DB
+      // Try to fetch template from DB and check is_active
       try {
-        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-        const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-        const supabase = createClient(supabaseUrl, supabaseKey);
-
         const { data: dbTemplate } = await supabase
           .from("platform_email_templates")
           .select("subject, html_content, is_active")
           .eq("template_key", templateName)
           .maybeSingle();
 
-        if (dbTemplate && dbTemplate.is_active) {
+        if (dbTemplate) {
+          if (!dbTemplate.is_active) {
+            await writeLog("disabled", "Template désactivé par l'administrateur", 0);
+            return new Response(
+              JSON.stringify({ success: false, skipped: true, reason: "template_disabled" }),
+              { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
           subject = replaceVariables(dbTemplate.subject, templateData || {});
           html = replaceVariables(dbTemplate.html_content, templateData || {});
           useDb = true;
@@ -93,10 +153,10 @@ Deno.serve(async (req) => {
         console.error("DB template fetch failed, using fallback:", dbErr);
       }
 
-      // Fallback to hardcoded templates
       if (!useDb) {
         const templateFn = fallbackTemplates[templateName];
         if (!templateFn) {
+          await writeLog("failed", `Unknown template: ${templateName}`, 0);
           return new Response(
             JSON.stringify({ error: `Unknown template: ${templateName}` }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -108,86 +168,88 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Send to recipient
-    const response = await fetch(`${GATEWAY_URL}/emails`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": RESEND_API_KEY,
-      },
-      body: JSON.stringify({
-        from: FROM_EMAIL,
-        to: [recipientEmail],
-        subject: subject!,
-        html: html!,
-      }),
-    });
+    logSubject = subject!;
 
-    const result = await response.json();
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      "X-Connection-Api-Key": RESEND_API_KEY,
+    };
 
-    if (!response.ok) {
-      console.error("Resend error:", result);
+    const { ok, result, retries } = await sendWithRetry(
+      { from: FROM_EMAIL, to: [recipientEmail], subject: subject!, html: html! },
+      headers
+    );
+
+    if (!ok) {
+      const errMsg = typeof result === "object" ? JSON.stringify(result) : String(result);
+      await writeLog("failed", errMsg.slice(0, 500), retries);
       return new Response(
         JSON.stringify({ error: "Failed to send email", details: result }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Also send admin notification if specified
+    await writeLog("sent", null, retries);
+
+    // Admin notification (mirror)
     if (adminEmail) {
       const adminTemplateKey = templateName.replace("-confirmation", "-admin");
       let adminSubject: string | undefined;
       let adminHtml: string | undefined;
+      let adminEnabled = true;
 
       try {
-        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-        const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-        const supabase = createClient(supabaseUrl, supabaseKey);
-
         const { data: adminDbTemplate } = await supabase
           .from("platform_email_templates")
           .select("subject, html_content, is_active")
           .eq("template_key", adminTemplateKey)
           .maybeSingle();
 
-        if (adminDbTemplate && adminDbTemplate.is_active) {
-          adminSubject = replaceVariables(adminDbTemplate.subject, templateData || {});
-          adminHtml = replaceVariables(adminDbTemplate.html_content, templateData || {});
+        if (adminDbTemplate) {
+          adminEnabled = adminDbTemplate.is_active;
+          if (adminEnabled) {
+            adminSubject = replaceVariables(adminDbTemplate.subject, templateData || {});
+            adminHtml = replaceVariables(adminDbTemplate.html_content, templateData || {});
+          }
         }
       } catch (_) {}
 
-      if (!adminSubject && fallbackTemplates[adminTemplateKey]) {
+      if (!adminSubject && fallbackTemplates[adminTemplateKey] && adminEnabled) {
         const adminResult = fallbackTemplates[adminTemplateKey](templateData || {});
         adminSubject = adminResult.subject;
         adminHtml = adminResult.html;
       }
 
-      if (adminSubject && adminHtml) {
-        await fetch(`${GATEWAY_URL}/emails`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "X-Connection-Api-Key": RESEND_API_KEY,
-          },
-          body: JSON.stringify({
-            from: FROM_EMAIL,
-            to: [adminEmail],
+      if (adminSubject && adminHtml && adminEnabled) {
+        const { ok: aOk, result: aResult, retries: aRetries } = await sendWithRetry(
+          { from: FROM_EMAIL, to: [adminEmail], subject: adminSubject, html: adminHtml },
+          headers
+        );
+        try {
+          await supabase.from("platform_email_logs").insert({
+            template_key: adminTemplateKey,
+            recipient_email: adminEmail,
             subject: adminSubject,
-            html: adminHtml,
-          }),
-        });
+            status: aOk ? "sent" : "failed",
+            error_message: aOk ? null : (typeof aResult === "object" ? JSON.stringify(aResult).slice(0, 500) : String(aResult)),
+            retry_count: aRetries,
+            organization_id: logOrgId,
+            user_id: logUserId,
+            context: logContext,
+          });
+        } catch (_) {}
       }
     }
 
     return new Response(
-      JSON.stringify({ success: true, id: result.id, source: useDb ? "database" : "fallback" }),
+      JSON.stringify({ success: true, id: result.id, source: useDb ? "database" : "fallback", retries }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("send-email error:", error);
     const msg = error instanceof Error ? error.message : "Erreur interne";
+    await writeLog("failed", msg.slice(0, 500), 0);
     return new Response(
       JSON.stringify({ error: msg }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
