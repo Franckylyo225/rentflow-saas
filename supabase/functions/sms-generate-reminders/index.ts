@@ -7,9 +7,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const STARTER_FLAGS = new Set(["sms_basic"]);
-// Plans that allow full automatic reminders (any schedule offset)
 const FULL_AUTO_FLAG = "sms_auto_full";
+const BASIC_AUTO_FLAG = "sms_auto_basic";
 
 function fmtAmount(n: number): string {
   return Number(n || 0).toLocaleString("fr-FR");
@@ -29,6 +28,10 @@ function renderTemplate(content: string, vars: Record<string, string>): string {
   return out;
 }
 
+function currentMonthKey(d: Date): string {
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -39,29 +42,47 @@ serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   try {
-    // 1. Get all active schedules with their template + organization
+    const now = new Date();
+    const todayDay = now.getUTCDate();
+    const currentHour = now.getUTCHours();
+    const monthKey = currentMonthKey(now);
+
+    // Allow manual override via query/body for testing
+    const url = new URL(req.url);
+    const forceDay = url.searchParams.get("force_day");
+    const forceHour = url.searchParams.get("force_hour");
+    const matchDay = forceDay ? parseInt(forceDay, 10) : todayDay;
+    const matchHour = forceHour ? parseInt(forceHour, 10) : currentHour;
+
+    // 1. Find schedules matching this day + hour
     const { data: schedules, error: schedErr } = await supabase
       .from("sms_schedules")
       .select(`
-        id, organization_id, offset_days, template_id, is_active,
+        id, organization_id, slot_index, day_of_month, send_hour, template_id, is_active,
         sms_templates(id, content)
       `)
-      .eq("is_active", true);
+      .eq("is_active", true)
+      .eq("day_of_month", matchDay)
+      .eq("send_hour", matchHour);
 
     if (schedErr) throw schedErr;
     if (!schedules || schedules.length === 0) {
       return new Response(
-        JSON.stringify({ success: true, generated: 0, message: "No active schedules" }),
+        JSON.stringify({
+          success: true,
+          generated: 0,
+          message: `No schedules at day=${matchDay} hour=${matchHour}`,
+        }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // 2. Group org IDs to fetch plan/feature flags once
+    // 2. Resolve plans/feature flags per org
     const orgIds = Array.from(new Set(schedules.map((s) => s.organization_id)));
 
     const { data: subs } = await supabase
       .from("subscriptions")
-      .select("organization_id, plan")
+      .select("organization_id, plan, status")
       .in("organization_id", orgIds);
 
     const planByOrg = new Map<string, string>();
@@ -75,7 +96,6 @@ serve(async (req) => {
     const flagsByPlan = new Map<string, string[]>();
     for (const p of plans || []) flagsByPlan.set(p.slug, (p.feature_flags as string[]) || []);
 
-    // Org name cache for variable rendering
     const { data: orgs } = await supabase
       .from("organizations")
       .select("id, name, sms_sender_name")
@@ -83,12 +103,10 @@ serve(async (req) => {
     const orgNameById = new Map<string, string>();
     for (const o of orgs || []) orgNameById.set(o.id, o.sms_sender_name || o.name || "RentFlow");
 
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
-
     let generated = 0;
     let skippedPlan = 0;
     let skippedExisting = 0;
+    let skippedNoTenants = 0;
 
     for (const sched of schedules) {
       const orgId = sched.organization_id;
@@ -97,58 +115,58 @@ serve(async (req) => {
       const tplContent = (sched as any).sms_templates?.content as string | undefined;
       if (!tplContent) continue;
 
-      // Plan gating: Starter only allowed J-5 (offset_days = -5)
-      const isFullAuto = flags.includes(FULL_AUTO_FLAG);
-      if (!isFullAuto && sched.offset_days !== -5) {
+      const hasBasic = flags.includes(BASIC_AUTO_FLAG);
+      const hasFull = flags.includes(FULL_AUTO_FLAG);
+
+      if (!hasBasic && !hasFull) {
+        skippedPlan++;
+        continue;
+      }
+      // Starter (basic only) → only slot_index = 1
+      if (!hasFull && sched.slot_index !== 1) {
         skippedPlan++;
         continue;
       }
 
-      // Compute target due_date: payment is due on (today - offset_days)
-      // offset_days = -5 means "5 days BEFORE due" → due_date = today + 5
-      // offset_days = +3 means "3 days AFTER due" → due_date = today - 3
-      const targetDate = new Date(today);
-      targetDate.setUTCDate(targetDate.getUTCDate() - sched.offset_days);
-      const targetDateStr = targetDate.toISOString().split("T")[0];
-
-      // Eligible payment statuses
-      const statuses = sched.offset_days < 0 ? ["pending"] : ["pending", "late", "partial"];
-
+      // Find all tenants of this org with an open rent payment for the current month
       const { data: payments, error: payErr } = await supabase
         .from("rent_payments")
         .select(`
-          id, amount, due_date, status,
+          id, amount, due_date, status, month,
           tenants!inner(id, full_name, phone, unit_id,
             units!inner(property_id,
               properties!inner(organization_id)
             )
           )
         `)
-        .eq("due_date", targetDateStr)
-        .in("status", statuses);
+        .eq("month", monthKey)
+        .in("status", ["pending", "late", "partial"]);
 
       if (payErr) {
         console.error(`[generate] error fetching payments for sched ${sched.id}:`, payErr);
         continue;
       }
-      if (!payments || payments.length === 0) continue;
-
-      // Filter to this org
-      const orgPayments = payments.filter(
+      const orgPayments = (payments || []).filter(
         (p: any) => p.tenants?.units?.properties?.organization_id === orgId
       );
+
+      if (orgPayments.length === 0) {
+        skippedNoTenants++;
+        continue;
+      }
 
       for (const payment of orgPayments) {
         const tenant = (payment as any).tenants;
         if (!tenant?.phone) continue;
 
-        // Anti-dup: check if a sms_messages row already exists for this rent_payment + schedule
+        // Anti-dup: one SMS per (schedule, tenant, month)
         const { data: existing } = await supabase
           .from("sms_messages")
           .select("id")
-          .eq("rent_payment_id", payment.id)
           .eq("schedule_id", sched.id)
+          .eq("tenant_id", tenant.id)
           .eq("trigger_type", "auto")
+          .gte("created_at", `${monthKey}-01T00:00:00Z`)
           .maybeSingle();
 
         if (existing) {
@@ -187,7 +205,9 @@ serve(async (req) => {
       }
     }
 
-    console.log(`[sms-generate-reminders] generated=${generated} skipped_plan=${skippedPlan} skipped_existing=${skippedExisting}`);
+    console.log(
+      `[sms-generate-reminders] day=${matchDay} hour=${matchHour} generated=${generated} skipped_plan=${skippedPlan} skipped_existing=${skippedExisting} skipped_no_tenants=${skippedNoTenants}`
+    );
 
     return new Response(
       JSON.stringify({
@@ -195,6 +215,9 @@ serve(async (req) => {
         generated,
         skipped_plan: skippedPlan,
         skipped_existing: skippedExisting,
+        skipped_no_tenants: skippedNoTenants,
+        matched_day: matchDay,
+        matched_hour: matchHour,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
