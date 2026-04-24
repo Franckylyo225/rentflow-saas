@@ -16,7 +16,7 @@ import {
   Mail, Key, Globe, Shield, Bell, Database, Server,
   CheckCircle2, Send, RefreshCw, Save, Settings2,
   Pencil, Eye, X, Code, ToggleLeft, Megaphone, Plus, Trash2,
-  MessageSquare,
+  MessageSquare, Image as ImageIcon,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
@@ -191,6 +191,130 @@ function TemplateEditorDialog({
 }
 
 /* ------------------------------------------------------------------ */
+/*  Email Logo Card (white/color variant)                             */
+/* ------------------------------------------------------------------ */
+const LOGO_BUCKET = "logos";
+const LOGO_CONFIG_PATH = "platform/email-logo-config.json";
+const LOGO_WHITE_URL = "https://dljpgpplvqhhfndpsihz.supabase.co/storage/v1/object/public/logos/platform%2Frentflow-logo-white.png";
+const LOGO_COLOR_URL = "https://dljpgpplvqhhfndpsihz.supabase.co/storage/v1/object/public/logos/platform%2Frentflow-logo.png";
+
+function EmailLogoCard() {
+  const [variant, setVariant] = useState<"white" | "color">("white");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(
+          `https://dljpgpplvqhhfndpsihz.supabase.co/storage/v1/object/public/logos/platform%2Femail-logo-config.json?t=${Date.now()}`,
+          { cache: "no-store" }
+        );
+        if (res.ok) {
+          const cfg = await res.json();
+          setVariant(cfg?.variant === "color" ? "color" : "white");
+        }
+      } catch {
+        // keep default
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const save = async (next: "white" | "color") => {
+    setSaving(true);
+    try {
+      const blob = new Blob(
+        [JSON.stringify({ variant: next, updated_at: new Date().toISOString() }, null, 2)],
+        { type: "application/json" }
+      );
+      const { error } = await supabase.storage
+        .from(LOGO_BUCKET)
+        .upload(LOGO_CONFIG_PATH, blob, {
+          upsert: true,
+          contentType: "application/json",
+          cacheControl: "0",
+        });
+      if (error) throw error;
+      setVariant(next);
+      toast.success(`Logo "${next === "white" ? "Blanc" : "Couleur"}" appliqué aux emails`);
+    } catch (e: any) {
+      toast.error("Erreur : " + (e.message || "Sauvegarde échouée"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <ImageIcon className="h-5 w-5 text-primary" /> Logo des emails
+        </CardTitle>
+        <CardDescription>
+          Choisissez la version du logo affichée dans l'en-tête des emails envoyés depuis la plateforme.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 gap-4">
+            {([
+              { key: "white", label: "Blanc", desc: "Idéal pour fonds colorés (vert, rouge)", bg: "hsl(160,84%,39%)", url: LOGO_WHITE_URL },
+              { key: "color", label: "Couleur", desc: "Logo original sur fond clair", bg: "#f5f5f7", url: LOGO_COLOR_URL },
+            ] as const).map((opt) => {
+              const active = variant === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  disabled={saving || active}
+                  onClick={() => save(opt.key)}
+                  className={`relative text-left rounded-lg border-2 transition-all overflow-hidden ${
+                    active
+                      ? "border-primary ring-2 ring-primary/20"
+                      : "border-border hover:border-primary/50"
+                  } disabled:cursor-not-allowed`}
+                >
+                  <div
+                    className="flex items-center justify-center h-24"
+                    style={{ background: opt.bg }}
+                  >
+                    <img
+                      src={opt.url}
+                      alt={`Logo ${opt.label}`}
+                      className="h-9 w-auto"
+                    />
+                  </div>
+                  <div className="p-3 bg-card">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-foreground">{opt.label}</p>
+                      {active && (
+                        <Badge variant="default" className="gap-1 text-[10px]">
+                          <CheckCircle2 className="h-3 w-3" /> Actif
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground mt-4">
+          La modification est appliquée immédiatement aux prochains envois — aucun redéploiement nécessaire.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Email Tab                                                         */
 /* ------------------------------------------------------------------ */
 function EmailTab() {
@@ -278,6 +402,9 @@ function EmailTab() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Email logo variant */}
+      <EmailLogoCard />
 
       {/* Editable Templates grouped by category */}
       <Card>
