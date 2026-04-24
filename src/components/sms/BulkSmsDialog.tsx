@@ -151,8 +151,16 @@ export function BulkSmsDialog({
   const recipientKey = (r: BulkSmsRecipient) => r.tenantId + (r.rentPaymentId ?? "");
 
   const toggleAll = (checked: boolean) => {
-    if (checked) setSelected(new Set(eligible.map(recipientKey)));
-    else setSelected(new Set());
+    if (checked) {
+      // Limite la sélection au plafond
+      const capped = eligible.slice(0, MAX_RECIPIENTS_PER_SEND);
+      setSelected(new Set(capped.map(recipientKey)));
+      if (eligible.length > MAX_RECIPIENTS_PER_SEND) {
+        toast.warning(`Sélection limitée à ${MAX_RECIPIENTS_PER_SEND} destinataires`, {
+          description: `Pour des raisons de sécurité, un envoi groupé ne peut dépasser ${MAX_RECIPIENTS_PER_SEND} destinataires.`,
+        });
+      }
+    } else setSelected(new Set());
   };
 
   const toggleOne = (key: string) => {
