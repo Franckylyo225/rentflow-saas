@@ -2,8 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, CreditCard, Home, Mail, Phone, User, Loader2, LogOut, Building2, FileText, Pencil, FastForward, MessageSquare } from "lucide-react";
-import { SendSmsDialog } from "@/components/sms/SendSmsDialog";
+import { ArrowLeft, Calendar, CreditCard, Home, Mail, Phone, User, Loader2, LogOut, Building2, FileText, Pencil, FastForward } from "lucide-react";
 import { PaymentStatusBadge } from "@/components/ui/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
@@ -138,11 +137,6 @@ export default function TenantDetail() {
             <Button variant="outline" size="sm" onClick={openEdit}>
               <Pencil className="h-4 w-4 mr-2" /> Modifier
             </Button>
-            {tenant.is_active && tenant.phone && (
-              <Button variant="outline" size="sm" onClick={() => setShowSms(true)}>
-                <MessageSquare className="h-4 w-4 mr-2" /> Envoyer SMS
-              </Button>
-            )}
             {tenant.is_active && (
               <Button variant="outline" size="sm" onClick={() => setShowAdvance(true)}>
                 <FastForward className="h-4 w-4 mr-2" /> Paiement anticipé
@@ -355,13 +349,6 @@ export default function TenantDetail() {
           onCompleted={fetchData}
         />
 
-        <SendSmsDialog
-          open={showSms}
-          onOpenChange={setShowSms}
-          defaultPhone={tenant?.phone}
-          defaultName={tenant?.full_name}
-          tenantId={tenant?.id}
-        />
       </div>
     </AppLayout>
   );
