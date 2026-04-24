@@ -235,7 +235,9 @@ export function SmsSchedulesEditor({ canEditAll, canEditBasic, planName }: Props
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <Label className="text-xs">Modèle de SMS</Label>
+                  <Label className="text-xs flex items-center gap-1">
+                    <MessageSquare className="h-3 w-3" /> Modèle de SMS
+                  </Label>
                   <Select
                     value={s.template_id || "none"}
                     onValueChange={(v) =>
@@ -300,6 +302,52 @@ export function SmsSchedulesEditor({ canEditAll, canEditBasic, planName }: Props
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              {/* Sous-bloc email : envoi parallèle au même horaire */}
+              <div className="rounded-md border border-dashed border-border bg-muted/20 p-3 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                    <Label className="text-xs font-medium">
+                      Envoyer aussi par email
+                    </Label>
+                  </div>
+                  <Switch
+                    checked={s.send_email && allowed}
+                    onCheckedChange={(v) => updateLocal(s.slot_index, { send_email: v })}
+                    disabled={!allowed}
+                  />
+                </div>
+                {s.send_email && allowed && (
+                  <div>
+                    <Label className="text-xs">Modèle d'email</Label>
+                    <Select
+                      value={s.email_template_id || "none"}
+                      onValueChange={(v) =>
+                        updateLocal(s.slot_index, {
+                          email_template_id: v === "none" ? null : v,
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choisir un modèle d'email" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— Aucun —</SelectItem>
+                        {emailTemplates.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      L'email sera envoyé à la même heure que le SMS, uniquement aux locataires
+                      ayant un email renseigné.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {allowed && (
