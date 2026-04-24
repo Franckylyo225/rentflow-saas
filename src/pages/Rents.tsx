@@ -29,8 +29,6 @@ import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useProfile } from "@/hooks/useProfile";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
-import { BulkSmsDialog, type BulkSmsRecipient } from "@/components/sms/BulkSmsDialog";
-import { FeatureLockedCard } from "@/components/auth/FeatureLockedCard";
 
 const paymentMethods = ["Espèces", "Virement bancaire", "Chèque", "Mobile Money", "Carte bancaire"];
 
@@ -50,8 +48,6 @@ export default function Rents() {
   const [showAdvance, setShowAdvance] = useState(false);
   const [advanceTenant, setAdvanceTenant] = useState<{ id: string; full_name: string; rent: number } | null>(null);
   const [smsTarget, setSmsTarget] = useState<{ phone: string; name: string; tenantId: string; rentPaymentId: string } | null>(null);
-  const [bulkOpen, setBulkOpen] = useState(false);
-  const [lockedOpen, setLockedOpen] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("action") === "new") {
@@ -356,39 +352,6 @@ export default function Rents() {
 
   const pendingTasks = allTasks.filter(t => t.status === "pending" || t.status === "in_progress");
 
-  // Destinataires pour l'envoi groupé : impayés (late + pending + partial) avec téléphone
-  const bulkRecipients: BulkSmsRecipient[] = useMemo(() => {
-    const seen = new Set<string>();
-    const out: BulkSmsRecipient[] = [];
-    paymentsWithEscalation
-      .filter(p => p.status !== "paid")
-      .forEach(p => {
-        const key = (p.tenant_id ?? "") + p.id;
-        if (seen.has(key)) return;
-        seen.add(key);
-        out.push({
-          tenantId: p.tenant_id,
-          name: p.tenants?.full_name ?? "Locataire",
-          phone: p.tenants?.phone ?? null,
-          rentPaymentId: p.id,
-          rentAmount: p.amount - p.paid_amount,
-          dueDate: p.due_date,
-        });
-      });
-    return out;
-  }, [paymentsWithEscalation]);
-
-  const hasUnpaidWithPhone = bulkRecipients.some(r => !!r.phone);
-  const canBulkSend = hasFeature("sms_bulk_send");
-
-  const handleBulkClick = () => {
-    if (!canBulkSend) {
-      setLockedOpen(true);
-      return;
-    }
-    setBulkOpen(true);
-  };
-
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -401,60 +364,10 @@ export default function Rents() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  Relances SMS
-                  {!canBulkSend && <LockIcon className="h-3 w-3 ml-1 opacity-70" />}
-                  <ChevronDown className="h-3.5 w-3.5 opacity-60" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72">
-                <DropdownMenuLabel>Mode de relance</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleBulkClick}
-                  disabled={canBulkSend && !hasUnpaidWithPhone}
-                  className="flex items-start gap-2 py-2.5"
-                >
-                  <Send className="h-4 w-4 mt-0.5 text-primary" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm flex items-center gap-1.5">
-                      Envoi manuel groupé
-                      {!canBulkSend && <LockIcon className="h-3 w-3 opacity-60" />}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      {canBulkSend
-                        ? hasUnpaidWithPhone
-                          ? "Sélectionnez les impayés et envoyez maintenant"
-                          : "Aucun impayé avec téléphone à relancer"
-                        : "Disponible avec l'offre Pro"}
-                    </div>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => navigate("/settings?tab=sms")}
-                  className="flex items-start gap-2 py-2.5"
-                >
-                  <Zap className="h-4 w-4 mt-0.5 text-primary" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm">Rappels automatiques</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      Programmez des envois récurrents (J-5, J-1, J+3…)
-                    </div>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => navigate("/settings?tab=sms")}
-                  className="text-xs text-muted-foreground gap-2"
-                >
-                  <SettingsIcon className="h-3.5 w-3.5" />
-                  Paramètres SMS & modèles
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button variant="outline" className="gap-2" onClick={() => navigate("/settings?tab=sms")}>
+              <MessageSquare className="h-4 w-4" />
+              Rappels SMS automatiques
+            </Button>
             <Select value={monthFilter} onValueChange={setMonthFilter}>
               <SelectTrigger className="w-full sm:w-56">
                 <SelectValue placeholder="Toutes les périodes" />
@@ -807,27 +720,6 @@ export default function Rents() {
           setAdvanceTenant(null);
         }}
       />
-
-      <BulkSmsDialog
-        open={bulkOpen}
-        onOpenChange={setBulkOpen}
-        recipients={bulkRecipients}
-        title="Relancer les impayés"
-        description="Envoyez un SMS de relance personnalisé à tous les locataires sélectionnés."
-      />
-
-      <Dialog open={lockedOpen} onOpenChange={setLockedOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Envoi groupé</DialogTitle>
-          </DialogHeader>
-          <FeatureLockedCard
-            title="Envoi groupé de SMS"
-            description="Relancez tous vos locataires impayés en un seul clic. Disponible à partir de l'offre Pro."
-            requiredPlan="Pro"
-          />
-        </DialogContent>
-      </Dialog>
     </AppLayout>
   );
 }

@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -12,15 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Loader2, Plus, Trash2, Calendar, Lock } from "lucide-react";
+import { Loader2, Calendar, Lock, Save, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { toast } from "@/hooks/use-toast";
@@ -28,10 +19,14 @@ import { toast } from "@/hooks/use-toast";
 type Schedule = {
   id: string;
   label: string;
-  offset_days: number;
   template_id: string | null;
   is_active: boolean;
+  slot_index: number;
+  day_of_month: number;
+  send_hour: number;
+  send_minute: number;
   sort_order: number;
+  offset_days: number;
 };
 
 type Template = { id: string; label: string };
@@ -42,14 +37,25 @@ interface Props {
   planName: string;
 }
 
+const SLOT_LABELS: Record<number, string> = {
+  1: "SMS principal",
+  2: "SMS secondaire",
+  3: "SMS de relance",
+};
+
+const SLOT_DEFAULT_LABELS: Record<number, string> = {
+  1: "Rappel avant échéance",
+  2: "Rappel veille échéance",
+  3: "Relance après échéance",
+};
+
 export function SmsSchedulesEditor({ canEditAll, canEditBasic, planName }: Props) {
   const { profile } = useProfile();
   const orgId = profile?.organization_id;
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<Schedule | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   const fetchData = async () => {
     if (!orgId) return;
@@ -59,11 +65,39 @@ export function SmsSchedulesEditor({ canEditAll, canEditBasic, planName }: Props
         .from("sms_schedules")
         .select("*")
         .eq("organization_id", orgId)
-        .order("sort_order")
-        .order("offset_days"),
+        .order("slot_index"),
       supabase.from("sms_templates").select("id, label").eq("organization_id", orgId),
     ]);
-    setSchedules(schedRes.data || []);
+
+    let rows = (schedRes.data || []) as Schedule[];
+
+    // Ensure we have exactly 3 slots — create any missing
+    const presentSlots = new Set(rows.map((r) => r.slot_index));
+    const missing = [1, 2, 3].filter((s) => !presentSlots.has(s));
+    if (missing.length > 0) {
+      const tplFallback = (tplRes.data || [])[0]?.id || null;
+      const inserts = missing.map((slot) => ({
+        organization_id: orgId,
+        slot_index: slot,
+        label: SLOT_DEFAULT_LABELS[slot],
+        template_id: tplFallback,
+        day_of_month: slot === 1 ? 1 : slot === 2 ? 4 : 8,
+        send_hour: 9,
+        send_minute: 0,
+        is_active: false,
+        sort_order: slot,
+        offset_days: slot === 1 ? -5 : slot === 2 ? -1 : 3,
+      }));
+      await supabase.from("sms_schedules").insert(inserts);
+      const refresh = await supabase
+        .from("sms_schedules")
+        .select("*")
+        .eq("organization_id", orgId)
+        .order("slot_index");
+      rows = (refresh.data || []) as Schedule[];
+    }
+
+    setSchedules(rows);
     setTemplates(tplRes.data || []);
     setLoading(false);
   };
@@ -73,66 +107,57 @@ export function SmsSchedulesEditor({ canEditAll, canEditBasic, planName }: Props
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgId]);
 
-  const isOffsetAllowed = (offset: number) => {
+  const updateLocal = (slotIndex: number, patch: Partial<Schedule>) => {
+    setSchedules((prev) =>
+      prev.map((s) => (s.slot_index === slotIndex ? { ...s, ...patch } : s))
+    );
+  };
+
+  const isSlotAllowed = (slotIndex: number) => {
     if (canEditAll) return true;
-    if (canEditBasic) return offset === -5;
+    if (canEditBasic) return slotIndex === 1;
     return false;
   };
 
-  const toggleActive = async (s: Schedule, val: boolean) => {
-    if (val && !isOffsetAllowed(s.offset_days)) {
+  const saveSchedule = async (s: Schedule) => {
+    if (!isSlotAllowed(s.slot_index)) {
       toast({
         title: "Plan insuffisant",
-        description: `Cette échéance n'est pas disponible avec l'offre ${planName}.`,
+        description: `Avec ${planName}, seul le SMS principal est disponible.`,
         variant: "destructive",
       });
       return;
     }
-    await supabase.from("sms_schedules").update({ is_active: val }).eq("id", s.id);
-    fetchData();
-  };
-
-  const handleSave = async () => {
-    if (!editing || !orgId) return;
-    if (!isOffsetAllowed(editing.offset_days)) {
+    if (s.is_active && !s.template_id) {
       toast({
-        title: "Échéance non autorisée",
-        description: `Avec ${planName}, seul J-5 est disponible.`,
+        title: "Modèle requis",
+        description: "Choisissez un modèle de SMS avant d'activer ce créneau.",
         variant: "destructive",
       });
       return;
     }
-    setSaving(true);
-    const payload = {
-      label: editing.label,
-      offset_days: editing.offset_days,
-      template_id: editing.template_id,
-      is_active: editing.is_active,
-    };
-    if (editing.id) {
-      await supabase.from("sms_schedules").update(payload).eq("id", editing.id);
-    } else {
-      await supabase
-        .from("sms_schedules")
-        .insert({ ...payload, organization_id: orgId, sort_order: schedules.length });
+    setSavingId(s.id);
+    const { error } = await supabase
+      .from("sms_schedules")
+      .update({
+        template_id: s.template_id,
+        day_of_month: s.day_of_month,
+        send_hour: s.send_hour,
+        send_minute: 0,
+        is_active: s.is_active,
+        label: s.label,
+      })
+      .eq("id", s.id);
+    setSavingId(null);
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return;
     }
-    setSaving(false);
-    setEditing(null);
     toast({ title: "Programmation enregistrée" });
-    fetchData();
   };
 
-  const handleDelete = async (id: string) => {
-    await supabase.from("sms_schedules").delete().eq("id", id);
-    toast({ title: "Programmation supprimée" });
-    fetchData();
-  };
-
-  const formatOffset = (offset: number) => {
-    if (offset === 0) return "Le jour J";
-    if (offset < 0) return `J${offset} (${Math.abs(offset)}j avant échéance)`;
-    return `J+${offset} (${offset}j après échéance)`;
-  };
+  const days = useMemo(() => Array.from({ length: 28 }, (_, i) => i + 1), []);
+  const hours = useMemo(() => Array.from({ length: 24 }, (_, i) => i), []);
 
   if (loading) {
     return (
@@ -143,182 +168,153 @@ export function SmsSchedulesEditor({ canEditAll, canEditBasic, planName }: Props
   }
 
   return (
-    <>
-      <Card className="border-border">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Calendar className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-base">Programmation automatique</CardTitle>
-                <CardDescription>
-                  Les SMS sont générés chaque matin selon les échéances de loyer.
-                </CardDescription>
-              </div>
-            </div>
-            {canEditAll && (
-              <Button
-                size="sm"
-                className="gap-2"
-                onClick={() =>
-                  setEditing({
-                    id: "",
-                    label: "",
-                    offset_days: -3,
-                    template_id: null,
-                    is_active: true,
-                    sort_order: schedules.length,
-                  })
-                }
-              >
-                <Plus className="h-3.5 w-3.5" /> Ajouter
-              </Button>
-            )}
+    <Card className="border-border">
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Calendar className="h-4 w-4 text-primary" />
           </div>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {schedules.map((s) => {
-            const allowed = isOffsetAllowed(s.offset_days);
-            const tpl = templates.find((t) => t.id === s.template_id);
-            return (
-              <div
-                key={s.id}
-                className={`flex items-center justify-between gap-3 p-3 rounded-lg border ${
-                  allowed ? "border-border bg-card" : "border-dashed border-muted bg-muted/30"
-                }`}
-              >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div>
+            <CardTitle className="text-base">Programmation des SMS automatiques</CardTitle>
+            <CardDescription>
+              Choisissez le jour du mois et l'heure d'envoi de chaque SMS. La programmation se
+              répète automatiquement chaque mois.
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {schedules.map((s) => {
+          const allowed = isSlotAllowed(s.slot_index);
+          return (
+            <div
+              key={s.id}
+              className={`rounded-lg border p-4 space-y-3 ${
+                allowed ? "border-border bg-card" : "border-dashed border-muted bg-muted/30"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-[10px]">
+                    Créneau {s.slot_index}
+                  </Badge>
+                  <p className="font-medium text-sm">{SLOT_LABELS[s.slot_index]}</p>
+                  {!allowed && (
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] bg-muted text-muted-foreground gap-1"
+                    >
+                      <Lock className="h-2.5 w-2.5" /> Pro
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-muted-foreground">Actif</Label>
                   <Switch
                     checked={s.is_active && allowed}
-                    onCheckedChange={(v) => toggleActive(s, v)}
+                    onCheckedChange={(v) => updateLocal(s.slot_index, { is_active: v })}
                     disabled={!allowed}
                   />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-medium text-sm">{s.label}</p>
-                      <Badge variant="outline" className="text-[10px]">
-                        {formatOffset(s.offset_days)}
-                      </Badge>
-                      {!allowed && (
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] bg-muted text-muted-foreground gap-1"
-                        >
-                          <Lock className="h-2.5 w-2.5" /> Pro
-                        </Badge>
-                      )}
-                    </div>
-                    {tpl && (
-                      <p className="text-xs text-muted-foreground mt-0.5">Modèle : {tpl.label}</p>
-                    )}
-                  </div>
                 </div>
-                {canEditAll && (
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => setEditing(s)}>
-                      Modifier
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive"
-                      onClick={() => handleDelete(s.id)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                )}
               </div>
-            );
-          })}
-          {schedules.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-6">
-              Aucune programmation. Ajoutez-en une pour activer les rappels automatiques.
-            </p>
-          )}
-        </CardContent>
-      </Card>
 
-      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editing?.id ? "Modifier la programmation" : "Nouvelle programmation"}
-            </DialogTitle>
-            <DialogDescription>
-              Définissez quand le SMS sera envoyé par rapport à la date d'échéance du loyer.
-            </DialogDescription>
-          </DialogHeader>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-xs">Modèle de SMS</Label>
+                  <Select
+                    value={s.template_id || "none"}
+                    onValueChange={(v) =>
+                      updateLocal(s.slot_index, { template_id: v === "none" ? null : v })
+                    }
+                    disabled={!allowed}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir un modèle" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— Aucun —</SelectItem>
+                      {templates.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Jour du mois</Label>
+                  <Select
+                    value={String(s.day_of_month)}
+                    onValueChange={(v) =>
+                      updateLocal(s.slot_index, { day_of_month: parseInt(v, 10) })
+                    }
+                    disabled={!allowed}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {days.map((d) => (
+                        <SelectItem key={d} value={String(d)}>
+                          Le {d} du mois
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> Heure d'envoi
+                  </Label>
+                  <Select
+                    value={String(s.send_hour)}
+                    onValueChange={(v) =>
+                      updateLocal(s.slot_index, { send_hour: parseInt(v, 10) })
+                    }
+                    disabled={!allowed}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hours.map((h) => (
+                        <SelectItem key={h} value={String(h)}>
+                          {String(h).padStart(2, "0")}:00
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-          {editing && (
-            <div className="space-y-4">
-              <div>
-                <Label className="text-xs">Libellé</Label>
-                <Input
-                  value={editing.label}
-                  onChange={(e) => setEditing({ ...editing, label: e.target.value })}
-                  placeholder="Ex : Rappel pré-échéance"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">
-                  Décalage (jours) — négatif = avant échéance, positif = après
-                </Label>
-                <Input
-                  type="number"
-                  value={editing.offset_days}
-                  onChange={(e) =>
-                    setEditing({ ...editing, offset_days: parseInt(e.target.value, 10) || 0 })
-                  }
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {formatOffset(editing.offset_days)}
-                </p>
-              </div>
-              <div>
-                <Label className="text-xs">Modèle de SMS</Label>
-                <Select
-                  value={editing.template_id || "none"}
-                  onValueChange={(v) =>
-                    setEditing({ ...editing, template_id: v === "none" ? null : v })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choisir un modèle" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">— Aucun —</SelectItem>
-                    {templates.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center justify-between pt-2">
-                <Label className="text-sm">Actif</Label>
-                <Switch
-                  checked={editing.is_active}
-                  onCheckedChange={(v) => setEditing({ ...editing, is_active: v })}
-                />
-              </div>
+              {allowed && (
+                <div className="flex justify-end">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => saveSchedule(s)}
+                    disabled={savingId === s.id}
+                  >
+                    {savingId === s.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Save className="h-3.5 w-3.5" />
+                    )}
+                    Enregistrer
+                  </Button>
+                </div>
+              )}
             </div>
-          )}
+          );
+        })}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)}>
-              Annuler
-            </Button>
-            <Button onClick={handleSave} disabled={saving || !editing?.label}>
-              {saving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
-              Enregistrer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+        <p className="text-xs text-muted-foreground pt-2">
+          💡 Les SMS sont envoyés automatiquement à l'heure choisie, à tous les locataires ayant un
+          loyer impayé pour le mois en cours. Limité aux jours 1 à 28 pour garantir l'envoi chaque
+          mois.
+        </p>
+      </CardContent>
+    </Card>
   );
 }

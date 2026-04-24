@@ -5,10 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Search, Loader2, ShieldAlert, UserX, Building2, MessageSquare } from "lucide-react";
-import { BulkSmsDialog, type BulkSmsRecipient } from "@/components/sms/BulkSmsDialog";
-import { FeatureLockedCard } from "@/components/auth/FeatureLockedCard";
-import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { Plus, Search, Loader2, ShieldAlert, UserX, Building2 } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -54,9 +51,6 @@ export default function Tenants() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { expired } = usePlanLimits();
-  const { hasFeature } = useFeatureAccess();
-  const [bulkOpen, setBulkOpen] = useState(false);
-  const [lockedOpen, setLockedOpen] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("action") === "new") {
@@ -219,27 +213,6 @@ export default function Tenants() {
   };
 
 
-  const bulkRecipients: BulkSmsRecipient[] = useMemo(
-    () =>
-      filtered.map(t => ({
-        tenantId: t.id,
-        name: t.tenant_type === "company" ? (t.company_name || t.full_name) : t.full_name,
-        phone: t.phone || null,
-        rentAmount: t.rent ?? null,
-      })),
-    [filtered]
-  );
-  const hasAnyPhone = bulkRecipients.some(r => !!r.phone);
-  const canBulkSend = hasFeature("sms_bulk_send");
-
-  const handleBulkClick = () => {
-    if (!canBulkSend) {
-      setLockedOpen(true);
-      return;
-    }
-    setBulkOpen(true);
-  };
-
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -249,17 +222,6 @@ export default function Tenants() {
             <p className="text-muted-foreground text-sm mt-1">{tenants.length} actifs · {formerTenants.length > 0 ? `${formerTenants.length} anciens` : ""}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2 self-start">
-            {activeTab === "active" && hasAnyPhone && (
-              <Button
-                variant="outline"
-                onClick={handleBulkClick}
-                className="gap-2"
-                title={canBulkSend ? "Envoyer un SMS à tous les locataires filtrés" : "Disponible avec l'offre Pro"}
-              >
-                <MessageSquare className="h-4 w-4" />
-                Envoyer SMS groupé
-              </Button>
-            )}
             <Button className="gap-2" disabled={expired} onClick={() => {
               if (expired) {
                 toast.error("Abonnement expiré", { description: "Renouvelez votre abonnement pour continuer.", action: { label: "Renouveler", onClick: () => navigate("/settings") } });
@@ -584,27 +546,6 @@ export default function Tenants() {
               Valider
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <BulkSmsDialog
-        open={bulkOpen}
-        onOpenChange={setBulkOpen}
-        recipients={bulkRecipients}
-        title="Envoi groupé de SMS"
-        description="Envoyez un SMS à tous les locataires sélectionnés (filtres respectés)."
-      />
-
-      <Dialog open={lockedOpen} onOpenChange={setLockedOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Envoi groupé</DialogTitle>
-          </DialogHeader>
-          <FeatureLockedCard
-            title="Envoi groupé de SMS"
-            description="Communiquez avec plusieurs locataires en un seul envoi. Disponible à partir de l'offre Pro."
-            requiredPlan="Pro"
-          />
         </DialogContent>
       </Dialog>
     </AppLayout>
