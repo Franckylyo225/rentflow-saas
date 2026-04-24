@@ -279,13 +279,13 @@ function EmailTab() {
         </CardContent>
       </Card>
 
-      {/* Editable Templates */}
+      {/* Editable Templates grouped by category */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Mail className="h-5 w-5 text-primary" /> Templates email
+            <Mail className="h-5 w-5 text-primary" /> Modèles d'emails
           </CardTitle>
-          <CardDescription>Cliquez sur un template pour le modifier. Les variables entre {"{{ }}"} seront remplacées automatiquement.</CardDescription>
+          <CardDescription>Activez/désactivez et modifiez les modèles. Les variables {"{{ }}"} sont remplacées automatiquement à l'envoi.</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -293,46 +293,63 @@ function EmailTab() {
               <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <div className="space-y-3">
-              {templates.map((t) => (
-                <div
-                  key={t.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/30 transition-colors group"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-foreground">{t.label}</p>
-                      {!t.is_active && (
-                        <Badge variant="secondary" className="text-[10px]">Désactivé</Badge>
-                      )}
+            <div className="space-y-6">
+              {CATEGORY_ORDER.map((cat) => {
+                const items = templates.filter((t) => (t.category || "activity") === cat);
+                if (items.length === 0) return null;
+                const meta = CATEGORY_LABELS[cat];
+                return (
+                  <div key={cat} className="space-y-2">
+                    <div className="flex items-baseline gap-2">
+                      <h3 className="text-sm font-semibold text-foreground">{meta.label}</h3>
+                      <span className="text-xs text-muted-foreground">— {meta.description}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">{t.description}</p>
-                    <p className="text-xs text-muted-foreground/60 mt-0.5 font-mono">{t.template_key}</p>
+                    <div className="space-y-2">
+                      {items.map((t) => (
+                        <div
+                          key={t.id}
+                          className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/30 transition-colors group"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium text-foreground">{t.label}</p>
+                              {t.is_admin_alert && <Badge variant="outline" className="text-[10px]">Admin</Badge>}
+                              {!t.is_active && <Badge variant="secondary" className="text-[10px]">Désactivé</Badge>}
+                            </div>
+                            {t.description && <p className="text-xs text-muted-foreground truncate">{t.description}</p>}
+                            <p className="text-xs text-muted-foreground/60 mt-0.5 font-mono">{t.template_key}</p>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Switch
+                              checked={t.is_active}
+                              onCheckedChange={(checked) => toggleActive.mutate({ id: t.id, is_active: checked })}
+                              className="scale-90"
+                            />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => {
+                                setEditingTemplate(t);
+                                setEditorOpen(true);
+                              }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Switch
-                      checked={t.is_active}
-                      onCheckedChange={(checked) => toggleActive.mutate({ id: t.id, is_active: checked })}
-                      className="scale-90"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => {
-                        setEditingTemplate(t);
-                        setEditorOpen(true);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Logs */}
+      <EmailLogsPanel />
 
       {/* Test */}
       <Card>
