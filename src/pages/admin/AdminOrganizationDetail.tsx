@@ -15,6 +15,7 @@ import {
 import {
   ArrowLeft, Building2, Users, Home, DoorOpen, UserCheck,
   Loader2, Power, PowerOff, Send, Calendar, Mail, Phone,
+  MessageSquare, AlertCircle, CheckCircle2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -69,6 +70,17 @@ interface UsageStats {
   users: number;
 }
 
+interface ReminderStats {
+  smsTotal: number;
+  smsSent: number;
+  smsFailed: number;
+  smsLast30: number;
+  emailTotal: number;
+  emailSent: number;
+  emailFailed: number;
+  emailLast30: number;
+}
+
 const AdminOrganizationDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -78,6 +90,10 @@ const AdminOrganizationDetail = () => {
   const [plans, setPlans] = useState<PlanOption[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [usage, setUsage] = useState<UsageStats>({ properties: 0, units: 0, tenants: 0, users: 0 });
+  const [reminders, setReminders] = useState<ReminderStats>({
+    smsTotal: 0, smsSent: 0, smsFailed: 0, smsLast30: 0,
+    emailTotal: 0, emailSent: 0, emailFailed: 0, emailLast30: 0,
+  });
   const [notes, setNotes] = useState<AdminNote[]>([]);
   const [newNote, setNewNote] = useState("");
   const [loading, setLoading] = useState(true);
@@ -86,19 +102,37 @@ const AdminOrganizationDetail = () => {
   const fetchAll = async () => {
     if (!id) return;
 
-    const [orgRes, subRes, notesRes, profilesRes, propsRes, plansRes] = await Promise.all([
+    const since30 = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+
+    const [orgRes, subRes, notesRes, profilesRes, propsRes, plansRes, smsRes, emailRes] = await Promise.all([
       supabase.from("organizations").select("id, name, email, phone, address, is_active, created_at, currency").eq("id", id).single(),
       supabase.from("subscriptions").select("*").eq("organization_id", id).maybeSingle(),
       supabase.from("admin_notes").select("*").eq("organization_id", id).order("created_at", { ascending: false }),
       supabase.from("profiles").select("id").eq("organization_id", id),
       supabase.from("properties").select("id").eq("organization_id", id),
       supabase.from("plans").select("slug, name, price_monthly").order("sort_order"),
+      supabase.from("sms_messages").select("status, created_at").eq("organization_id", id),
+      supabase.from("email_reminder_logs").select("status, sent_at").eq("organization_id", id),
     ]);
 
     setPlans((plansRes.data || []) as PlanOption[]);
 
     if (orgRes.data) setOrg(orgRes.data);
     if (subRes.data) setSubscription(subRes.data);
+    setNotes(notesRes.data || []);
+
+    const sms = smsRes.data || [];
+    const emails = emailRes.data || [];
+    setReminders({
+      smsTotal: sms.length,
+      smsSent: sms.filter((s: any) => s.status === "sent" || s.status === "delivered").length,
+      smsFailed: sms.filter((s: any) => s.status === "failed").length,
+      smsLast30: sms.filter((s: any) => s.created_at >= since30).length,
+      emailTotal: emails.length,
+      emailSent: emails.filter((e: any) => e.status === "sent").length,
+      emailFailed: emails.filter((e: any) => e.status === "failed").length,
+      emailLast30: emails.filter((e: any) => e.sent_at >= since30).length,
+    });
     setNotes(notesRes.data || []);
 
     const propIds = (propsRes.data || []).map((p: any) => p.id);
@@ -288,6 +322,78 @@ const AdminOrganizationDetail = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Reminder stats (SMS + Email) */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Relances envoyées</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* SMS */}
+              <div className="rounded-lg border border-border p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-md bg-primary/10">
+                    <MessageSquare className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">SMS</p>
+                    <p className="text-xs text-muted-foreground">{reminders.smsLast30} sur 30 derniers jours</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 pt-1">
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-foreground">{reminders.smsTotal}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase">Total</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-success flex items-center justify-center gap-1">
+                      <CheckCircle2 className="h-4 w-4" />{reminders.smsSent}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground uppercase">Envoyés</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-destructive flex items-center justify-center gap-1">
+                      <AlertCircle className="h-4 w-4" />{reminders.smsFailed}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground uppercase">Échecs</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Email */}
+              <div className="rounded-lg border border-border p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-md bg-primary/10">
+                    <Mail className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Email</p>
+                    <p className="text-xs text-muted-foreground">{reminders.emailLast30} sur 30 derniers jours</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 pt-1">
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-foreground">{reminders.emailTotal}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase">Total</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-success flex items-center justify-center gap-1">
+                      <CheckCircle2 className="h-4 w-4" />{reminders.emailSent}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground uppercase">Envoyés</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-destructive flex items-center justify-center gap-1">
+                      <AlertCircle className="h-4 w-4" />{reminders.emailFailed}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground uppercase">Échecs</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Subscription management */}
         <Card>
