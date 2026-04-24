@@ -29,7 +29,7 @@ export default function TenantDetail() {
   const [editForm, setEditForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [showAdvance, setShowAdvance] = useState(false);
-  const [showSms, setShowSms] = useState(false);
+  
 
   const fetchData = () => {
     if (!id) return;
