@@ -49,6 +49,8 @@ export default function Rents() {
   const [showAdvance, setShowAdvance] = useState(false);
   const [advanceTenant, setAdvanceTenant] = useState<{ id: string; full_name: string; rent: number } | null>(null);
   const [smsTarget, setSmsTarget] = useState<{ phone: string; name: string; tenantId: string; rentPaymentId: string } | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [lockedOpen, setLockedOpen] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("action") === "new") {
@@ -63,6 +65,7 @@ export default function Rents() {
   const { settings: orgSettings } = useOrganizationSettings();
   const { profile } = useProfile();
   const { expired } = usePlanLimits();
+  const { hasFeature } = useFeatureAccess();
   const navigate = useNavigate();
 
   // Compute escalation info for each payment
