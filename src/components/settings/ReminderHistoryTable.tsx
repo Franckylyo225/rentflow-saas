@@ -432,6 +432,7 @@ function SmsTable({ rows }: { rows: SmsRow[] }) {
             <TableHead>Message</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Statut</TableHead>
+            <TableHead>Audit</TableHead>
             <TableHead>Erreur</TableHead>
           </TableRow>
         </TableHeader>
@@ -460,6 +461,9 @@ function SmsTable({ rows }: { rows: SmsRow[] }) {
                   <Badge variant="outline" className={`gap-1 text-xs font-normal ${conf.className}`}>
                     <Icon className="h-3 w-3" /> {conf.label}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  <AuditCell audit={r.audit ?? null} />
                 </TableCell>
                 <TableCell>
                   {r.error_message ? (
