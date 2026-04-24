@@ -407,7 +407,11 @@ function ApiTab() {
           <div className="space-y-3">
             {[
               { name: "send-email", desc: "Envoi d'emails transactionnels via Resend" },
-              { name: "send-rent-reminders", desc: "Relances automatiques de loyer" },
+              { name: "send-quittance-email", desc: "Envoi automatique des quittances PDF" },
+              { name: "sms-send", desc: "Envoi unitaire d'un SMS via MonSMS Pro" },
+              { name: "sms-process-queue", desc: "Traitement de la file SMS (CRON 15 min)" },
+              { name: "sms-generate-reminders", desc: "Génération des relances SMS auto (CRON quotidien)" },
+              { name: "sms-credits", desc: "Lecture du solde SMS MonSMS Pro" },
               { name: "create-user", desc: "Création de compte utilisateur" },
               { name: "send-contact-email", desc: "Formulaire de contact landing page" },
               { name: "manage-super-admins", desc: "Gestion des super administrateurs" },
