@@ -59,7 +59,9 @@ serve(async (req) => {
       .from("sms_schedules")
       .select(`
         id, organization_id, slot_index, day_of_month, send_hour, template_id, is_active,
-        sms_templates(id, content)
+        send_email, email_template_id,
+        sms_templates(id, content),
+        email_templates:email_template_id(id, subject, html_content)
       `)
       .eq("is_active", true)
       .eq("day_of_month", matchDay)
