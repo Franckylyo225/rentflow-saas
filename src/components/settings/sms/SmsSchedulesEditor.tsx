@@ -56,19 +56,21 @@ export function SmsSchedulesEditor({ canEditAll, canEditBasic, planName }: Props
   const orgId = profile?.organization_id;
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [emailTemplates, setEmailTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
 
   const fetchData = async () => {
     if (!orgId) return;
     setLoading(true);
-    const [schedRes, tplRes] = await Promise.all([
+    const [schedRes, tplRes, emailTplRes] = await Promise.all([
       supabase
         .from("sms_schedules")
         .select("*")
         .eq("organization_id", orgId)
         .order("slot_index"),
       supabase.from("sms_templates").select("id, label").eq("organization_id", orgId),
+      supabase.from("email_templates").select("id, label").eq("organization_id", orgId),
     ]);
 
     let rows = (schedRes.data || []) as Schedule[];
@@ -101,6 +103,7 @@ export function SmsSchedulesEditor({ canEditAll, canEditBasic, planName }: Props
 
     setSchedules(rows);
     setTemplates(tplRes.data || []);
+    setEmailTemplates(emailTplRes.data || []);
     setLoading(false);
   };
 
