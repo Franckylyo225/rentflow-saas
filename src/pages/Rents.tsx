@@ -27,6 +27,9 @@ import { downloadInvoice, generateInvoiceNumber, type InvoiceData } from "@/lib/
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useProfile } from "@/hooks/useProfile";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { BulkSmsDialog, type BulkSmsRecipient } from "@/components/sms/BulkSmsDialog";
+import { FeatureLockedCard } from "@/components/auth/FeatureLockedCard";
 
 const paymentMethods = ["Espèces", "Virement bancaire", "Chèque", "Mobile Money", "Carte bancaire"];
 
