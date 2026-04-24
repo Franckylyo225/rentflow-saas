@@ -323,6 +323,78 @@ const AdminOrganizationDetail = () => {
           </Card>
         </div>
 
+        {/* Reminder stats (SMS + Email) */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Relances envoyées</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* SMS */}
+              <div className="rounded-lg border border-border p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-md bg-primary/10">
+                    <MessageSquare className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">SMS</p>
+                    <p className="text-xs text-muted-foreground">{reminders.smsLast30} sur 30 derniers jours</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 pt-1">
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-foreground">{reminders.smsTotal}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase">Total</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-emerald-600 flex items-center justify-center gap-1">
+                      <CheckCircle2 className="h-4 w-4" />{reminders.smsSent}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground uppercase">Envoyés</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-destructive flex items-center justify-center gap-1">
+                      <AlertCircle className="h-4 w-4" />{reminders.smsFailed}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground uppercase">Échecs</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Email */}
+              <div className="rounded-lg border border-border p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-md bg-primary/10">
+                    <Mail className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Email</p>
+                    <p className="text-xs text-muted-foreground">{reminders.emailLast30} sur 30 derniers jours</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 pt-1">
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-foreground">{reminders.emailTotal}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase">Total</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-emerald-600 flex items-center justify-center gap-1">
+                      <CheckCircle2 className="h-4 w-4" />{reminders.emailSent}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground uppercase">Envoyés</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-destructive flex items-center justify-center gap-1">
+                      <AlertCircle className="h-4 w-4" />{reminders.emailFailed}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground uppercase">Échecs</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Subscription management */}
         <Card>
           <CardHeader className="pb-3">
