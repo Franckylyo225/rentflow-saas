@@ -51,9 +51,6 @@ export default function Tenants() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { expired } = usePlanLimits();
-  const { hasFeature } = useFeatureAccess();
-  const [bulkOpen, setBulkOpen] = useState(false);
-  const [lockedOpen, setLockedOpen] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("action") === "new") {
@@ -215,27 +212,6 @@ export default function Tenants() {
     refetch();
   };
 
-
-  const bulkRecipients: BulkSmsRecipient[] = useMemo(
-    () =>
-      filtered.map(t => ({
-        tenantId: t.id,
-        name: t.tenant_type === "company" ? (t.company_name || t.full_name) : t.full_name,
-        phone: t.phone || null,
-        rentAmount: t.rent ?? null,
-      })),
-    [filtered]
-  );
-  const hasAnyPhone = bulkRecipients.some(r => !!r.phone);
-  const canBulkSend = hasFeature("sms_bulk_send");
-
-  const handleBulkClick = () => {
-    if (!canBulkSend) {
-      setLockedOpen(true);
-      return;
-    }
-    setBulkOpen(true);
-  };
 
   return (
     <AppLayout>
