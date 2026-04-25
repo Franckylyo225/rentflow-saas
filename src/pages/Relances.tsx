@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 // ----------------- Types & mock data -----------------
 
-type Channel = "email" | "sms" | "whatsapp";
+type Channel = "email" | "sms";
 type ReminderStatus = "Impayé" | "En retard" | "Relancé";
 
 interface UrgentReminder {
@@ -87,7 +87,7 @@ const historyMock: HistoryItem[] = [
   { id: "h1", tenant: "N'Guessan Aya", channel: "email", date: "23 avr", result: "Payé" },
   { id: "h2", tenant: "Koné Ibrahim", channel: "sms", date: "21 avr", result: "Payé" },
   { id: "h3", tenant: "Yao Koffi", channel: "email", date: "19 avr", result: "Ouvert" },
-  { id: "h4", tenant: "Diallo Aïssatou", channel: "whatsapp", date: "18 avr", result: "Payé" },
+  { id: "h4", tenant: "Diallo Aïssatou", channel: "email", date: "18 avr", result: "Payé" },
   { id: "h5", tenant: "Aka Eric", channel: "sms", date: "15 avr", result: "Sans réponse" },
 ];
 
@@ -117,7 +117,6 @@ function ChannelTag({ channel }: { channel: Channel }) {
   const map: Record<Channel, { label: string; className: string; letter: string }> = {
     email: { label: "Email", className: "bg-info/15 text-info border-info/30", letter: "@" },
     sms: { label: "SMS", className: "bg-success/15 text-success border-success/30", letter: "S" },
-    whatsapp: { label: "WhatsApp", className: "bg-purple-500/15 text-purple-600 border-purple-500/30 dark:text-purple-400", letter: "W" },
   };
   const cfg = map[channel];
   return (
@@ -147,15 +146,17 @@ export default function Relances() {
   const { hasFeature, planName, loading: planLoading } = useFeatureAccess();
 
   // Capacités selon le plan
-  const canEmail = hasFeature("email_reminders");
-  const canSms = hasFeature("sms_reminders");
-  const canEditTemplates = hasFeature("sms_templates_edit");
-  const canSchedule = hasFeature("sms_schedule");
-  const canFullAuto = hasFeature("sms_auto_full");
-  // Whatsapp réservé aux plans Pro/Business via sms_auto_full
-  const canWhatsapp = canFullAuto;
-  // Création de séquence personnalisée = Pro+
-  const canCreateSequence = canEditTemplates;
+  const isPro = hasFeature("sms_auto_full") || hasFeature("sms_schedule") || hasFeature("sms_templates_edit");
+  // Starter et Pro peuvent tous deux personnaliser les modèles (email + SMS)
+  const canEditTemplates = true;
+  // Envoi manuel : réservé à Pro/Business
+  const canManualSend = isPro;
+  const canEmail = canManualSend;
+  const canSms = canManualSend;
+  // Nombre maximum de séquences activables simultanément
+  const maxActiveSequences = isPro ? 3 : 1;
+  // Création de séquence personnalisée : Pro+
+  const canCreateSequence = isPro;
 
   const [globalActive, setGlobalActive] = useState(true);
   const [confirmOff, setConfirmOff] = useState(false);
@@ -175,6 +176,22 @@ export default function Relances() {
       action: { label: "Voir les offres", onClick: () => navigate("/settings?tab=subscription") },
     });
   };
+
+  // Quand le plan charge, plafonner le nombre de séquences actives selon la limite
+  useEffect(() => {
+    if (planLoading) return;
+    setSequences(prev => {
+      let kept = 0;
+      return prev.map(s => {
+        if (s.active && kept < maxActiveSequences) {
+          kept += 1;
+          return s;
+        }
+        return s.active ? { ...s, active: false } : s;
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planLoading, maxActiveSequences]);
 
   // KPIs
   const kpiToRemind = reminders.length;
@@ -206,12 +223,8 @@ export default function Relances() {
 
   // Actions
   const sendReminder = (r: UrgentReminder, channel: "email" | "sms") => {
-    if (channel === "email" && !canEmail) {
-      upgradeNotice("Les relances par e-mail ne sont pas incluses dans votre offre.");
-      return;
-    }
-    if (channel === "sms" && !canSms) {
-      upgradeNotice("Les relances par SMS ne sont pas incluses dans votre offre.");
+    if (!canManualSend) {
+      upgradeNotice("L'envoi manuel de relances est réservé aux offres Pro et Business.");
       return;
     }
     const label = channel === "email" ? "Email" : "SMS";
@@ -252,6 +265,20 @@ export default function Relances() {
     if (!globalActive) {
       toast.error("Activez d'abord les relances en haut de la page.");
       return;
+    }
+    const target = sequences.find(s => s.id === id);
+    if (!target) return;
+    // Activation : vérifier la limite du plan
+    if (!target.active) {
+      const activeCount = sequences.filter(s => s.active).length;
+      if (activeCount >= maxActiveSequences) {
+        upgradeNotice(
+          isPro
+            ? `Votre offre permet ${maxActiveSequences} séquences actives simultanément.`
+            : `L'offre Starter permet une seule séquence active. Passez à Pro pour en activer jusqu'à 3.`
+        );
+        return;
+      }
     }
     setSequences(prev => prev.map(s => s.id === id ? { ...s, active: !s.active } : s));
   };
@@ -331,7 +358,7 @@ export default function Relances() {
         </div>
 
         {/* Plan limitation banner */}
-        {!planLoading && !canEditTemplates && (
+        {!planLoading && !isPro && (
           <div className="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 flex items-start gap-3">
             <Sparkles className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
             <div className="flex-1 text-sm">
@@ -339,8 +366,9 @@ export default function Relances() {
                 Vous êtes sur l'offre {planName}
               </p>
               <p className="text-muted-foreground mt-0.5">
-                Vous bénéficiez des relances automatiques de base (J-3 / J+1).
-                Passez à l'offre <strong>Pro</strong> pour personnaliser vos modèles, créer des séquences sur mesure et débloquer le canal WhatsApp.
+                Vous pouvez activer <strong>1 séquence automatique</strong> et personnaliser vos modèles
+                (email et SMS). Passez à l'offre <strong>Pro</strong> pour activer jusqu'à 3 séquences
+                et débloquer l'envoi manuel des relances.
               </p>
             </div>
             <Button
@@ -636,17 +664,9 @@ export default function Relances() {
           <SheetHeader>
             <SheetTitle>Éditeur de séquence</SheetTitle>
             <SheetDescription>
-              {canEditTemplates
-                ? "Personnalisez l'étape sélectionnée."
-                : "Consultez les paramètres de la séquence. L'édition est réservée aux offres Pro et Business."}
+              Personnalisez l'étape sélectionnée (objet, message, canal et délai).
             </SheetDescription>
           </SheetHeader>
-          {!canEditTemplates && (
-            <div className="mt-4 rounded-md border border-warning/30 bg-warning/5 p-3 text-xs text-foreground flex items-start gap-2">
-              <Lock className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
-              <span>Lecture seule sur l'offre {planName}. Passez à Pro pour modifier les modèles, les délais et les canaux.</span>
-            </div>
-          )}
           {editingSeq && (
             <div className="mt-4 space-y-4">
               <div className="flex flex-wrap gap-2">
@@ -673,29 +693,19 @@ export default function Relances() {
               <div className="space-y-2">
                 <Label>Canal</Label>
                 <div className="flex gap-2">
-                  {(["email", "sms", "whatsapp"] as Channel[]).map(c => {
-                    const channelLocked =
-                      (c === "email" && !canEmail) ||
-                      (c === "sms" && !canSms) ||
-                      (c === "whatsapp" && !canWhatsapp);
-                    return (
-                      <Button
-                        key={c}
-                        type="button"
-                        variant={editingSeq.channel === c ? "default" : "outline"}
-                        size="sm"
-                        disabled={!canEditTemplates || channelLocked}
-                        onClick={() => setEditingSeq({ ...editingSeq, channel: c })}
-                      >
-                        {channelLocked && <Lock className="h-3 w-3" />}
-                        {c === "email" ? "Email" : c === "sms" ? "SMS" : "WhatsApp"}
-                      </Button>
-                    );
-                  })}
+                  {(["email", "sms"] as Channel[]).map(c => (
+                    <Button
+                      key={c}
+                      type="button"
+                      variant={editingSeq.channel === c ? "default" : "outline"}
+                      size="sm"
+                      disabled={!canEditTemplates}
+                      onClick={() => setEditingSeq({ ...editingSeq, channel: c })}
+                    >
+                      {c === "email" ? "Email" : "SMS"}
+                    </Button>
+                  ))}
                 </div>
-                {!canWhatsapp && (
-                  <p className="text-[11px] text-muted-foreground">WhatsApp disponible avec l'offre Pro.</p>
-                )}
               </div>
               <div className="space-y-2">
                 <Label>Objet du message</Label>
@@ -734,13 +744,7 @@ export default function Relances() {
           )}
           <SheetFooter className="mt-6">
             <Button variant="outline" onClick={() => setEditorOpen(false)}>Annuler</Button>
-            {canEditTemplates ? (
-              <Button onClick={saveSequence}>Enregistrer</Button>
-            ) : (
-              <Button onClick={() => navigate("/settings?tab=subscription")} className="bg-warning hover:bg-warning/90 text-warning-foreground">
-                <Sparkles className="h-4 w-4" /> Passer à Pro
-              </Button>
-            )}
+            <Button onClick={saveSequence}>Enregistrer</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
@@ -854,7 +858,7 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
         <div className="space-y-2">
           <Label>Canal</Label>
           <div className="flex gap-1">
-            {(["email", "sms", "whatsapp"] as Channel[]).map(c => (
+            {(["email", "sms"] as Channel[]).map(c => (
               <Button
                 key={c}
                 type="button"
@@ -862,7 +866,7 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
                 variant={channel === c ? "default" : "outline"}
                 onClick={() => setChannel(c)}
               >
-                {c === "email" ? "Email" : c === "sms" ? "SMS" : "WA"}
+                {c === "email" ? "Email" : "SMS"}
               </Button>
             ))}
           </div>
@@ -877,7 +881,7 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
             step: delay >= 0 ? `J+${delay}` : `J${delay}`,
             stepColor: delay > 7 ? "destructive" : delay > 0 ? "warning" : "success",
             name: name.trim(),
-            description: `${channel === "email" ? "Email" : channel === "sms" ? "SMS" : "WhatsApp"} · ${Math.abs(delay)} jour(s) ${delay >= 0 ? "après" : "avant"} l'échéance`,
+            description: `${channel === "email" ? "Email" : "SMS"} · ${Math.abs(delay)} jour(s) ${delay >= 0 ? "après" : "avant"} l'échéance`,
             active: true,
             delayDays: delay,
             channel,
