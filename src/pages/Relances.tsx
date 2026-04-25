@@ -361,7 +361,7 @@ export default function Relances() {
     muted: "bg-muted text-muted-foreground border-border",
   };
 
-  const variables = ["[Prénom]", "[Montant]", "[Date échéance]", "[Bien]", "[Lien paiement]"];
+  const variables = ["[Prénom]", "[Montant]", "[Date échéance]", "[Bien]", "[Lien paiement]", "[Nom agence]"];
 
   return (
     <AppLayout>
