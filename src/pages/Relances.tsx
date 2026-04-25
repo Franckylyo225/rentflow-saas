@@ -71,9 +71,9 @@ interface Sequence {
 
 const initialSequences: Sequence[] = [
   { id: "s1", step: "J-3", stepColor: "success", name: "Rappel avant échéance", description: "Email · 3 jours avant la date", active: true, delayDays: -3, channels: ["email"], subject: "Rappel : votre loyer arrive à échéance", body: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien] est dû le [Date échéance]. Lien de paiement : [Lien paiement]", sendTime: "09:00" },
-  { id: "s2", step: "J+1", stepColor: "warning", name: "Relance J+1", description: "Email + SMS · 1 jour après l'échéance", active: true, delayDays: 1, channels: ["email", "sms"], subject: "Loyer en retard de paiement", body: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien] n'a pas encore été reçu. Merci de régulariser.", sendTime: "10:00" },
-  { id: "s3", step: "J+7", stepColor: "destructive", name: "Relance urgente", description: "SMS prioritaire · 7 jours après l'échéance", active: true, delayDays: 7, channels: ["sms"], subject: "Relance urgente", body: "[Prénom], votre loyer de [Montant] est en retard de 7 jours. Merci de régulariser sous 48h.", sendTime: "11:00" },
-  { id: "s4", step: "J+15", stepColor: "muted", name: "Mise en demeure", description: "Email formel · 15 jours après l'échéance", active: false, delayDays: 15, channels: ["email"], subject: "Mise en demeure", body: "Bonjour [Prénom], faute de règlement de [Montant] pour [Bien], nous vous mettons en demeure de payer sous 8 jours.", sendTime: "14:00" },
+  { id: "s2", step: "J+1", stepColor: "warning", name: "Relance J+1", description: "Email + SMS · 1 jour après l'échéance", active: true, delayDays: 1, channels: ["email", "sms"], subject: "Loyer en retard de paiement", body: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien] n'a pas encore été reçu. Merci de régulariser.", sendTime: "09:00" },
+  { id: "s3", step: "J+7", stepColor: "destructive", name: "Relance urgente", description: "SMS prioritaire · 7 jours après l'échéance", active: true, delayDays: 7, channels: ["sms"], subject: "Relance urgente", body: "[Prénom], votre loyer de [Montant] est en retard de 7 jours. Merci de régulariser sous 48h.", sendTime: "09:00" },
+  { id: "s4", step: "J+15", stepColor: "muted", name: "Mise en demeure", description: "Email formel · 15 jours après l'échéance", active: false, delayDays: 15, channels: ["email"], subject: "Mise en demeure", body: "Bonjour [Prénom], faute de règlement de [Montant] pour [Bien], nous vous mettons en demeure de payer sous 8 jours.", sendTime: "09:00" },
 ];
 
 interface HistoryItem {
