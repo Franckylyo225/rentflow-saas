@@ -291,24 +291,68 @@ export default function Relances() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Relances automatiques</h1>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl font-bold text-foreground">Relances automatiques</h1>
+              {!planLoading && planName && (
+                <Badge variant="outline" className="text-xs">Offre {planName}</Badge>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground">
               Suivi et gestion des relances loyers — {monthLabel}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
               <Switch checked={globalActive} onCheckedChange={handleToggleGlobal} id="global-toggle" />
               <Label htmlFor="global-toggle" className={cn("text-sm font-medium cursor-pointer", globalActive ? "text-success" : "text-muted-foreground")}>
                 Relances {globalActive ? "actives" : "désactivées"}
               </Label>
             </div>
-            <Button onClick={() => setNewSeqOpen(true)} className="bg-primary hover:bg-primary/90">
-              <Plus className="h-4 w-4" /> Nouvelle séquence
-            </Button>
+            {canCreateSequence ? (
+              <Button onClick={() => setNewSeqOpen(true)} className="bg-primary hover:bg-primary/90">
+                <Plus className="h-4 w-4" /> Nouvelle séquence
+              </Button>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={() => upgradeNotice("La création de séquences personnalisées est réservée aux offres Pro et Business.")}
+                  >
+                    <Lock className="h-3.5 w-3.5" /> Nouvelle séquence
+                    <Sparkles className="h-3.5 w-3.5 text-warning" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Disponible avec l'offre Pro</TooltipContent>
+              </Tooltip>
+            )}
           </div>
         </div>
+
+        {/* Plan limitation banner */}
+        {!planLoading && !canEditTemplates && (
+          <div className="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 flex items-start gap-3">
+            <Sparkles className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
+            <div className="flex-1 text-sm">
+              <p className="font-medium text-foreground">
+                Vous êtes sur l'offre {planName}
+              </p>
+              <p className="text-muted-foreground mt-0.5">
+                Vous bénéficiez des relances automatiques de base (J-3 / J+1).
+                Passez à l'offre <strong>Pro</strong> pour personnaliser vos modèles, créer des séquences sur mesure et débloquer le canal WhatsApp.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate("/settings?tab=subscription")}
+              className="flex-shrink-0"
+            >
+              Passer à Pro
+            </Button>
+          </div>
+        )}
 
         {/* KPI cards */}
         <div className="grid gap-4 grid-cols-2 xl:grid-cols-4">
