@@ -27,6 +27,10 @@ import {
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TestSendDialog } from "@/components/relances/TestSendDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/hooks/useProfile";
+import { format, startOfMonth } from "date-fns";
+import { fr } from "date-fns/locale";
 
 // ----------------- Types & mock data -----------------
 
@@ -111,16 +115,7 @@ interface HistoryItem {
   tenant: string;
   channel: Channel;
   date: string;
-  result: "Payé" | "Ouvert" | "Sans réponse" | "Erreur envoi";
 }
-
-const historyMock: HistoryItem[] = [
-  { id: "h1", tenant: "N'Guessan Aya", channel: "email", date: "23 avr", result: "Payé" },
-  { id: "h2", tenant: "Koné Ibrahim", channel: "sms", date: "21 avr", result: "Payé" },
-  { id: "h3", tenant: "Yao Koffi", channel: "email", date: "19 avr", result: "Ouvert" },
-  { id: "h4", tenant: "Diallo Aïssatou", channel: "email", date: "18 avr", result: "Payé" },
-  { id: "h5", tenant: "Aka Eric", channel: "sms", date: "15 avr", result: "Sans réponse" },
-];
 
 // ----------------- Helpers -----------------
 
@@ -160,15 +155,6 @@ function ChannelTag({ channel }: { channel: Channel }) {
   );
 }
 
-function ResultBadge({ result }: { result: HistoryItem["result"] }) {
-  const map: Record<HistoryItem["result"], string> = {
-    "Payé": "bg-success/15 text-success border-success/30",
-    "Ouvert": "bg-info/15 text-info border-info/30",
-    "Sans réponse": "bg-muted text-muted-foreground border-border",
-    "Erreur envoi": "bg-destructive/15 text-destructive border-destructive/30",
-  };
-  return <Badge className={cn("border", map[result], "hover:" + map[result])}>{result}</Badge>;
-}
 
 // ----------------- Main page -----------------
 
@@ -207,6 +193,104 @@ export default function Relances() {
   const [manualSentThisMonth, setManualSentThisMonth] = useState(0);
   const [quotaReachedOpen, setQuotaReachedOpen] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
+  const { profile } = useProfile();
+  const orgId = profile?.organization_id;
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+
+  // Charger l'historique réel des relances envoyées (mois en cours)
+  useEffect(() => {
+    if (!orgId) return;
+    let cancelled = false;
+    (async () => {
+      setHistoryLoading(true);
+      const monthStart = startOfMonth(new Date()).toISOString();
+
+      const [emailRes, smsRes, tenantsRes] = await Promise.all([
+        supabase
+          .from("email_reminder_logs")
+          .select("id,sent_at,recipient_email,rent_payment_id")
+          .eq("organization_id", orgId)
+          .eq("status", "sent")
+          .gte("sent_at", monthStart)
+          .order("sent_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("sms_messages")
+          .select("id,sent_at,created_at,recipient_name,recipient_phone,tenant_id,status")
+          .eq("organization_id", orgId)
+          .in("status", ["sent", "delivered"])
+          .gte("created_at", monthStart)
+          .order("created_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("tenants")
+          .select("id,full_name,email,unit_id,units!inner(property_id,properties!inner(organization_id))")
+          .eq("units.properties.organization_id", orgId),
+      ]);
+
+      const tenantsByEmail = new Map<string, string>();
+      const tenantsById = new Map<string, string>();
+      const rentPaymentTenantMap = new Map<string, string>();
+      for (const t of (tenantsRes.data as any[]) || []) {
+        if (t.email) tenantsByEmail.set(String(t.email).toLowerCase(), t.full_name);
+        tenantsById.set(t.id, t.full_name);
+      }
+
+      // Récupérer les noms via rent_payments si nécessaire (emails)
+      const emailRows = (emailRes.data || []) as any[];
+      const missingRentIds = Array.from(
+        new Set(
+          emailRows
+            .filter((r) => r.recipient_email && !tenantsByEmail.get(String(r.recipient_email).toLowerCase()))
+            .map((r) => r.rent_payment_id)
+            .filter(Boolean)
+        )
+      );
+      if (missingRentIds.length > 0) {
+        const { data: rps } = await supabase
+          .from("rent_payments")
+          .select("id,tenant_id")
+          .in("id", missingRentIds);
+        for (const rp of rps || []) rentPaymentTenantMap.set(rp.id, rp.tenant_id);
+      }
+
+      const items: HistoryItem[] = [];
+      for (const r of emailRows) {
+        const lookupName = tenantsByEmail.get(String(r.recipient_email || "").toLowerCase());
+        const fallbackName =
+          lookupName ||
+          tenantsById.get(rentPaymentTenantMap.get(r.rent_payment_id) || "") ||
+          r.recipient_email ||
+          "—";
+        items.push({
+          id: `e_${r.id}`,
+          tenant: fallbackName,
+          channel: "email",
+          date: format(new Date(r.sent_at), "dd MMM", { locale: fr }),
+        });
+      }
+      for (const s of (smsRes.data || []) as any[]) {
+        const name = s.recipient_name || tenantsById.get(s.tenant_id || "") || s.recipient_phone || "—";
+        items.push({
+          id: `s_${s.id}`,
+          tenant: name,
+          channel: "sms",
+          date: format(new Date(s.sent_at || s.created_at), "dd MMM", { locale: fr }),
+        });
+      }
+
+      // Tri global desc (plus récent d'abord) puis limite à 8
+      items.sort((a, b) => (a.id < b.id ? 1 : -1));
+      if (!cancelled) {
+        setHistory(items.slice(0, 8));
+        setHistoryLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [orgId]);
 
   const manualRemaining = Math.max(monthlyManualQuota - manualSentThisMonth, 0);
   const quotaReached = isPro && manualSentThisMonth >= monthlyManualQuota;
@@ -739,18 +823,30 @@ export default function Relances() {
                     <TableHead>Locataire</TableHead>
                     <TableHead>Canal</TableHead>
                     <TableHead>Envoyé</TableHead>
-                    <TableHead>Résultat</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {historyMock.map(h => (
-                    <TableRow key={h.id}>
-                      <TableCell className="font-medium">{h.tenant}</TableCell>
-                      <TableCell><ChannelTag channel={h.channel} /></TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{h.date}</TableCell>
-                      <TableCell><ResultBadge result={h.result} /></TableCell>
+                  {historyLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-sm text-muted-foreground py-6">
+                        Chargement…
+                      </TableCell>
                     </TableRow>
-                  ))}
+                  ) : history.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-sm text-muted-foreground py-6">
+                        Aucune relance envoyée ce mois.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    history.map(h => (
+                      <TableRow key={h.id}>
+                        <TableCell className="font-medium">{h.tenant}</TableCell>
+                        <TableCell><ChannelTag channel={h.channel} /></TableCell>
+                        <TableCell className="text-muted-foreground text-sm">{h.date}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
               <div className="border-t border-border px-4 py-3 text-right">
