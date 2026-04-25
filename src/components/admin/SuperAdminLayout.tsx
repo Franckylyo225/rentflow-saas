@@ -13,6 +13,8 @@ import {
   Settings,
   Layers,
   Receipt,
+  Mail,
+  Contact as ContactIcon,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -41,6 +43,8 @@ const NAV_ITEMS = [
   { label: "Codes Promo", href: "/admin/promo-codes", icon: Settings },
   { label: "Super Admins", href: "/admin/admins", icon: Users },
   { label: "Utilisateurs", href: "/admin/users", icon: UserCheck },
+  { label: "Contacts CRM", href: "/admin/contacts", icon: ContactIcon },
+  { label: "Campagnes Email", href: "/admin/campaigns", icon: Mail },
   { label: "Paramètres", href: "/admin/settings", icon: Settings },
 ];
 
