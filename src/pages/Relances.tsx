@@ -29,7 +29,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 // ----------------- Types & mock data -----------------
 
-type Channel = "email" | "sms" | "whatsapp";
+type Channel = "email" | "sms";
 type ReminderStatus = "Impayé" | "En retard" | "Relancé";
 
 interface UrgentReminder {
