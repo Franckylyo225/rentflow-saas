@@ -338,9 +338,9 @@ export default function Relances() {
     setEditorOpen(true);
   };
 
-  const insertVariable = (variable: string) => {
+  const insertVariable = (variable: string, target: "emailBody" | "smsBody" | "emailSubject" = "emailBody") => {
     if (!editingSeq) return;
-    setEditingSeq({ ...editingSeq, body: editingSeq.body + ` ${variable}` });
+    setEditingSeq({ ...editingSeq, [target]: (editingSeq[target] || "") + ` ${variable}` });
   };
 
   const saveSequence = () => {
