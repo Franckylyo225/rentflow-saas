@@ -889,7 +889,7 @@ export default function Relances() {
                     : (canEmail ? "email" : (canSms ? "sms" : null));
                   return (
                     <Button
-                      disabled={!preferred}
+                      disabled={!preferred || quotaReached}
                       onClick={() => preferred && sendReminder(detailReminder, preferred)}
                     >
                       <Send className="h-4 w-4" /> Envoyer une relance manuelle
