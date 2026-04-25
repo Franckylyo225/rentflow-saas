@@ -1246,6 +1246,26 @@ export default function Relances() {
       </Sheet>
 
       <TestSendDialog open={testOpen} onOpenChange={setTestOpen} />
+
+      {/* Manual reminder dialog */}
+      <ManualReminderDialog
+        target={manualTarget}
+        sequences={sequences}
+        canEmail={canEmail}
+        canSms={canSms}
+        quotaReached={quotaReached}
+        onClose={() => setManualTarget(null)}
+        onSend={(channels, sequenceId) => {
+          if (!manualTarget) return;
+          const seq = sequences.find(s => s.id === sequenceId);
+          const channelLabel = channels.map(c => c === "email" ? "Email" : "SMS").join(" + ");
+          channels.forEach(c => sendReminder(manualTarget, c));
+          toast.success(`Relance manuelle envoyée à ${manualTarget.tenant.split(" ")[0]} (${channelLabel}) ✓`, {
+            description: seq ? `Modèle : ${seq.name}` : undefined,
+          });
+          setManualTarget(null);
+        }}
+      />
     </AppLayout>
   );
 }
