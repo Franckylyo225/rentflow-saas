@@ -214,7 +214,7 @@ export default function Relances() {
           .eq("status", "sent")
           .gte("sent_at", monthStart)
           .order("sent_at", { ascending: false })
-          .limit(20),
+          .limit(500),
         supabase
           .from("sms_messages")
           .select("id,sent_at,created_at,recipient_name,recipient_phone,tenant_id,status")
@@ -222,7 +222,7 @@ export default function Relances() {
           .in("status", ["sent", "delivered"])
           .gte("created_at", monthStart)
           .order("created_at", { ascending: false })
-          .limit(20),
+          .limit(500),
         supabase
           .from("tenants")
           .select("id,full_name,email,unit_id,units!inner(property_id,properties!inner(organization_id))")
