@@ -250,6 +250,20 @@ export default function Relances() {
       toast.error("Activez d'abord les relances en haut de la page.");
       return;
     }
+    const target = sequences.find(s => s.id === id);
+    if (!target) return;
+    // Activation : vérifier la limite du plan
+    if (!target.active) {
+      const activeCount = sequences.filter(s => s.active).length;
+      if (activeCount >= maxActiveSequences) {
+        upgradeNotice(
+          isPro
+            ? `Votre offre permet ${maxActiveSequences} séquences actives simultanément.`
+            : `L'offre Starter permet une seule séquence active. Passez à Pro pour en activer jusqu'à 3.`
+        );
+        return;
+      }
+    }
     setSequences(prev => prev.map(s => s.id === id ? { ...s, active: !s.active } : s));
   };
 
