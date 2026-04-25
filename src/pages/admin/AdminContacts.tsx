@@ -17,9 +17,10 @@ import {
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Loader2, Upload, Search, Users } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Upload, Search, Users, FileSpreadsheet } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import * as XLSX from "xlsx";
 
 interface Contact {
   id: string;
