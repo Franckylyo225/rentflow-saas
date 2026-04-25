@@ -34,6 +34,8 @@ interface Contact {
   organization_id: string | null;
   last_activity_at: string | null;
   created_at: string;
+  deliverability?: string | null;
+  bounce_count?: number | null;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
@@ -42,6 +44,12 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   interested: { label: "Intéressé", className: "bg-primary/10 text-primary border-primary/20" },
   converted: { label: "Converti", className: "bg-success/10 text-success border-success/20" },
   unsubscribed: { label: "Désabonné", className: "bg-muted text-muted-foreground border-border" },
+};
+
+const DELIVERABILITY_CONFIG: Record<string, { label: string; className: string }> = {
+  good: { label: "Bon", className: "bg-success/10 text-success border-success/20" },
+  risky: { label: "À risque", className: "bg-warning/10 text-warning border-warning/20" },
+  bad: { label: "Mauvais", className: "bg-destructive/10 text-destructive border-destructive/20" },
 };
 
 const emptyForm = {
@@ -256,31 +264,41 @@ export default function AdminContacts() {
                     <TableHead>Société</TableHead>
                     <TableHead>Source</TableHead>
                     <TableHead>Statut</TableHead>
+                    <TableHead>Délivrabilité</TableHead>
                     <TableHead>Créé</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map(c => (
-                    <TableRow key={c.id}>
-                      <TableCell className="font-medium">{c.email}</TableCell>
-                      <TableCell>{c.full_name || "—"}</TableCell>
-                      <TableCell>{c.company || "—"}</TableCell>
-                      <TableCell><Badge variant="outline" className="text-xs">{c.source}</Badge></TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={STATUS_CONFIG[c.status]?.className}>
-                          {STATUS_CONFIG[c.status]?.label || c.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {format(new Date(c.created_at), "dd/MM/yyyy", { locale: fr })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button size="icon" variant="ghost" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
-                        <Button size="icon" variant="ghost" onClick={() => handleDelete(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filtered.map(c => {
+                    const deliv = DELIVERABILITY_CONFIG[c.deliverability ?? "good"] ?? DELIVERABILITY_CONFIG.good;
+                    return (
+                      <TableRow key={c.id}>
+                        <TableCell className="font-medium">{c.email}</TableCell>
+                        <TableCell>{c.full_name || "—"}</TableCell>
+                        <TableCell>{c.company || "—"}</TableCell>
+                        <TableCell><Badge variant="outline" className="text-xs">{c.source}</Badge></TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={STATUS_CONFIG[c.status]?.className}>
+                            {STATUS_CONFIG[c.status]?.label || c.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={deliv.className}>
+                            {deliv.label}
+                            {(c.bounce_count ?? 0) > 0 ? ` · ${c.bounce_count}` : ""}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {format(new Date(c.created_at), "dd/MM/yyyy", { locale: fr })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button size="icon" variant="ghost" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
+                          <Button size="icon" variant="ghost" onClick={() => handleDelete(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}
