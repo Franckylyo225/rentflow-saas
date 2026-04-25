@@ -654,6 +654,9 @@ export default function Relances() {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-foreground text-sm">{seq.name}</p>
                     <p className="text-xs text-muted-foreground truncate">{seq.description}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                      <Clock className="h-3 w-3" /> Envoi à {seq.sendTime}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2">
                     {seq.active && globalActive ? (
