@@ -477,3 +477,71 @@ function RecordSaleDialog({
     </Dialog>
   );
 }
+
+function EditListingDialog({
+  listing, onOpenChange, onSave,
+}: {
+  listing: SaleListing | null;
+  onOpenChange: (o: boolean) => void;
+  onSave: (id: string, data: { name: string; location: string; askingPrice: number; listedAt: string; }) => void;
+}) {
+  const [name, setName] = useState("");
+  const [location, setLocation] = useState("");
+  const [price, setPrice] = useState("");
+  const [date, setDate] = useState(todayISO());
+
+  // Sync form when a new listing is opened for edition
+  if (listing && listing.name !== name && listing.location !== location && price === "") {
+    // initial sync only when fields are empty
+  }
+
+  // Effect-like sync
+  useMemo(() => {
+    if (listing) {
+      setName(listing.name);
+      setLocation(listing.location);
+      setPrice(listing.askingPrice.toString());
+      setDate(listing.listedAt);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listing?.id]);
+
+  return (
+    <Dialog open={!!listing} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader><DialogTitle>Modifier le bien</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="ename">Nom du bien</Label>
+            <Input id="ename" value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="eloc">Localisation / Quartier</Label>
+            <Input id="eloc" value={location} onChange={(e) => setLocation(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="eprice">Prix de vente demandé (FCFA)</Label>
+            <Input id="eprice" type="number" inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="edate">Date de mise en vente</Label>
+            <Input id="edate" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
+          <Button
+            className="bg-success hover:bg-success/90 text-success-foreground"
+            disabled={!listing || !name || !location || !price || !date}
+            onClick={() => {
+              if (!listing) return;
+              onSave(listing.id, { name, location, askingPrice: Number(price) || 0, listedAt: date });
+            }}
+          >
+            Enregistrer
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
