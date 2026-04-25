@@ -196,17 +196,14 @@ export default function Ventes() {
                           <Button size="sm" variant="ghost" className="h-8 gap-1 text-success" onClick={() => openSellFromListing(l)}>
                             <CheckCircle2 className="h-3.5 w-3.5" /> Marquer vendu
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => toast.info("Édition bientôt disponible")}>
+                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(l)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
                           <Button
                             size="icon"
                             variant="ghost"
                             className="h-8 w-8 text-destructive"
-                            onClick={() => {
-                              removeListing(l.id);
-                              toast.success("Bien retiré de la liste");
-                            }}
+                            onClick={() => setDeleting(l)}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
