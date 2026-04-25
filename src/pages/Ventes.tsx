@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Home, TrendingUp, Wallet, Plus, Pencil, Trash2, CheckCircle2, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Home, TrendingUp, Wallet, Plus, Pencil, Trash2, CheckCircle2, ArrowUpRight, ArrowDownRight, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { FeatureLockedCard } from "@/components/auth/FeatureLockedCard";
 import { usePropertySales, SALES_COMMISSION_RATE, type SaleListing } from "@/hooks/usePropertySales";
