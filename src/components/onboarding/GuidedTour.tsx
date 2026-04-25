@@ -130,10 +130,13 @@ interface GuidedTourProps {
 
 export function GuidedTour({ open: controlledOpen, onOpenChange }: GuidedTourProps) {
   const navigate = useNavigate();
-  const { data: properties } = useProperties();
-  const { data: units } = useUnits();
-  const { data: tenants } = useTenants();
-  const { data: payments } = useRentPayments();
+  const { data: properties, loading: loadingProperties } = useProperties();
+  const { data: units, loading: loadingUnits } = useUnits();
+  const { data: tenants, loading: loadingTenants } = useTenants();
+  const { data: payments, loading: loadingPayments } = useRentPayments();
+
+  // Tant que les données ne sont pas chargées, on ne peut pas évaluer l'état du tour.
+  const dataReady = !loadingProperties && !loadingUnits && !loadingTenants && !loadingPayments;
 
   const ctx: TourContext = useMemo(
     () => ({
@@ -146,7 +149,7 @@ export function GuidedTour({ open: controlledOpen, onOpenChange }: GuidedTourPro
   );
 
   const completedCount = STEPS.filter((s) => s.isComplete(ctx)).length;
-  const allDone = completedCount === STEPS.length;
+  const allDone = dataReady && completedCount === STEPS.length;
 
   const firstIncompleteIdx = useMemo(() => {
     const idx = STEPS.findIndex((s) => !s.isComplete(ctx));
