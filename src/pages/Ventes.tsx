@@ -32,12 +32,14 @@ export default function Ventes() {
   const { hasFeature, loading } = useFeatureAccess();
   const allowed = loading || hasFeature("property_sales");
 
-  const { listings, sales, addListing, removeListing, recordSale } = usePropertySales();
+  const { listings, sales, addListing, updateListing, removeListing, recordSale } = usePropertySales();
 
   const [addOpen, setAddOpen] = useState(false);
   const [sellOpen, setSellOpen] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState<string>("");
   const [prefilledPrice, setPrefilledPrice] = useState<number | null>(null);
+  const [editing, setEditing] = useState<SaleListing | null>(null);
+  const [deleting, setDeleting] = useState<SaleListing | null>(null);
 
   // KPI
   const now = new Date();
