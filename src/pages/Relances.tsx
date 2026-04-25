@@ -172,6 +172,14 @@ export default function Relances() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingSeq, setEditingSeq] = useState<Sequence | null>(null);
   const [newSeqOpen, setNewSeqOpen] = useState(false);
+  // Compteur local d'envois manuels du mois en cours (mock — à brancher en BDD plus tard)
+  const [manualSentThisMonth, setManualSentThisMonth] = useState(0);
+  const [quotaReachedOpen, setQuotaReachedOpen] = useState(false);
+
+  const manualRemaining = Math.max(monthlyManualQuota - manualSentThisMonth, 0);
+  const quotaReached = isPro && manualSentThisMonth >= monthlyManualQuota;
+  const quotaRatio = monthlyManualQuota > 0 ? manualSentThisMonth / monthlyManualQuota : 0;
+  const quotaWarning = isPro && quotaRatio >= 0.8 && !quotaReached;
 
   const upgradeNotice = (msg: string) => {
     toast.error(msg, {
