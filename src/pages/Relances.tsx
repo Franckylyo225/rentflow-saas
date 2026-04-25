@@ -621,18 +621,23 @@ export default function Relances() {
           </Card>
         </div>
 
-        {/* Section 2 — Urgent reminders */}
+        {/* Section 2 — Calendrier des relances */}
         <Card>
           <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-warning" />
-              Relances urgentes
-            </CardTitle>
+            <div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Clock className="h-5 w-5 text-primary" />
+                Calendrier des relances
+              </CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">
+                Relances automatiques planifiées. À partir de 7 jours de retard, vous pouvez relancer manuellement.
+              </p>
+            </div>
             <Tabs value={filter} onValueChange={(v) => setFilter(v as any)}>
               <TabsList>
                 <TabsTrigger value="all">Tous ({counts.all})</TabsTrigger>
-                <TabsTrigger value="email">Email ({counts.email})</TabsTrigger>
-                <TabsTrigger value="sms">SMS ({counts.sms})</TabsTrigger>
+                <TabsTrigger value="auto">Auto ({counts.auto})</TabsTrigger>
+                <TabsTrigger value="manual">Manuel possible ({counts.manual})</TabsTrigger>
               </TabsList>
             </Tabs>
           </CardHeader>
@@ -662,101 +667,119 @@ export default function Relances() {
                         {sortKey === "daysLate" ? (sortDir === "desc" ? <ArrowDown className="h-3.5 w-3.5" /> : <ArrowUp className="h-3.5 w-3.5" />) : <ArrowUpDown className="h-3.5 w-3.5 opacity-50" />}
                       </button>
                     </TableHead>
-                    <TableHead>Dernière relance</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Relance prévue</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                        Aucune relance urgente.
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        Aucune relance planifiée.
                       </TableCell>
                     </TableRow>
                   )}
-                  {filtered.map((r) => (
-                    <TableRow
-                      key={r.id}
-                      className={cn(
-                        "cursor-pointer",
-                        r.daysLate > 7 && "bg-destructive/5 hover:bg-destructive/10"
-                      )}
-                      onClick={() => setDetailReminder(r)}
-                    >
-                      <TableCell className="font-medium">{r.tenant}</TableCell>
-                      <TableCell className="text-muted-foreground">{r.property}</TableCell>
-                      <TableCell className="font-semibold">{fmtFCFA(r.amount)}</TableCell>
-                      <TableCell><DelayBadge days={r.daysLate} /></TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {r.lastReminderAt
-                          ? `${r.lastReminderAt} — ${r.lastReminderChannel === "auto" ? "Auto" : r.lastReminderChannel === "email" ? "Email" : "SMS"}`
-                          : "—"}
-                      </TableCell>
-                      <TableCell><StatusBadge status={r.status} /></TableCell>
-                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-2">
-                          {r.daysLate > 7 ? (
-                            <>
-                              <Button size="sm" variant="destructive" disabled={!canSms || quotaReached} onClick={() => sendReminder(r, "sms")}>
-                                <Smartphone className="h-3.5 w-3.5" /> SMS urgent
-                              </Button>
-                              <Button size="sm" variant="outline" disabled={!canEmail || quotaReached} onClick={() => sendReminder(r, "email")}>
-                                <Mail className="h-3.5 w-3.5" /> Email
-                              </Button>
-                            </>
-                          ) : r.autoReminded ? (
-                            <Button size="sm" disabled className="bg-success/20 text-success border border-success/30 cursor-not-allowed opacity-80 hover:bg-success/20">
-                              <CheckCircle2 className="h-3.5 w-3.5" /> Relancé auto
+                  {filtered.map((r) => {
+                    const planned = getPlannedSequence(r.daysLate);
+                    const manualEligible = r.daysLate >= 7;
+                    return (
+                      <TableRow
+                        key={r.id}
+                        className={cn(
+                          "cursor-pointer",
+                          manualEligible && "bg-destructive/5 hover:bg-destructive/10"
+                        )}
+                        onClick={() => setDetailReminder(r)}
+                      >
+                        <TableCell className="font-medium">{r.tenant}</TableCell>
+                        <TableCell className="text-muted-foreground">{r.property}</TableCell>
+                        <TableCell className="font-semibold">{fmtFCFA(r.amount)}</TableCell>
+                        <TableCell><DelayBadge days={r.daysLate} /></TableCell>
+                        <TableCell>
+                          {planned ? (
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="font-normal">{planned.step}</Badge>
+                              <span className="text-xs text-muted-foreground">{planned.name}</span>
+                              <div className="flex items-center gap-1">
+                                {planned.channels.map(c => (
+                                  <span
+                                    key={c}
+                                    className="inline-flex items-center justify-center rounded-md border border-border bg-muted h-5 w-5"
+                                    title={c === "email" ? "Email" : "SMS"}
+                                  >
+                                    {c === "email" ? <Mail className="h-3 w-3" /> : <Smartphone className="h-3 w-3" />}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Aucune séquence active</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                          {manualEligible ? (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              disabled={!canManualSend || quotaReached}
+                              onClick={() => setManualTarget(r)}
+                            >
+                              <Send className="h-3.5 w-3.5" /> Relancer manuellement
                             </Button>
                           ) : (
-                            <>
-                              <Button size="sm" variant="outline" disabled={!canEmail || quotaReached} onClick={() => sendReminder(r, "email")}>
-                                <Mail className="h-3.5 w-3.5" /> Email
-                              </Button>
-                              <Button size="sm" variant="outline" disabled={!canSms || quotaReached} onClick={() => sendReminder(r, "sms")}>
-                                <Smartphone className="h-3.5 w-3.5" /> SMS
-                              </Button>
-                            </>
+                            <Badge variant="outline" className="bg-success/10 text-success border-success/30 font-normal gap-1">
+                              <CheckCircle2 className="h-3 w-3" /> Auto
+                            </Badge>
                           )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
 
             {/* Mobile card list */}
             <div className="md:hidden divide-y divide-border">
-              {filtered.map(r => (
-                <button
-                  key={r.id}
-                  onClick={() => setDetailReminder(r)}
-                  className={cn(
-                    "w-full text-left p-4 space-y-2",
-                    r.daysLate > 7 && "bg-destructive/5"
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-semibold text-foreground">{r.tenant}</p>
-                      <p className="text-xs text-muted-foreground">{r.property}</p>
+              {filtered.map(r => {
+                const planned = getPlannedSequence(r.daysLate);
+                const manualEligible = r.daysLate >= 7;
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => setDetailReminder(r)}
+                    className={cn(
+                      "w-full text-left p-4 space-y-2",
+                      manualEligible && "bg-destructive/5"
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-semibold text-foreground">{r.tenant}</p>
+                        <p className="text-xs text-muted-foreground">{r.property}</p>
+                      </div>
+                      <DelayBadge days={r.daysLate} />
                     </div>
-                    <DelayBadge days={r.daysLate} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold">{fmtFCFA(r.amount)}</span>
-                    <Button
-                      size="sm"
-                      variant={r.daysLate > 7 ? "destructive" : "outline"}
-                      onClick={(e) => { e.stopPropagation(); sendReminder(r, r.daysLate > 7 ? "sms" : "email"); }}
-                    >
-                      {r.daysLate > 7 ? <><Smartphone className="h-3.5 w-3.5" /> SMS urgent</> : <><Mail className="h-3.5 w-3.5" /> Relancer</>}
-                    </Button>
-                  </div>
-                </button>
-              ))}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-bold">{fmtFCFA(r.amount)}</span>
+                      {manualEligible ? (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          disabled={!canManualSend || quotaReached}
+                          onClick={(e) => { e.stopPropagation(); setManualTarget(r); }}
+                        >
+                          <Send className="h-3.5 w-3.5" /> Relancer
+                        </Button>
+                      ) : (
+                        <Badge variant="outline" className="bg-success/10 text-success border-success/30 font-normal gap-1">
+                          <CheckCircle2 className="h-3 w-3" /> Auto {planned ? planned.step : ""}
+                        </Badge>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
