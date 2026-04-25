@@ -15,6 +15,7 @@ import { Building2, Users, AlertTriangle, TrendingUp, Loader2, Wallet, TrendingD
 import { useProperties, useUnits, useTenants, useRentPayments } from "@/hooks/useData";
 import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
 import { useExpenses } from "@/hooks/useExpenses";
+import { usePropertySales } from "@/hooks/usePropertySales";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -52,6 +53,7 @@ export default function Dashboard() {
   const { data: tenants } = useTenants();
   const { data: payments } = useRentPayments();
   const { data: expenses } = useExpenses();
+  const { sales } = usePropertySales();
   const { hasFeature, loading: featLoading } = useFeatureAccess();
 
   const canRents = featLoading || hasFeature("rents");
@@ -68,11 +70,15 @@ export default function Dashboard() {
   const [historyDrawer, setHistoryDrawer] = useState<null | "ca" | "expenses" | "occupancy">(null);
 
   const prevMonth = useMemo(() => shiftMonth(selectedMonth, -1), [selectedMonth]);
-  const monthCA = useMemo(() => payments.filter(p => p.month === selectedMonth).reduce((s, p) => s + p.paid_amount, 0), [payments, selectedMonth]);
+  const monthRents = useMemo(() => payments.filter(p => p.month === selectedMonth).reduce((s, p) => s + p.paid_amount, 0), [payments, selectedMonth]);
+  const monthSalesAmount = useMemo(() => sales.filter(s => s.saleDate.slice(0, 7) === selectedMonth).reduce((s, x) => s + x.salePrice, 0), [sales, selectedMonth]);
+  const monthCA = monthRents + monthSalesAmount;
   const monthExpenses = useMemo(() => expenses.filter(e => e.expense_date.slice(0, 7) === selectedMonth).reduce((s, e) => s + e.amount, 0), [expenses, selectedMonth]);
   const monthBenefice = monthCA - monthExpenses;
 
-  const prevCA = useMemo(() => payments.filter(p => p.month === prevMonth).reduce((s, p) => s + p.paid_amount, 0), [payments, prevMonth]);
+  const prevRents = useMemo(() => payments.filter(p => p.month === prevMonth).reduce((s, p) => s + p.paid_amount, 0), [payments, prevMonth]);
+  const prevSalesAmount = useMemo(() => sales.filter(s => s.saleDate.slice(0, 7) === prevMonth).reduce((s, x) => s + x.salePrice, 0), [sales, prevMonth]);
+  const prevCA = prevRents + prevSalesAmount;
   const prevExpenses = useMemo(() => expenses.filter(e => e.expense_date.slice(0, 7) === prevMonth).reduce((s, e) => s + e.amount, 0), [expenses, prevMonth]);
   const prevBenefice = prevCA - prevExpenses;
 
@@ -113,8 +119,12 @@ export default function Dashboard() {
   }, [selectedMonth]);
 
   const sparklineData = useMemo(() =>
-    sixMonths.map(m => payments.filter(p => p.month === m.key).reduce((s, p) => s + p.paid_amount, 0)),
-    [payments, sixMonths]);
+    sixMonths.map(m => {
+      const r = payments.filter(p => p.month === m.key).reduce((s, p) => s + p.paid_amount, 0);
+      const v = sales.filter(s => s.saleDate.slice(0, 7) === m.key).reduce((s, x) => s + x.salePrice, 0);
+      return r + v;
+    }),
+    [payments, sales, sixMonths]);
 
   const sparklineExpenses = useMemo(() =>
     sixMonths.map(m => expenses.filter(e => e.expense_date.slice(0, 7) === m.key).reduce((s, e) => s + e.amount, 0)),
@@ -219,9 +229,20 @@ export default function Dashboard() {
                 trend={caChange.direction !== "flat" ? { value: `${caChange.pct}%`, positive: caChange.direction === "up" } : undefined}
                 subtitle="vs mois précédent"
                 sparkData={sparklineData}
-                helpText="Somme des montants encaissés sur le mois sélectionné, tous statuts confondus."
+                helpText="Loyers encaissés + ventes immobilières du mois sélectionné."
                 onSparkClick={() => setHistoryDrawer("ca")}
-              />
+              >
+                <div className="space-y-1 text-[11px]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">📋 Loyers</span>
+                    <span className="font-medium text-card-foreground">{formatAmount(monthRents, short)} FCFA</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">🏠 Ventes</span>
+                    <span className="font-medium text-card-foreground">{formatAmount(monthSalesAmount, short)} FCFA</span>
+                  </div>
+                </div>
+              </StatCard>
             )}
             {canExpenses && (
               <StatCard

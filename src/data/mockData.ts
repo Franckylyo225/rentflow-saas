@@ -1,4 +1,4 @@
-import { Building2, Users, CreditCard, LayoutDashboard, Settings, Receipt, Users2, BarChart3, Bell, Landmark, HelpCircle } from "lucide-react";
+import { Building2, Users, CreditCard, LayoutDashboard, Settings, Receipt, Users2, BarChart3, Bell, Landmark, HelpCircle, Home } from "lucide-react";
 
 export interface City {
   id: string;
@@ -137,6 +137,7 @@ export const navItems = [
   
   { label: "Locataires", icon: Users, path: "/tenants", featureKey: "tenants" },
   { label: "Loyers", icon: CreditCard, path: "/rents", featureKey: "rents" },
+  { label: "Ventes", icon: Home, path: "/ventes", featureKey: "property_sales" },
   { label: "Dépenses", icon: Receipt, path: "/expenses", featureKey: "expenses" },
   { label: "Salaires", icon: Users2, path: "/employees", featureKey: "employees" },
   { label: "Rapports", icon: BarChart3, path: "/financial-reports", featureKey: "reports" },
