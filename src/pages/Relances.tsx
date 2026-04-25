@@ -177,6 +177,22 @@ export default function Relances() {
     });
   };
 
+  // Quand le plan charge, plafonner le nombre de séquences actives selon la limite
+  useEffect(() => {
+    if (planLoading) return;
+    setSequences(prev => {
+      let kept = 0;
+      return prev.map(s => {
+        if (s.active && kept < maxActiveSequences) {
+          kept += 1;
+          return s;
+        }
+        return s.active ? { ...s, active: false } : s;
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planLoading, maxActiveSequences]);
+
   // KPIs
   const kpiToRemind = reminders.length;
   const kpiAmount = reminders.reduce((s, r) => s + r.amount, 0);
