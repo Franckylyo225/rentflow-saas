@@ -1355,3 +1355,191 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
     </div>
   );
 }
+
+// ----------------- Manual reminder dialog -----------------
+
+function ManualReminderDialog({
+  target,
+  sequences,
+  canEmail,
+  canSms,
+  quotaReached,
+  onClose,
+  onSend,
+}: {
+  target: UrgentReminder | null;
+  sequences: Sequence[];
+  canEmail: boolean;
+  canSms: boolean;
+  quotaReached: boolean;
+  onClose: () => void;
+  onSend: (channels: Channel[], sequenceId: string) => void;
+}) {
+  const [sequenceId, setSequenceId] = useState<string>("");
+  const [channels, setChannels] = useState<Channel[]>(["email", "sms"]);
+
+  // Réinit à l'ouverture
+  useEffect(() => {
+    if (target) {
+      // pré-sélectionne la séquence la plus pertinente (≥ 7j → "Relance urgente" ou la plus tardive disponible)
+      const sorted = [...sequences].sort((a, b) => b.delayDays - a.delayDays);
+      const best = sorted.find(s => s.delayDays <= target.daysLate) || sorted[0];
+      setSequenceId(best?.id || "");
+      const next: Channel[] = [];
+      if (canEmail && best?.channels.includes("email")) next.push("email");
+      if (canSms && best?.channels.includes("sms")) next.push("sms");
+      setChannels(next.length > 0 ? next : (canEmail ? ["email"] : canSms ? ["sms"] : []));
+    }
+  }, [target, sequences, canEmail, canSms]);
+
+  const seq = sequences.find(s => s.id === sequenceId);
+
+  const toggleChannel = (c: Channel) => {
+    setChannels(prev => {
+      if (prev.includes(c)) {
+        if (prev.length === 1) {
+          toast.error("Sélectionnez au moins un canal d'envoi.");
+          return prev;
+        }
+        return prev.filter(x => x !== c);
+      }
+      return [...prev, c];
+    });
+  };
+
+  const renderPreview = (text: string) => {
+    if (!target) return text;
+    const firstName = target.tenant.split(" ")[0];
+    return text
+      .split("[Prénom]").join(firstName)
+      .split("[Nom]").join(target.tenant)
+      .split("[Montant]").join(fmtFCFA(target.amount))
+      .split("[Bien]").join(target.property)
+      .split("[Date échéance]").join("la date prévue")
+      .split("[Lien paiement]").join("https://…")
+      .split("[Nom agence]").join("Votre agence");
+  };
+
+  const handleSend = () => {
+    if (!seq || channels.length === 0) return;
+    onSend(channels, seq.id);
+  };
+
+  return (
+    <Dialog open={!!target} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Send className="h-5 w-5 text-primary" />
+            Relance manuelle
+          </DialogTitle>
+          <DialogDescription>
+            {target && (
+              <>
+                Envoyer une relance à <strong>{target.tenant}</strong> — {target.property} ({fmtFCFA(target.amount)} · {target.daysLate}j de retard)
+              </>
+            )}
+          </DialogDescription>
+        </DialogHeader>
+
+        {target && (
+          <div className="space-y-5">
+            {/* Choix du modèle */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Modèle de message</Label>
+              <div className="grid gap-2">
+                {sequences.map(s => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setSequenceId(s.id)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg border p-3 text-left transition",
+                      sequenceId === s.id
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:bg-muted/50"
+                    )}
+                  >
+                    <Badge variant="outline" className="font-normal">{s.step}</Badge>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">{s.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{s.description}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Choix des canaux */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Canaux d'envoi</Label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={!canEmail}
+                  onClick={() => toggleChannel("email")}
+                  className={cn(
+                    "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition",
+                    channels.includes("email")
+                      ? "border-primary bg-primary/10 text-foreground"
+                      : "border-border bg-background hover:bg-muted",
+                    !canEmail && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <Mail className="h-4 w-4" /> Email
+                </button>
+                <button
+                  type="button"
+                  disabled={!canSms}
+                  onClick={() => toggleChannel("sms")}
+                  className={cn(
+                    "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition",
+                    channels.includes("sms")
+                      ? "border-primary bg-primary/10 text-foreground"
+                      : "border-border bg-background hover:bg-muted",
+                    !canSms && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <Smartphone className="h-4 w-4" /> SMS
+                </button>
+              </div>
+            </div>
+
+            {/* Aperçus */}
+            {seq && (
+              <div className="space-y-3">
+                {channels.includes("email") && (
+                  <div className="rounded-lg border border-border bg-muted/30 p-3">
+                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1.5">
+                      <Mail className="h-3 w-3" /> Aperçu email
+                    </p>
+                    <p className="text-sm font-semibold mb-1">{renderPreview(seq.emailSubject)}</p>
+                    <p className="text-sm whitespace-pre-wrap text-muted-foreground">{renderPreview(seq.emailBody)}</p>
+                  </div>
+                )}
+                {channels.includes("sms") && (
+                  <div className="rounded-lg border border-border bg-muted/30 p-3">
+                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1.5">
+                      <Smartphone className="h-3 w-3" /> Aperçu SMS
+                    </p>
+                    <p className="text-sm whitespace-pre-wrap text-muted-foreground">{renderPreview(seq.smsBody)}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Annuler</Button>
+          <Button
+            onClick={handleSend}
+            disabled={!seq || channels.length === 0 || quotaReached}
+          >
+            <Send className="h-4 w-4" /> Envoyer la relance
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
