@@ -823,18 +823,30 @@ export default function Relances() {
                     <TableHead>Locataire</TableHead>
                     <TableHead>Canal</TableHead>
                     <TableHead>Envoyé</TableHead>
-                    <TableHead>Résultat</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {historyMock.map(h => (
-                    <TableRow key={h.id}>
-                      <TableCell className="font-medium">{h.tenant}</TableCell>
-                      <TableCell><ChannelTag channel={h.channel} /></TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{h.date}</TableCell>
-                      <TableCell><ResultBadge result={h.result} /></TableCell>
+                  {historyLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-sm text-muted-foreground py-6">
+                        Chargement…
+                      </TableCell>
                     </TableRow>
-                  ))}
+                  ) : history.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-sm text-muted-foreground py-6">
+                        Aucune relance envoyée ce mois.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    history.map(h => (
+                      <TableRow key={h.id}>
+                        <TableCell className="font-medium">{h.tenant}</TableCell>
+                        <TableCell><ChannelTag channel={h.channel} /></TableCell>
+                        <TableCell className="text-muted-foreground text-sm">{h.date}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
               <div className="border-t border-border px-4 py-3 text-right">
