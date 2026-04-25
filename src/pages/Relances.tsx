@@ -331,11 +331,22 @@ export default function Relances() {
   const kpiResponseRate = 64; // mock %
   const kpiAvgDays = 3;
 
+  // Détermine la prochaine séquence auto applicable selon le retard et les séquences actives
+  const getPlannedSequence = (daysLate: number): Sequence | null => {
+    const active = sequences.filter(s => s.active && globalActive);
+    if (active.length === 0) return null;
+    // On cherche la séquence dont delayDays est le plus proche (≤ daysLate) ou la prochaine à venir
+    const past = active.filter(s => s.delayDays <= daysLate).sort((a, b) => b.delayDays - a.delayDays);
+    if (past.length > 0) return past[0];
+    const next = active.filter(s => s.delayDays > daysLate).sort((a, b) => a.delayDays - b.delayDays);
+    return next[0] || null;
+  };
+
   // Filter + sort
   const filtered = useMemo(() => {
     let list = reminders;
-    if (filter === "email") list = list.filter(r => r.lastReminderChannel === "email");
-    else if (filter === "sms") list = list.filter(r => r.lastReminderChannel === "sms");
+    if (filter === "auto") list = list.filter(r => r.daysLate < 7);
+    else if (filter === "manual") list = list.filter(r => r.daysLate >= 7);
     const sorted = [...list].sort((a, b) => {
       const av = sortKey === "daysLate" ? a.daysLate : a.amount;
       const bv = sortKey === "daysLate" ? b.daysLate : b.amount;
@@ -346,8 +357,8 @@ export default function Relances() {
 
   const counts = {
     all: reminders.length,
-    email: reminders.filter(r => r.lastReminderChannel === "email").length,
-    sms: reminders.filter(r => r.lastReminderChannel === "sms").length,
+    auto: reminders.filter(r => r.daysLate < 7).length,
+    manual: reminders.filter(r => r.daysLate >= 7).length,
   };
 
   // Actions
