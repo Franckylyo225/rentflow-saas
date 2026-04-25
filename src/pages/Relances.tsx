@@ -197,6 +197,8 @@ export default function Relances() {
   const orgId = profile?.organization_id;
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyPage, setHistoryPage] = useState(1);
+  const HISTORY_PAGE_SIZE = 8;
 
   // Charger l'historique réel des relances envoyées (mois en cours)
   useEffect(() => {
