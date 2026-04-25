@@ -1155,8 +1155,9 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
             active: true,
             delayDays: delay,
             channels,
-            subject: name.trim(),
-            body: "Bonjour [Prénom], ...",
+            emailSubject: name.trim(),
+            emailBody: "Bonjour [Prénom],\n\nVotre loyer de [Montant] pour [Bien] est concerné par cette relance.\n\nCordialement,\n[Nom agence]",
+            smsBody: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien]. — [Nom agence]",
             sendTime,
           })}
         >
