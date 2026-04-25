@@ -871,7 +871,7 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
         <div className="space-y-2">
           <Label>Canal</Label>
           <div className="flex gap-1">
-            {(["email", "sms", "whatsapp"] as Channel[]).map(c => (
+            {(["email", "sms"] as Channel[]).map(c => (
               <Button
                 key={c}
                 type="button"
@@ -879,7 +879,7 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
                 variant={channel === c ? "default" : "outline"}
                 onClick={() => setChannel(c)}
               >
-                {c === "email" ? "Email" : c === "sms" ? "SMS" : "WA"}
+                {c === "email" ? "Email" : "SMS"}
               </Button>
             ))}
           </div>
