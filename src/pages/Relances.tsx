@@ -22,10 +22,11 @@ import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Plus, ArrowUp, ArrowDown, ArrowUpDown, Mail, MessageSquare, Smartphone,
-  AlertTriangle, CheckCircle2, Clock, Send, Lock, Sparkles,
+  AlertTriangle, CheckCircle2, Clock, Send, Lock, Sparkles, FlaskConical,
 } from "lucide-react";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TestSendDialog } from "@/components/relances/TestSendDialog";
 
 // ----------------- Types & mock data -----------------
 
@@ -176,6 +177,7 @@ export default function Relances() {
   // Compteur local d'envois manuels du mois en cours (mock — à brancher en BDD plus tard)
   const [manualSentThisMonth, setManualSentThisMonth] = useState(0);
   const [quotaReachedOpen, setQuotaReachedOpen] = useState(false);
+  const [testOpen, setTestOpen] = useState(false);
 
   const manualRemaining = Math.max(monthlyManualQuota - manualSentThisMonth, 0);
   const quotaReached = isPro && manualSentThisMonth >= monthlyManualQuota;
@@ -355,6 +357,13 @@ export default function Relances() {
                 Relances {globalActive ? "actives" : "désactivées"}
               </Label>
             </div>
+            <Button
+              variant="outline"
+              onClick={() => setTestOpen(true)}
+              className="gap-2"
+            >
+              <FlaskConical className="h-4 w-4" /> Tester l'envoi
+            </Button>
             {canCreateSequence ? (
               <Button onClick={() => setNewSeqOpen(true)} className="bg-primary hover:bg-primary/90">
                 <Plus className="h-4 w-4" /> Nouvelle séquence
@@ -984,6 +993,8 @@ export default function Relances() {
           )}
         </SheetContent>
       </Sheet>
+
+      <TestSendDialog open={testOpen} onOpenChange={setTestOpen} />
     </AppLayout>
   );
 }
