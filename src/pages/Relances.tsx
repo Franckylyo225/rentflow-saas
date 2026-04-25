@@ -357,6 +357,13 @@ export default function Relances() {
                 Relances {globalActive ? "actives" : "désactivées"}
               </Label>
             </div>
+            <Button
+              variant="outline"
+              onClick={() => setTestOpen(true)}
+              className="gap-2"
+            >
+              <FlaskConical className="h-4 w-4" /> Tester l'envoi
+            </Button>
             {canCreateSequence ? (
               <Button onClick={() => setNewSeqOpen(true)} className="bg-primary hover:bg-primary/90">
                 <Plus className="h-4 w-4" /> Nouvelle séquence
