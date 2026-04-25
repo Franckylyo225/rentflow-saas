@@ -43,6 +43,7 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminContacts from "./pages/admin/AdminContacts";
 import AdminCampaigns from "./pages/admin/AdminCampaigns";
 import AdminMarketingDashboard from "./pages/admin/AdminMarketingDashboard";
+import AdminWorkflows from "./pages/admin/AdminWorkflows";
 import { SuperAdminRoute } from "./components/admin/SuperAdminRoute";
 import NotFound from "./pages/NotFound";
 import TermsOfService from "./pages/legal/TermsOfService";
@@ -108,6 +109,7 @@ const App = () => (
               <Route path="/admin/contacts" element={<SuperAdminRoute><AdminContacts /></SuperAdminRoute>} />
               <Route path="/admin/campaigns" element={<SuperAdminRoute><AdminCampaigns /></SuperAdminRoute>} />
               <Route path="/admin/marketing" element={<SuperAdminRoute><AdminMarketingDashboard /></SuperAdminRoute>} />
+              <Route path="/admin/workflows" element={<SuperAdminRoute><AdminWorkflows /></SuperAdminRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
