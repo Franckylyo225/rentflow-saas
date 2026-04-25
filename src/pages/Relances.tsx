@@ -27,6 +27,10 @@ import {
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TestSendDialog } from "@/components/relances/TestSendDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/hooks/useProfile";
+import { format, startOfMonth } from "date-fns";
+import { fr } from "date-fns/locale";
 
 // ----------------- Types & mock data -----------------
 
