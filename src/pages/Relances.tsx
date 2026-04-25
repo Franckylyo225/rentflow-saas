@@ -64,17 +64,46 @@ interface Sequence {
   description: string;
   active: boolean;
   delayDays: number;
-  channels: Channel[]; // au moins un canal — peut combiner email + SMS
-  subject: string;
-  body: string;
+  channels: Channel[]; // au moins un canal — par défaut email + sms
+  emailSubject: string;
+  emailBody: string;
+  smsBody: string;
   sendTime: string; // format "HH:mm" — heure locale d'envoi
 }
 
 const initialSequences: Sequence[] = [
-  { id: "s1", step: "J-3", stepColor: "success", name: "Rappel avant échéance", description: "Email · 3 jours avant la date", active: true, delayDays: -3, channels: ["email"], subject: "Rappel : votre loyer arrive à échéance", body: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien] est dû le [Date échéance]. Lien de paiement : [Lien paiement]", sendTime: "09:00" },
-  { id: "s2", step: "J+1", stepColor: "warning", name: "Relance J+1", description: "Email + SMS · 1 jour après l'échéance", active: true, delayDays: 1, channels: ["email", "sms"], subject: "Loyer en retard de paiement", body: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien] n'a pas encore été reçu. Merci de régulariser.", sendTime: "09:00" },
-  { id: "s3", step: "J+7", stepColor: "destructive", name: "Relance urgente", description: "SMS prioritaire · 7 jours après l'échéance", active: true, delayDays: 7, channels: ["sms"], subject: "Relance urgente", body: "[Prénom], votre loyer de [Montant] est en retard de 7 jours. Merci de régulariser sous 48h.", sendTime: "09:00" },
-  { id: "s4", step: "J+15", stepColor: "muted", name: "Mise en demeure", description: "Email formel · 15 jours après l'échéance", active: false, delayDays: 15, channels: ["email"], subject: "Mise en demeure", body: "Bonjour [Prénom], faute de règlement de [Montant] pour [Bien], nous vous mettons en demeure de payer sous 8 jours.", sendTime: "09:00" },
+  {
+    id: "s1", step: "J-3", stepColor: "success", name: "Rappel avant échéance",
+    description: "Email + SMS · 3 jours avant la date", active: true, delayDays: -3,
+    channels: ["email", "sms"], sendTime: "09:00",
+    emailSubject: "Rappel : votre loyer arrive à échéance",
+    emailBody: "Bonjour [Prénom],\n\nNous vous rappelons que votre loyer de [Montant] pour [Bien] est dû le [Date échéance].\n\nLien de paiement : [Lien paiement]\n\nCordialement,\n[Nom agence]",
+    smsBody: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien] est dû le [Date échéance]. — [Nom agence]",
+  },
+  {
+    id: "s2", step: "J+1", stepColor: "warning", name: "Relance J+1",
+    description: "Email + SMS · 1 jour après l'échéance", active: true, delayDays: 1,
+    channels: ["email", "sms"], sendTime: "09:00",
+    emailSubject: "Loyer en retard de paiement",
+    emailBody: "Bonjour [Prénom],\n\nVotre loyer de [Montant] pour [Bien] n'a pas encore été reçu. Merci de régulariser votre situation dans les plus brefs délais.\n\nCordialement,\n[Nom agence]",
+    smsBody: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien] n'a pas été reçu. Merci de régulariser. — [Nom agence]",
+  },
+  {
+    id: "s3", step: "J+7", stepColor: "destructive", name: "Relance urgente",
+    description: "Email + SMS · 7 jours après l'échéance", active: true, delayDays: 7,
+    channels: ["email", "sms"], sendTime: "09:00",
+    emailSubject: "Relance urgente — loyer impayé",
+    emailBody: "Bonjour [Prénom],\n\nVotre loyer de [Montant] pour [Bien] est en retard de 7 jours. Merci de régulariser sous 48h pour éviter toute procédure.\n\nCordialement,\n[Nom agence]",
+    smsBody: "[Prénom], votre loyer de [Montant] est en retard de 7 jours. Régularisez sous 48h. — [Nom agence]",
+  },
+  {
+    id: "s4", step: "J+15", stepColor: "muted", name: "Mise en demeure",
+    description: "Email + SMS · 15 jours après l'échéance", active: false, delayDays: 15,
+    channels: ["email", "sms"], sendTime: "09:00",
+    emailSubject: "Mise en demeure",
+    emailBody: "Bonjour [Prénom],\n\nFaute de règlement de [Montant] pour [Bien], nous vous mettons en demeure de payer sous 8 jours.\n\nCordialement,\n[Nom agence]",
+    smsBody: "[Prénom], mise en demeure : régularisez [Montant] sous 8 jours. — [Nom agence]",
+  },
 ];
 
 interface HistoryItem {
@@ -309,9 +338,9 @@ export default function Relances() {
     setEditorOpen(true);
   };
 
-  const insertVariable = (variable: string) => {
+  const insertVariable = (variable: string, target: "emailBody" | "smsBody" | "emailSubject" = "emailBody") => {
     if (!editingSeq) return;
-    setEditingSeq({ ...editingSeq, body: editingSeq.body + ` ${variable}` });
+    setEditingSeq({ ...editingSeq, [target]: (editingSeq[target] || "") + ` ${variable}` });
   };
 
   const saveSequence = () => {
@@ -332,7 +361,7 @@ export default function Relances() {
     muted: "bg-muted text-muted-foreground border-border",
   };
 
-  const variables = ["[Prénom]", "[Montant]", "[Date échéance]", "[Bien]", "[Lien paiement]"];
+  const variables = ["[Prénom]", "[Montant]", "[Date échéance]", "[Bien]", "[Lien paiement]", "[Nom agence]"];
 
   return (
     <AppLayout>
@@ -867,39 +896,93 @@ export default function Relances() {
                   Vous pouvez activer Email et SMS simultanément pour cette étape.
                 </p>
               </div>
-              <div className="space-y-2">
-                <Label>Objet du message</Label>
-                <Input
-                  value={editingSeq.subject}
-                  disabled={!canEditTemplates}
-                  onChange={e => setEditingSeq({ ...editingSeq, subject: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Corps du message</Label>
-                <Textarea
-                  rows={6}
-                  value={editingSeq.body}
-                  disabled={!canEditTemplates}
-                  onChange={e => setEditingSeq({ ...editingSeq, body: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Variables disponibles</Label>
-                <div className="flex flex-wrap gap-2">
-                  {variables.map(v => (
-                    <button
-                      key={v}
-                      type="button"
+              {/* Modèle Email */}
+              {editingSeq.channels.includes("email") && (
+                <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-info" />
+                    <h4 className="text-sm font-semibold">Modèle Email</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Objet de l'email</Label>
+                    <Input
+                      value={editingSeq.emailSubject}
                       disabled={!canEditTemplates}
-                      onClick={() => insertVariable(v)}
-                      className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium hover:bg-primary hover:text-primary-foreground transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {v}
-                    </button>
-                  ))}
+                      onChange={e => setEditingSeq({ ...editingSeq, emailSubject: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Corps de l'email</Label>
+                    <Textarea
+                      rows={6}
+                      value={editingSeq.emailBody}
+                      disabled={!canEditTemplates}
+                      onChange={e => setEditingSeq({ ...editingSeq, emailBody: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Insérer une variable</Label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {variables.map(v => (
+                        <button
+                          key={v}
+                          type="button"
+                          disabled={!canEditTemplates}
+                          onClick={() => insertVariable(v, "emailBody")}
+                          className="rounded-full border border-border bg-muted px-2.5 py-1 text-[11px] font-medium hover:bg-primary hover:text-primary-foreground transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {v}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Modèle SMS */}
+              {editingSeq.channels.includes("sms") && (
+                <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="h-4 w-4 text-success" />
+                    <h4 className="text-sm font-semibold">Modèle SMS</h4>
+                    <Badge variant="outline" className="ml-auto text-[10px]">
+                      {editingSeq.smsBody.length} car. · {Math.ceil(editingSeq.smsBody.length / 160) || 1} SMS
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Message SMS</Label>
+                    <Textarea
+                      rows={4}
+                      value={editingSeq.smsBody}
+                      disabled={!canEditTemplates}
+                      onChange={e => setEditingSeq({ ...editingSeq, smsBody: e.target.value })}
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Restez concis : 160 caractères = 1 SMS facturé.
+                    </p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Insérer une variable</Label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {variables.map(v => (
+                        <button
+                          key={v}
+                          type="button"
+                          disabled={!canEditTemplates}
+                          onClick={() => insertVariable(v, "smsBody")}
+                          className="rounded-full border border-border bg-muted px-2.5 py-1 text-[11px] font-medium hover:bg-primary hover:text-primary-foreground transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {v}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <p className="text-[11px] text-muted-foreground">
+                La variable <code>[Nom agence]</code> reprend automatiquement le nom de votre organisation et fait office de signature.
+              </p>
             </div>
           )}
           <SheetFooter className="mt-6">
@@ -1004,7 +1087,7 @@ export default function Relances() {
 function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreate: (s: Sequence) => void }) {
   const [name, setName] = useState("");
   const [delay, setDelay] = useState(0);
-  const [channels, setChannels] = useState<Channel[]>(["email"]);
+  const [channels, setChannels] = useState<Channel[]>(["email", "sms"]);
   const [sendTime, setSendTime] = useState("09:00");
 
   const toggleChannel = (c: Channel) => {
@@ -1072,8 +1155,9 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
             active: true,
             delayDays: delay,
             channels,
-            subject: name.trim(),
-            body: "Bonjour [Prénom], ...",
+            emailSubject: name.trim(),
+            emailBody: "Bonjour [Prénom],\n\nVotre loyer de [Montant] pour [Bien] est concerné par cette relance.\n\nCordialement,\n[Nom agence]",
+            smsBody: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien]. — [Nom agence]",
             sendTime,
           })}
         >
