@@ -63,17 +63,17 @@ interface Sequence {
   description: string;
   active: boolean;
   delayDays: number;
-  channel: Channel;
+  channels: Channel[]; // au moins un canal — peut combiner email + SMS
   subject: string;
   body: string;
   sendTime: string; // format "HH:mm" — heure locale d'envoi
 }
 
 const initialSequences: Sequence[] = [
-  { id: "s1", step: "J-3", stepColor: "success", name: "Rappel avant échéance", description: "Email automatique · 3 jours avant la date", active: true, delayDays: -3, channel: "email", subject: "Rappel : votre loyer arrive à échéance", body: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien] est dû le [Date échéance]. Lien de paiement : [Lien paiement]", sendTime: "09:00" },
-  { id: "s2", step: "J+1", stepColor: "warning", name: "Relance J+1", description: "Email + SMS · 1 jour après l'échéance", active: true, delayDays: 1, channel: "email", subject: "Loyer en retard de paiement", body: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien] n'a pas encore été reçu. Merci de régulariser.", sendTime: "10:00" },
-  { id: "s3", step: "J+7", stepColor: "destructive", name: "Relance urgente", description: "SMS prioritaire · 7 jours après l'échéance", active: true, delayDays: 7, channel: "sms", subject: "Relance urgente", body: "[Prénom], votre loyer de [Montant] est en retard de 7 jours. Merci de régulariser sous 48h.", sendTime: "11:00" },
-  { id: "s4", step: "J+15", stepColor: "muted", name: "Mise en demeure", description: "Email formel · 15 jours après l'échéance", active: false, delayDays: 15, channel: "email", subject: "Mise en demeure", body: "Bonjour [Prénom], faute de règlement de [Montant] pour [Bien], nous vous mettons en demeure de payer sous 8 jours.", sendTime: "14:00" },
+  { id: "s1", step: "J-3", stepColor: "success", name: "Rappel avant échéance", description: "Email · 3 jours avant la date", active: true, delayDays: -3, channels: ["email"], subject: "Rappel : votre loyer arrive à échéance", body: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien] est dû le [Date échéance]. Lien de paiement : [Lien paiement]", sendTime: "09:00" },
+  { id: "s2", step: "J+1", stepColor: "warning", name: "Relance J+1", description: "Email + SMS · 1 jour après l'échéance", active: true, delayDays: 1, channels: ["email", "sms"], subject: "Loyer en retard de paiement", body: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien] n'a pas encore été reçu. Merci de régulariser.", sendTime: "10:00" },
+  { id: "s3", step: "J+7", stepColor: "destructive", name: "Relance urgente", description: "SMS prioritaire · 7 jours après l'échéance", active: true, delayDays: 7, channels: ["sms"], subject: "Relance urgente", body: "[Prénom], votre loyer de [Montant] est en retard de 7 jours. Merci de régulariser sous 48h.", sendTime: "11:00" },
+  { id: "s4", step: "J+15", stepColor: "muted", name: "Mise en demeure", description: "Email formel · 15 jours après l'échéance", active: false, delayDays: 15, channels: ["email"], subject: "Mise en demeure", body: "Bonjour [Prénom], faute de règlement de [Montant] pour [Bien], nous vous mettons en demeure de payer sous 8 jours.", sendTime: "14:00" },
 ];
 
 interface HistoryItem {
@@ -654,9 +654,20 @@ export default function Relances() {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-foreground text-sm">{seq.name}</p>
                     <p className="text-xs text-muted-foreground truncate">{seq.description}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> Envoi à {seq.sendTime}
-                    </p>
+                    <div className="mt-1 flex items-center gap-2 flex-wrap">
+                      <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {seq.sendTime}
+                      </span>
+                      {seq.channels.map(c => (
+                        <span
+                          key={c}
+                          className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-medium text-foreground"
+                        >
+                          {c === "email" ? <Mail className="h-2.5 w-2.5" /> : <Smartphone className="h-2.5 w-2.5" />}
+                          {c === "email" ? "Email" : "SMS"}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {seq.active && globalActive ? (
@@ -813,21 +824,39 @@ export default function Relances() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Canal</Label>
+                <Label>Canaux d'envoi</Label>
                 <div className="flex gap-2">
-                  {(["email", "sms"] as Channel[]).map(c => (
-                    <Button
-                      key={c}
-                      type="button"
-                      variant={editingSeq.channel === c ? "default" : "outline"}
-                      size="sm"
-                      disabled={!canEditTemplates}
-                      onClick={() => setEditingSeq({ ...editingSeq, channel: c })}
-                    >
-                      {c === "email" ? "Email" : "SMS"}
-                    </Button>
-                  ))}
+                  {(["email", "sms"] as Channel[]).map(c => {
+                    const selected = editingSeq.channels.includes(c);
+                    return (
+                      <Button
+                        key={c}
+                        type="button"
+                        variant={selected ? "default" : "outline"}
+                        size="sm"
+                        disabled={!canEditTemplates}
+                        onClick={() => {
+                          const next = selected
+                            ? editingSeq.channels.filter(x => x !== c)
+                            : [...editingSeq.channels, c];
+                          // Au moins un canal doit rester sélectionné
+                          if (next.length === 0) {
+                            toast.error("Sélectionnez au moins un canal d'envoi.");
+                            return;
+                          }
+                          setEditingSeq({ ...editingSeq, channels: next });
+                        }}
+                      >
+                        {c === "email" ? <Mail className="h-3.5 w-3.5" /> : <Smartphone className="h-3.5 w-3.5" />}
+                        {c === "email" ? "Email" : "SMS"}
+                        {selected && <CheckCircle2 className="h-3.5 w-3.5 ml-1" />}
+                      </Button>
+                    );
+                  })}
                 </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Vous pouvez activer Email et SMS simultanément pour cette étape.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label>Objet du message</Label>
@@ -964,8 +993,23 @@ export default function Relances() {
 function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreate: (s: Sequence) => void }) {
   const [name, setName] = useState("");
   const [delay, setDelay] = useState(0);
-  const [channel, setChannel] = useState<Channel>("email");
+  const [channels, setChannels] = useState<Channel[]>(["email"]);
   const [sendTime, setSendTime] = useState("09:00");
+
+  const toggleChannel = (c: Channel) => {
+    setChannels(prev => {
+      const next = prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c];
+      if (next.length === 0) {
+        toast.error("Sélectionnez au moins un canal d'envoi.");
+        return prev;
+      }
+      return next;
+    });
+  };
+
+  const channelLabel = channels.length === 2
+    ? "Email + SMS"
+    : channels[0] === "email" ? "Email" : "SMS";
 
   return (
     <div className="space-y-4">
@@ -973,30 +1017,35 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
         <Label>Nom de la séquence</Label>
         <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex : Relance J+30" />
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
           <Label>Délai (jours)</Label>
           <Input type="number" value={delay} onChange={e => setDelay(Number(e.target.value))} />
         </div>
         <div className="space-y-2">
-          <Label>Heure</Label>
+          <Label>Heure d'envoi</Label>
           <Input type="time" value={sendTime} onChange={e => setSendTime(e.target.value || "09:00")} />
         </div>
-        <div className="space-y-2">
-          <Label>Canal</Label>
-          <div className="flex gap-1">
-            {(["email", "sms"] as Channel[]).map(c => (
+      </div>
+      <div className="space-y-2">
+        <Label>Canaux d'envoi</Label>
+        <div className="flex gap-2">
+          {(["email", "sms"] as Channel[]).map(c => {
+            const selected = channels.includes(c);
+            return (
               <Button
                 key={c}
                 type="button"
                 size="sm"
-                variant={channel === c ? "default" : "outline"}
-                onClick={() => setChannel(c)}
+                variant={selected ? "default" : "outline"}
+                onClick={() => toggleChannel(c)}
               >
+                {c === "email" ? <Mail className="h-3.5 w-3.5" /> : <Smartphone className="h-3.5 w-3.5" />}
                 {c === "email" ? "Email" : "SMS"}
+                {selected && <CheckCircle2 className="h-3.5 w-3.5 ml-1" />}
               </Button>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
       <DialogFooter>
@@ -1008,10 +1057,10 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
             step: delay >= 0 ? `J+${delay}` : `J${delay}`,
             stepColor: delay > 7 ? "destructive" : delay > 0 ? "warning" : "success",
             name: name.trim(),
-            description: `${channel === "email" ? "Email" : "SMS"} · ${Math.abs(delay)} jour(s) ${delay >= 0 ? "après" : "avant"} l'échéance · ${sendTime}`,
+            description: `${channelLabel} · ${Math.abs(delay)} jour(s) ${delay >= 0 ? "après" : "avant"} l'échéance · ${sendTime}`,
             active: true,
             delayDays: delay,
-            channel,
+            channels,
             subject: name.trim(),
             body: "Bonjour [Prénom], ...",
             sendTime,
