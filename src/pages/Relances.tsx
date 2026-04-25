@@ -810,9 +810,20 @@ export default function Relances() {
                 <Button variant="outline" onClick={() => markAsPaid(detailReminder)}>
                   Marquer comme payé
                 </Button>
-                <Button onClick={() => sendReminder(detailReminder, detailReminder.daysLate > 7 ? "sms" : "email")}>
-                  <Send className="h-4 w-4" /> Envoyer une relance manuelle
-                </Button>
+                {(() => {
+                  // Choix du canal préférentiel selon les capacités du plan
+                  const preferred = detailReminder.daysLate > 7
+                    ? (canSms ? "sms" : (canEmail ? "email" : null))
+                    : (canEmail ? "email" : (canSms ? "sms" : null));
+                  return (
+                    <Button
+                      disabled={!preferred}
+                      onClick={() => preferred && sendReminder(detailReminder, preferred)}
+                    >
+                      <Send className="h-4 w-4" /> Envoyer une relance manuelle
+                    </Button>
+                  );
+                })()}
               </SheetFooter>
             </>
           )}
