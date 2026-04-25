@@ -1,1 +1,10 @@
 project_id = "dljpgpplvqhhfndpsihz"
+
+[functions.track-open]
+verify_jwt = false
+
+[functions.track-click]
+verify_jwt = false
+
+[functions.capture-lead]
+verify_jwt = false
