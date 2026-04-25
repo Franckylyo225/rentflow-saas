@@ -143,6 +143,20 @@ function ResultBadge({ result }: { result: HistoryItem["result"] }) {
 // ----------------- Main page -----------------
 
 export default function Relances() {
+  const navigate = useNavigate();
+  const { hasFeature, planName, loading: planLoading } = useFeatureAccess();
+
+  // Capacités selon le plan
+  const canEmail = hasFeature("email_reminders");
+  const canSms = hasFeature("sms_reminders");
+  const canEditTemplates = hasFeature("sms_templates_edit");
+  const canSchedule = hasFeature("sms_schedule");
+  const canFullAuto = hasFeature("sms_auto_full");
+  // Whatsapp réservé aux plans Pro/Business via sms_auto_full
+  const canWhatsapp = canFullAuto;
+  // Création de séquence personnalisée = Pro+
+  const canCreateSequence = canEditTemplates;
+
   const [globalActive, setGlobalActive] = useState(true);
   const [confirmOff, setConfirmOff] = useState(false);
   const [reminders, setReminders] = useState(initialReminders);
@@ -155,6 +169,12 @@ export default function Relances() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingSeq, setEditingSeq] = useState<Sequence | null>(null);
   const [newSeqOpen, setNewSeqOpen] = useState(false);
+
+  const upgradeNotice = (msg: string) => {
+    toast.error(msg, {
+      action: { label: "Voir les offres", onClick: () => navigate("/settings?tab=subscription") },
+    });
+  };
 
   // KPIs
   const kpiToRemind = reminders.length;
