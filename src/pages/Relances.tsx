@@ -157,6 +157,8 @@ export default function Relances() {
   const maxActiveSequences = isPro ? 3 : 1;
   // Création de séquence personnalisée : Pro+
   const canCreateSequence = isPro;
+  // Quota mensuel d'envois manuels (Pro uniquement, configurable côté admin SaaS plus tard)
+  const monthlyManualQuota = isPro ? 50 : 0;
 
   const [globalActive, setGlobalActive] = useState(true);
   const [confirmOff, setConfirmOff] = useState(false);
@@ -170,6 +172,14 @@ export default function Relances() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingSeq, setEditingSeq] = useState<Sequence | null>(null);
   const [newSeqOpen, setNewSeqOpen] = useState(false);
+  // Compteur local d'envois manuels du mois en cours (mock — à brancher en BDD plus tard)
+  const [manualSentThisMonth, setManualSentThisMonth] = useState(0);
+  const [quotaReachedOpen, setQuotaReachedOpen] = useState(false);
+
+  const manualRemaining = Math.max(monthlyManualQuota - manualSentThisMonth, 0);
+  const quotaReached = isPro && manualSentThisMonth >= monthlyManualQuota;
+  const quotaRatio = monthlyManualQuota > 0 ? manualSentThisMonth / monthlyManualQuota : 0;
+  const quotaWarning = isPro && quotaRatio >= 0.8 && !quotaReached;
 
   const upgradeNotice = (msg: string) => {
     toast.error(msg, {
@@ -227,12 +237,20 @@ export default function Relances() {
       upgradeNotice("L'envoi manuel de relances est réservé aux offres Pro et Business.");
       return;
     }
+    if (manualSentThisMonth >= monthlyManualQuota) {
+      setQuotaReachedOpen(true);
+      return;
+    }
     const label = channel === "email" ? "Email" : "SMS";
     const firstName = r.tenant.split(" ")[0];
     setReminders(prev => prev.map(x => x.id === r.id
       ? { ...x, lastReminderAt: "À l'instant", lastReminderChannel: channel, status: "Relancé" as ReminderStatus }
       : x));
-    toast.success(`Relance envoyée à ${firstName} par ${label} ✓`);
+    setManualSentThisMonth(n => n + 1);
+    const newRemaining = monthlyManualQuota - (manualSentThisMonth + 1);
+    toast.success(`Relance envoyée à ${firstName} par ${label} ✓`, {
+      description: `Quota : ${manualSentThisMonth + 1}/${monthlyManualQuota} envois manuels ce mois (${newRemaining} restants)`,
+    });
   };
 
   const markAsPaid = (r: UrgentReminder) => {
@@ -382,6 +400,56 @@ export default function Relances() {
           </div>
         )}
 
+        {/* Quota d'envois manuels (Pro) */}
+        {!planLoading && isPro && (
+          <div className={cn(
+            "rounded-lg border px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between",
+            quotaReached
+              ? "border-destructive/40 bg-destructive/5"
+              : quotaWarning
+                ? "border-warning/40 bg-warning/5"
+                : "border-border bg-card"
+          )}>
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              <Send className={cn(
+                "h-5 w-5 flex-shrink-0 mt-0.5",
+                quotaReached ? "text-destructive" : quotaWarning ? "text-warning" : "text-muted-foreground"
+              )} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground">
+                  Envois manuels — {manualSentThisMonth} / {monthlyManualQuota} ce mois
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {quotaReached
+                    ? "Quota mensuel atteint. Les nouveaux envois manuels sont bloqués jusqu'au mois prochain."
+                    : quotaWarning
+                      ? `Plus que ${manualRemaining} envoi${manualRemaining > 1 ? "s" : ""} disponible${manualRemaining > 1 ? "s" : ""} ce mois.`
+                      : `${manualRemaining} envoi${manualRemaining > 1 ? "s" : ""} restant${manualRemaining > 1 ? "s" : ""}. Les relances automatiques ne sont pas comptées.`}
+                </p>
+                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={cn(
+                      "h-full transition-all",
+                      quotaReached ? "bg-destructive" : quotaWarning ? "bg-warning" : "bg-success"
+                    )}
+                    style={{ width: `${Math.min(quotaRatio * 100, 100)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+            {(quotaWarning || quotaReached) && (
+              <Button
+                size="sm"
+                variant={quotaReached ? "default" : "outline"}
+                onClick={() => navigate("/settings?tab=subscription")}
+                className="flex-shrink-0"
+              >
+                Passer à Business
+              </Button>
+            )}
+          </div>
+        )}
+
         {/* KPI cards */}
         <div className="grid gap-4 grid-cols-2 xl:grid-cols-4">
           <Card>
@@ -505,10 +573,10 @@ export default function Relances() {
                         <div className="flex items-center justify-end gap-2">
                           {r.daysLate > 7 ? (
                             <>
-                              <Button size="sm" variant="destructive" disabled={!canSms} onClick={() => sendReminder(r, "sms")}>
+                              <Button size="sm" variant="destructive" disabled={!canSms || quotaReached} onClick={() => sendReminder(r, "sms")}>
                                 <Smartphone className="h-3.5 w-3.5" /> SMS urgent
                               </Button>
-                              <Button size="sm" variant="outline" disabled={!canEmail} onClick={() => sendReminder(r, "email")}>
+                              <Button size="sm" variant="outline" disabled={!canEmail || quotaReached} onClick={() => sendReminder(r, "email")}>
                                 <Mail className="h-3.5 w-3.5" /> Email
                               </Button>
                             </>
@@ -518,10 +586,10 @@ export default function Relances() {
                             </Button>
                           ) : (
                             <>
-                              <Button size="sm" variant="outline" disabled={!canEmail} onClick={() => sendReminder(r, "email")}>
+                              <Button size="sm" variant="outline" disabled={!canEmail || quotaReached} onClick={() => sendReminder(r, "email")}>
                                 <Mail className="h-3.5 w-3.5" /> Email
                               </Button>
-                              <Button size="sm" variant="outline" disabled={!canSms} onClick={() => sendReminder(r, "sms")}>
+                              <Button size="sm" variant="outline" disabled={!canSms || quotaReached} onClick={() => sendReminder(r, "sms")}>
                                 <Smartphone className="h-3.5 w-3.5" /> SMS
                               </Button>
                             </>
@@ -654,6 +722,39 @@ export default function Relances() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmOff(false)}>Annuler</Button>
             <Button variant="destructive" onClick={confirmDisable}>Désactiver</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Quota atteint dialog */}
+      <Dialog open={quotaReachedOpen} onOpenChange={setQuotaReachedOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Quota mensuel atteint
+            </DialogTitle>
+            <DialogDescription className="pt-2 space-y-2">
+              <span className="block">
+                Vous avez utilisé vos <strong>{monthlyManualQuota} envois manuels</strong> inclus
+                dans l'offre <strong>{planName}</strong> pour ce mois-ci.
+              </span>
+              <span className="block">
+                Les <strong>relances automatiques</strong> de vos séquences continuent de fonctionner
+                normalement et ne sont pas comptées dans ce quota.
+              </span>
+              <span className="block">
+                Pour envoyer davantage de relances manuelles, passez à l'offre
+                <strong> Business</strong> (envois illimités) ou attendez le renouvellement
+                de votre quota le <strong>1er du mois prochain</strong>.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setQuotaReachedOpen(false)}>Compris</Button>
+            <Button onClick={() => { setQuotaReachedOpen(false); navigate("/settings?tab=subscription"); }}>
+              Voir l'offre Business
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -821,7 +922,7 @@ export default function Relances() {
                     : (canEmail ? "email" : (canSms ? "sms" : null));
                   return (
                     <Button
-                      disabled={!preferred}
+                      disabled={!preferred || quotaReached}
                       onClick={() => preferred && sendReminder(detailReminder, preferred)}
                     >
                       <Send className="h-4 w-4" /> Envoyer une relance manuelle
