@@ -15,6 +15,7 @@ import { Building2, Users, AlertTriangle, TrendingUp, Loader2, Wallet, TrendingD
 import { useProperties, useUnits, useTenants, useRentPayments } from "@/hooks/useData";
 import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
 import { useExpenses } from "@/hooks/useExpenses";
+import { usePropertySales } from "@/hooks/usePropertySales";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -52,6 +53,7 @@ export default function Dashboard() {
   const { data: tenants } = useTenants();
   const { data: payments } = useRentPayments();
   const { data: expenses } = useExpenses();
+  const { sales } = usePropertySales();
   const { hasFeature, loading: featLoading } = useFeatureAccess();
 
   const canRents = featLoading || hasFeature("rents");
