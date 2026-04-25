@@ -182,9 +182,10 @@ export default function Relances() {
   const [reminders, setReminders] = useState(initialReminders);
   const [sequences, setSequences] = useState(initialSequences);
   const [previousSeqStates, setPreviousSeqStates] = useState<Record<string, boolean> | null>(null);
-  const [filter, setFilter] = useState<"all" | "email" | "sms">("all");
+  const [filter, setFilter] = useState<"all" | "auto" | "manual">("all");
   const [sortKey, setSortKey] = useState<"daysLate" | "amount">("daysLate");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [manualTarget, setManualTarget] = useState<UrgentReminder | null>(null);
   const [detailReminder, setDetailReminder] = useState<UrgentReminder | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingSeq, setEditingSeq] = useState<Sequence | null>(null);
@@ -330,11 +331,22 @@ export default function Relances() {
   const kpiResponseRate = 64; // mock %
   const kpiAvgDays = 3;
 
+  // Détermine la prochaine séquence auto applicable selon le retard et les séquences actives
+  const getPlannedSequence = (daysLate: number): Sequence | null => {
+    const active = sequences.filter(s => s.active && globalActive);
+    if (active.length === 0) return null;
+    // On cherche la séquence dont delayDays est le plus proche (≤ daysLate) ou la prochaine à venir
+    const past = active.filter(s => s.delayDays <= daysLate).sort((a, b) => b.delayDays - a.delayDays);
+    if (past.length > 0) return past[0];
+    const next = active.filter(s => s.delayDays > daysLate).sort((a, b) => a.delayDays - b.delayDays);
+    return next[0] || null;
+  };
+
   // Filter + sort
   const filtered = useMemo(() => {
     let list = reminders;
-    if (filter === "email") list = list.filter(r => r.lastReminderChannel === "email");
-    else if (filter === "sms") list = list.filter(r => r.lastReminderChannel === "sms");
+    if (filter === "auto") list = list.filter(r => r.daysLate < 7);
+    else if (filter === "manual") list = list.filter(r => r.daysLate >= 7);
     const sorted = [...list].sort((a, b) => {
       const av = sortKey === "daysLate" ? a.daysLate : a.amount;
       const bv = sortKey === "daysLate" ? b.daysLate : b.amount;
@@ -345,8 +357,8 @@ export default function Relances() {
 
   const counts = {
     all: reminders.length,
-    email: reminders.filter(r => r.lastReminderChannel === "email").length,
-    sms: reminders.filter(r => r.lastReminderChannel === "sms").length,
+    auto: reminders.filter(r => r.daysLate < 7).length,
+    manual: reminders.filter(r => r.daysLate >= 7).length,
   };
 
   // Actions
@@ -621,18 +633,23 @@ export default function Relances() {
           </Card>
         </div>
 
-        {/* Section 2 — Urgent reminders */}
+        {/* Section 2 — Calendrier des relances */}
         <Card>
           <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-warning" />
-              Relances urgentes
-            </CardTitle>
+            <div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Clock className="h-5 w-5 text-primary" />
+                Calendrier des relances
+              </CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">
+                Relances automatiques planifiées. À partir de 7 jours de retard, vous pouvez relancer manuellement.
+              </p>
+            </div>
             <Tabs value={filter} onValueChange={(v) => setFilter(v as any)}>
               <TabsList>
                 <TabsTrigger value="all">Tous ({counts.all})</TabsTrigger>
-                <TabsTrigger value="email">Email ({counts.email})</TabsTrigger>
-                <TabsTrigger value="sms">SMS ({counts.sms})</TabsTrigger>
+                <TabsTrigger value="auto">Auto ({counts.auto})</TabsTrigger>
+                <TabsTrigger value="manual">Manuel possible ({counts.manual})</TabsTrigger>
               </TabsList>
             </Tabs>
           </CardHeader>
@@ -662,101 +679,119 @@ export default function Relances() {
                         {sortKey === "daysLate" ? (sortDir === "desc" ? <ArrowDown className="h-3.5 w-3.5" /> : <ArrowUp className="h-3.5 w-3.5" />) : <ArrowUpDown className="h-3.5 w-3.5 opacity-50" />}
                       </button>
                     </TableHead>
-                    <TableHead>Dernière relance</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Relance prévue</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                        Aucune relance urgente.
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        Aucune relance planifiée.
                       </TableCell>
                     </TableRow>
                   )}
-                  {filtered.map((r) => (
-                    <TableRow
-                      key={r.id}
-                      className={cn(
-                        "cursor-pointer",
-                        r.daysLate > 7 && "bg-destructive/5 hover:bg-destructive/10"
-                      )}
-                      onClick={() => setDetailReminder(r)}
-                    >
-                      <TableCell className="font-medium">{r.tenant}</TableCell>
-                      <TableCell className="text-muted-foreground">{r.property}</TableCell>
-                      <TableCell className="font-semibold">{fmtFCFA(r.amount)}</TableCell>
-                      <TableCell><DelayBadge days={r.daysLate} /></TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {r.lastReminderAt
-                          ? `${r.lastReminderAt} — ${r.lastReminderChannel === "auto" ? "Auto" : r.lastReminderChannel === "email" ? "Email" : "SMS"}`
-                          : "—"}
-                      </TableCell>
-                      <TableCell><StatusBadge status={r.status} /></TableCell>
-                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-2">
-                          {r.daysLate > 7 ? (
-                            <>
-                              <Button size="sm" variant="destructive" disabled={!canSms || quotaReached} onClick={() => sendReminder(r, "sms")}>
-                                <Smartphone className="h-3.5 w-3.5" /> SMS urgent
-                              </Button>
-                              <Button size="sm" variant="outline" disabled={!canEmail || quotaReached} onClick={() => sendReminder(r, "email")}>
-                                <Mail className="h-3.5 w-3.5" /> Email
-                              </Button>
-                            </>
-                          ) : r.autoReminded ? (
-                            <Button size="sm" disabled className="bg-success/20 text-success border border-success/30 cursor-not-allowed opacity-80 hover:bg-success/20">
-                              <CheckCircle2 className="h-3.5 w-3.5" /> Relancé auto
+                  {filtered.map((r) => {
+                    const planned = getPlannedSequence(r.daysLate);
+                    const manualEligible = r.daysLate >= 7;
+                    return (
+                      <TableRow
+                        key={r.id}
+                        className={cn(
+                          "cursor-pointer",
+                          manualEligible && "bg-destructive/5 hover:bg-destructive/10"
+                        )}
+                        onClick={() => setDetailReminder(r)}
+                      >
+                        <TableCell className="font-medium">{r.tenant}</TableCell>
+                        <TableCell className="text-muted-foreground">{r.property}</TableCell>
+                        <TableCell className="font-semibold">{fmtFCFA(r.amount)}</TableCell>
+                        <TableCell><DelayBadge days={r.daysLate} /></TableCell>
+                        <TableCell>
+                          {planned ? (
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="font-normal">{planned.step}</Badge>
+                              <span className="text-xs text-muted-foreground">{planned.name}</span>
+                              <div className="flex items-center gap-1">
+                                {planned.channels.map(c => (
+                                  <span
+                                    key={c}
+                                    className="inline-flex items-center justify-center rounded-md border border-border bg-muted h-5 w-5"
+                                    title={c === "email" ? "Email" : "SMS"}
+                                  >
+                                    {c === "email" ? <Mail className="h-3 w-3" /> : <Smartphone className="h-3 w-3" />}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Aucune séquence active</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                          {manualEligible ? (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              disabled={!canManualSend || quotaReached}
+                              onClick={() => setManualTarget(r)}
+                            >
+                              <Send className="h-3.5 w-3.5" /> Relancer manuellement
                             </Button>
                           ) : (
-                            <>
-                              <Button size="sm" variant="outline" disabled={!canEmail || quotaReached} onClick={() => sendReminder(r, "email")}>
-                                <Mail className="h-3.5 w-3.5" /> Email
-                              </Button>
-                              <Button size="sm" variant="outline" disabled={!canSms || quotaReached} onClick={() => sendReminder(r, "sms")}>
-                                <Smartphone className="h-3.5 w-3.5" /> SMS
-                              </Button>
-                            </>
+                            <Badge variant="outline" className="bg-success/10 text-success border-success/30 font-normal gap-1">
+                              <CheckCircle2 className="h-3 w-3" /> Auto
+                            </Badge>
                           )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
 
             {/* Mobile card list */}
             <div className="md:hidden divide-y divide-border">
-              {filtered.map(r => (
-                <button
-                  key={r.id}
-                  onClick={() => setDetailReminder(r)}
-                  className={cn(
-                    "w-full text-left p-4 space-y-2",
-                    r.daysLate > 7 && "bg-destructive/5"
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-semibold text-foreground">{r.tenant}</p>
-                      <p className="text-xs text-muted-foreground">{r.property}</p>
+              {filtered.map(r => {
+                const planned = getPlannedSequence(r.daysLate);
+                const manualEligible = r.daysLate >= 7;
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => setDetailReminder(r)}
+                    className={cn(
+                      "w-full text-left p-4 space-y-2",
+                      manualEligible && "bg-destructive/5"
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-semibold text-foreground">{r.tenant}</p>
+                        <p className="text-xs text-muted-foreground">{r.property}</p>
+                      </div>
+                      <DelayBadge days={r.daysLate} />
                     </div>
-                    <DelayBadge days={r.daysLate} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold">{fmtFCFA(r.amount)}</span>
-                    <Button
-                      size="sm"
-                      variant={r.daysLate > 7 ? "destructive" : "outline"}
-                      onClick={(e) => { e.stopPropagation(); sendReminder(r, r.daysLate > 7 ? "sms" : "email"); }}
-                    >
-                      {r.daysLate > 7 ? <><Smartphone className="h-3.5 w-3.5" /> SMS urgent</> : <><Mail className="h-3.5 w-3.5" /> Relancer</>}
-                    </Button>
-                  </div>
-                </button>
-              ))}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-bold">{fmtFCFA(r.amount)}</span>
+                      {manualEligible ? (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          disabled={!canManualSend || quotaReached}
+                          onClick={(e) => { e.stopPropagation(); setManualTarget(r); }}
+                        >
+                          <Send className="h-3.5 w-3.5" /> Relancer
+                        </Button>
+                      ) : (
+                        <Badge variant="outline" className="bg-success/10 text-success border-success/30 font-normal gap-1">
+                          <CheckCircle2 className="h-3 w-3" /> Auto {planned ? planned.step : ""}
+                        </Badge>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -1211,6 +1246,26 @@ export default function Relances() {
       </Sheet>
 
       <TestSendDialog open={testOpen} onOpenChange={setTestOpen} />
+
+      {/* Manual reminder dialog */}
+      <ManualReminderDialog
+        target={manualTarget}
+        sequences={sequences}
+        canEmail={canEmail}
+        canSms={canSms}
+        quotaReached={quotaReached}
+        onClose={() => setManualTarget(null)}
+        onSend={(channels, sequenceId) => {
+          if (!manualTarget) return;
+          const seq = sequences.find(s => s.id === sequenceId);
+          const channelLabel = channels.map(c => c === "email" ? "Email" : "SMS").join(" + ");
+          channels.forEach(c => sendReminder(manualTarget, c));
+          toast.success(`Relance manuelle envoyée à ${manualTarget.tenant.split(" ")[0]} (${channelLabel}) ✓`, {
+            description: seq ? `Modèle : ${seq.name}` : undefined,
+          });
+          setManualTarget(null);
+        }}
+      />
     </AppLayout>
   );
 }
@@ -1298,5 +1353,193 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
         </Button>
       </DialogFooter>
     </div>
+  );
+}
+
+// ----------------- Manual reminder dialog -----------------
+
+function ManualReminderDialog({
+  target,
+  sequences,
+  canEmail,
+  canSms,
+  quotaReached,
+  onClose,
+  onSend,
+}: {
+  target: UrgentReminder | null;
+  sequences: Sequence[];
+  canEmail: boolean;
+  canSms: boolean;
+  quotaReached: boolean;
+  onClose: () => void;
+  onSend: (channels: Channel[], sequenceId: string) => void;
+}) {
+  const [sequenceId, setSequenceId] = useState<string>("");
+  const [channels, setChannels] = useState<Channel[]>(["email", "sms"]);
+
+  // Réinit à l'ouverture
+  useEffect(() => {
+    if (target) {
+      // pré-sélectionne la séquence la plus pertinente (≥ 7j → "Relance urgente" ou la plus tardive disponible)
+      const sorted = [...sequences].sort((a, b) => b.delayDays - a.delayDays);
+      const best = sorted.find(s => s.delayDays <= target.daysLate) || sorted[0];
+      setSequenceId(best?.id || "");
+      const next: Channel[] = [];
+      if (canEmail && best?.channels.includes("email")) next.push("email");
+      if (canSms && best?.channels.includes("sms")) next.push("sms");
+      setChannels(next.length > 0 ? next : (canEmail ? ["email"] : canSms ? ["sms"] : []));
+    }
+  }, [target, sequences, canEmail, canSms]);
+
+  const seq = sequences.find(s => s.id === sequenceId);
+
+  const toggleChannel = (c: Channel) => {
+    setChannels(prev => {
+      if (prev.includes(c)) {
+        if (prev.length === 1) {
+          toast.error("Sélectionnez au moins un canal d'envoi.");
+          return prev;
+        }
+        return prev.filter(x => x !== c);
+      }
+      return [...prev, c];
+    });
+  };
+
+  const renderPreview = (text: string) => {
+    if (!target) return text;
+    const firstName = target.tenant.split(" ")[0];
+    return text
+      .split("[Prénom]").join(firstName)
+      .split("[Nom]").join(target.tenant)
+      .split("[Montant]").join(fmtFCFA(target.amount))
+      .split("[Bien]").join(target.property)
+      .split("[Date échéance]").join("la date prévue")
+      .split("[Lien paiement]").join("https://…")
+      .split("[Nom agence]").join("Votre agence");
+  };
+
+  const handleSend = () => {
+    if (!seq || channels.length === 0) return;
+    onSend(channels, seq.id);
+  };
+
+  return (
+    <Dialog open={!!target} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Send className="h-5 w-5 text-primary" />
+            Relance manuelle
+          </DialogTitle>
+          <DialogDescription>
+            {target && (
+              <>
+                Envoyer une relance à <strong>{target.tenant}</strong> — {target.property} ({fmtFCFA(target.amount)} · {target.daysLate}j de retard)
+              </>
+            )}
+          </DialogDescription>
+        </DialogHeader>
+
+        {target && (
+          <div className="space-y-5">
+            {/* Choix du modèle */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Modèle de message</Label>
+              <div className="grid gap-2">
+                {sequences.map(s => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setSequenceId(s.id)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg border p-3 text-left transition",
+                      sequenceId === s.id
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:bg-muted/50"
+                    )}
+                  >
+                    <Badge variant="outline" className="font-normal">{s.step}</Badge>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">{s.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{s.description}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Choix des canaux */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Canaux d'envoi</Label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={!canEmail}
+                  onClick={() => toggleChannel("email")}
+                  className={cn(
+                    "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition",
+                    channels.includes("email")
+                      ? "border-primary bg-primary/10 text-foreground"
+                      : "border-border bg-background hover:bg-muted",
+                    !canEmail && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <Mail className="h-4 w-4" /> Email
+                </button>
+                <button
+                  type="button"
+                  disabled={!canSms}
+                  onClick={() => toggleChannel("sms")}
+                  className={cn(
+                    "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition",
+                    channels.includes("sms")
+                      ? "border-primary bg-primary/10 text-foreground"
+                      : "border-border bg-background hover:bg-muted",
+                    !canSms && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <Smartphone className="h-4 w-4" /> SMS
+                </button>
+              </div>
+            </div>
+
+            {/* Aperçus */}
+            {seq && (
+              <div className="space-y-3">
+                {channels.includes("email") && (
+                  <div className="rounded-lg border border-border bg-muted/30 p-3">
+                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1.5">
+                      <Mail className="h-3 w-3" /> Aperçu email
+                    </p>
+                    <p className="text-sm font-semibold mb-1">{renderPreview(seq.emailSubject)}</p>
+                    <p className="text-sm whitespace-pre-wrap text-muted-foreground">{renderPreview(seq.emailBody)}</p>
+                  </div>
+                )}
+                {channels.includes("sms") && (
+                  <div className="rounded-lg border border-border bg-muted/30 p-3">
+                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1.5">
+                      <Smartphone className="h-3 w-3" /> Aperçu SMS
+                    </p>
+                    <p className="text-sm whitespace-pre-wrap text-muted-foreground">{renderPreview(seq.smsBody)}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Annuler</Button>
+          <Button
+            onClick={handleSend}
+            disabled={!seq || channels.length === 0 || quotaReached}
+          >
+            <Send className="h-4 w-4" /> Envoyer la relance
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
