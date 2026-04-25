@@ -1075,6 +1075,182 @@ export type Database = {
           },
         ]
       }
+      marketing_workflow_enrollments: {
+        Row: {
+          completed_at: string | null
+          contact_id: string
+          current_step_order: number
+          enrolled_at: string
+          id: string
+          status: string
+          workflow_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          contact_id: string
+          current_step_order?: number
+          enrolled_at?: string
+          id?: string
+          status?: string
+          workflow_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          contact_id?: string
+          current_step_order?: number
+          enrolled_at?: string
+          id?: string
+          status?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_workflow_enrollments_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_workflow_enrollments_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_workflow_step_runs: {
+        Row: {
+          created_at: string
+          enrollment_id: string
+          error_message: string | null
+          executed_at: string | null
+          id: string
+          recipient_id: string | null
+          scheduled_for: string
+          status: string
+          step_id: string
+        }
+        Insert: {
+          created_at?: string
+          enrollment_id: string
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          recipient_id?: string | null
+          scheduled_for?: string
+          status?: string
+          step_id: string
+        }
+        Update: {
+          created_at?: string
+          enrollment_id?: string
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          recipient_id?: string | null
+          scheduled_for?: string
+          status?: string
+          step_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_workflow_step_runs_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_workflow_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_workflow_step_runs_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_workflow_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_workflow_steps: {
+        Row: {
+          condition_type: string
+          created_at: string
+          delay_days: number
+          html_content: string
+          id: string
+          is_active: boolean
+          step_order: number
+          subject: string
+          updated_at: string
+          workflow_id: string
+        }
+        Insert: {
+          condition_type?: string
+          created_at?: string
+          delay_days?: number
+          html_content?: string
+          id?: string
+          is_active?: boolean
+          step_order?: number
+          subject?: string
+          updated_at?: string
+          workflow_id: string
+        }
+        Update: {
+          condition_type?: string
+          created_at?: string
+          delay_days?: number
+          html_content?: string
+          id?: string
+          is_active?: boolean
+          step_order?: number
+          subject?: string
+          updated_at?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_workflow_steps_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_workflows: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          trigger_type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
