@@ -117,7 +117,6 @@ function ChannelTag({ channel }: { channel: Channel }) {
   const map: Record<Channel, { label: string; className: string; letter: string }> = {
     email: { label: "Email", className: "bg-info/15 text-info border-info/30", letter: "@" },
     sms: { label: "SMS", className: "bg-success/15 text-success border-success/30", letter: "S" },
-    whatsapp: { label: "WhatsApp", className: "bg-purple-500/15 text-purple-600 border-purple-500/30 dark:text-purple-400", letter: "W" },
   };
   const cfg = map[channel];
   return (
