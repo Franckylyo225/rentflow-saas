@@ -206,6 +206,14 @@ export default function Relances() {
 
   // Actions
   const sendReminder = (r: UrgentReminder, channel: "email" | "sms") => {
+    if (channel === "email" && !canEmail) {
+      upgradeNotice("Les relances par e-mail ne sont pas incluses dans votre offre.");
+      return;
+    }
+    if (channel === "sms" && !canSms) {
+      upgradeNotice("Les relances par SMS ne sont pas incluses dans votre offre.");
+      return;
+    }
     const label = channel === "email" ? "Email" : "SMS";
     const firstName = r.tenant.split(" ")[0];
     setReminders(prev => prev.map(x => x.id === r.id
