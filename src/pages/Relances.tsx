@@ -819,7 +819,7 @@ export default function Relances() {
                     onChange={e => setEditingSeq({ ...editingSeq, sendTime: e.target.value || "09:00" })}
                   />
                   <p className="text-[11px] text-muted-foreground">
-                    Heure locale (Abidjan, GMT)
+                    Heure locale Abidjan (GMT). Par défaut : 09:00 GMT.
                   </p>
                 </div>
               </div>
