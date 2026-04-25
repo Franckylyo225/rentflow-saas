@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Home, TrendingUp, Wallet, Plus, Pencil, Trash2, CheckCircle2, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
@@ -31,12 +32,14 @@ export default function Ventes() {
   const { hasFeature, loading } = useFeatureAccess();
   const allowed = loading || hasFeature("property_sales");
 
-  const { listings, sales, addListing, removeListing, recordSale } = usePropertySales();
+  const { listings, sales, addListing, updateListing, removeListing, recordSale } = usePropertySales();
 
   const [addOpen, setAddOpen] = useState(false);
   const [sellOpen, setSellOpen] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState<string>("");
   const [prefilledPrice, setPrefilledPrice] = useState<number | null>(null);
+  const [editing, setEditing] = useState<SaleListing | null>(null);
+  const [deleting, setDeleting] = useState<SaleListing | null>(null);
 
   // KPI
   const now = new Date();
@@ -193,17 +196,14 @@ export default function Ventes() {
                           <Button size="sm" variant="ghost" className="h-8 gap-1 text-success" onClick={() => openSellFromListing(l)}>
                             <CheckCircle2 className="h-3.5 w-3.5" /> Marquer vendu
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => toast.info("Édition bientôt disponible")}>
+                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(l)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
                           <Button
                             size="icon"
                             variant="ghost"
                             className="h-8 w-8 text-destructive"
-                            onClick={() => {
-                              removeListing(l.id);
-                              toast.success("Bien retiré de la liste");
-                            }}
+                            onClick={() => setDeleting(l)}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
@@ -273,6 +273,44 @@ export default function Ventes() {
           toast.success(`Vente enregistrée — +${fmt(data.salePrice)} FCFA ajouté au CA ✅`);
         }}
       />
+
+      <EditListingDialog
+        listing={editing}
+        onOpenChange={(o) => { if (!o) setEditing(null); }}
+        onSave={(id, data) => {
+          updateListing(id, data);
+          toast.success("Bien mis à jour");
+          setEditing(null);
+        }}
+      />
+
+      <AlertDialog open={!!deleting} onOpenChange={(o) => { if (!o) setDeleting(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce bien&nbsp;?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous êtes sur le point de retirer&nbsp;
+              <span className="font-semibold text-foreground">{deleting?.name}</span>&nbsp;
+              de la liste des biens à vendre. Cette action est définitive.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleting) {
+                  removeListing(deleting.id);
+                  toast.success("Bien retiré de la liste");
+                }
+                setDeleting(null);
+              }}
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
@@ -433,6 +471,74 @@ function RecordSaleDialog({
             }}
           >
             Confirmer la vente
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditListingDialog({
+  listing, onOpenChange, onSave,
+}: {
+  listing: SaleListing | null;
+  onOpenChange: (o: boolean) => void;
+  onSave: (id: string, data: { name: string; location: string; askingPrice: number; listedAt: string; }) => void;
+}) {
+  const [name, setName] = useState("");
+  const [location, setLocation] = useState("");
+  const [price, setPrice] = useState("");
+  const [date, setDate] = useState(todayISO());
+
+  // Sync form when a new listing is opened for edition
+  if (listing && listing.name !== name && listing.location !== location && price === "") {
+    // initial sync only when fields are empty
+  }
+
+  // Effect-like sync
+  useMemo(() => {
+    if (listing) {
+      setName(listing.name);
+      setLocation(listing.location);
+      setPrice(listing.askingPrice.toString());
+      setDate(listing.listedAt);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listing?.id]);
+
+  return (
+    <Dialog open={!!listing} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader><DialogTitle>Modifier le bien</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="ename">Nom du bien</Label>
+            <Input id="ename" value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="eloc">Localisation / Quartier</Label>
+            <Input id="eloc" value={location} onChange={(e) => setLocation(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="eprice">Prix de vente demandé (FCFA)</Label>
+            <Input id="eprice" type="number" inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="edate">Date de mise en vente</Label>
+            <Input id="edate" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
+          <Button
+            className="bg-success hover:bg-success/90 text-success-foreground"
+            disabled={!listing || !name || !location || !price || !date}
+            onClick={() => {
+              if (!listing) return;
+              onSave(listing.id, { name, location, askingPrice: Number(price) || 0, listedAt: date });
+            }}
+          >
+            Enregistrer
           </Button>
         </DialogFooter>
       </DialogContent>
