@@ -19,11 +19,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Plus, ArrowUp, ArrowDown, ArrowUpDown, Mail, MessageSquare, Smartphone,
-  AlertTriangle, CheckCircle2, Clock, Send,
+  AlertTriangle, CheckCircle2, Clock, Send, Lock, Sparkles,
 } from "lucide-react";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 // ----------------- Types & mock data -----------------
 
@@ -141,6 +143,20 @@ function ResultBadge({ result }: { result: HistoryItem["result"] }) {
 // ----------------- Main page -----------------
 
 export default function Relances() {
+  const navigate = useNavigate();
+  const { hasFeature, planName, loading: planLoading } = useFeatureAccess();
+
+  // Capacités selon le plan
+  const canEmail = hasFeature("email_reminders");
+  const canSms = hasFeature("sms_reminders");
+  const canEditTemplates = hasFeature("sms_templates_edit");
+  const canSchedule = hasFeature("sms_schedule");
+  const canFullAuto = hasFeature("sms_auto_full");
+  // Whatsapp réservé aux plans Pro/Business via sms_auto_full
+  const canWhatsapp = canFullAuto;
+  // Création de séquence personnalisée = Pro+
+  const canCreateSequence = canEditTemplates;
+
   const [globalActive, setGlobalActive] = useState(true);
   const [confirmOff, setConfirmOff] = useState(false);
   const [reminders, setReminders] = useState(initialReminders);
@@ -153,6 +169,12 @@ export default function Relances() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingSeq, setEditingSeq] = useState<Sequence | null>(null);
   const [newSeqOpen, setNewSeqOpen] = useState(false);
+
+  const upgradeNotice = (msg: string) => {
+    toast.error(msg, {
+      action: { label: "Voir les offres", onClick: () => navigate("/settings?tab=subscription") },
+    });
+  };
 
   // KPIs
   const kpiToRemind = reminders.length;
@@ -184,6 +206,14 @@ export default function Relances() {
 
   // Actions
   const sendReminder = (r: UrgentReminder, channel: "email" | "sms") => {
+    if (channel === "email" && !canEmail) {
+      upgradeNotice("Les relances par e-mail ne sont pas incluses dans votre offre.");
+      return;
+    }
+    if (channel === "sms" && !canSms) {
+      upgradeNotice("Les relances par SMS ne sont pas incluses dans votre offre.");
+      return;
+    }
     const label = channel === "email" ? "Email" : "SMS";
     const firstName = r.tenant.split(" ")[0];
     setReminders(prev => prev.map(x => x.id === r.id
@@ -238,6 +268,10 @@ export default function Relances() {
 
   const saveSequence = () => {
     if (!editingSeq) return;
+    if (!canEditTemplates) {
+      upgradeNotice("L'édition des modèles de relance est réservée aux offres Pro et Business.");
+      return;
+    }
     setSequences(prev => prev.map(s => s.id === editingSeq.id ? editingSeq : s));
     setEditorOpen(false);
     toast.success("Séquence enregistrée ✓");
@@ -257,24 +291,68 @@ export default function Relances() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Relances automatiques</h1>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl font-bold text-foreground">Relances automatiques</h1>
+              {!planLoading && planName && (
+                <Badge variant="outline" className="text-xs">Offre {planName}</Badge>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground">
               Suivi et gestion des relances loyers — {monthLabel}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
               <Switch checked={globalActive} onCheckedChange={handleToggleGlobal} id="global-toggle" />
               <Label htmlFor="global-toggle" className={cn("text-sm font-medium cursor-pointer", globalActive ? "text-success" : "text-muted-foreground")}>
                 Relances {globalActive ? "actives" : "désactivées"}
               </Label>
             </div>
-            <Button onClick={() => setNewSeqOpen(true)} className="bg-primary hover:bg-primary/90">
-              <Plus className="h-4 w-4" /> Nouvelle séquence
-            </Button>
+            {canCreateSequence ? (
+              <Button onClick={() => setNewSeqOpen(true)} className="bg-primary hover:bg-primary/90">
+                <Plus className="h-4 w-4" /> Nouvelle séquence
+              </Button>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={() => upgradeNotice("La création de séquences personnalisées est réservée aux offres Pro et Business.")}
+                  >
+                    <Lock className="h-3.5 w-3.5" /> Nouvelle séquence
+                    <Sparkles className="h-3.5 w-3.5 text-warning" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Disponible avec l'offre Pro</TooltipContent>
+              </Tooltip>
+            )}
           </div>
         </div>
+
+        {/* Plan limitation banner */}
+        {!planLoading && !canEditTemplates && (
+          <div className="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 flex items-start gap-3">
+            <Sparkles className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
+            <div className="flex-1 text-sm">
+              <p className="font-medium text-foreground">
+                Vous êtes sur l'offre {planName}
+              </p>
+              <p className="text-muted-foreground mt-0.5">
+                Vous bénéficiez des relances automatiques de base (J-3 / J+1).
+                Passez à l'offre <strong>Pro</strong> pour personnaliser vos modèles, créer des séquences sur mesure et débloquer le canal WhatsApp.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate("/settings?tab=subscription")}
+              className="flex-shrink-0"
+            >
+              Passer à Pro
+            </Button>
+          </div>
+        )}
 
         {/* KPI cards */}
         <div className="grid gap-4 grid-cols-2 xl:grid-cols-4">
@@ -399,10 +477,10 @@ export default function Relances() {
                         <div className="flex items-center justify-end gap-2">
                           {r.daysLate > 7 ? (
                             <>
-                              <Button size="sm" variant="destructive" onClick={() => sendReminder(r, "sms")}>
+                              <Button size="sm" variant="destructive" disabled={!canSms} onClick={() => sendReminder(r, "sms")}>
                                 <Smartphone className="h-3.5 w-3.5" /> SMS urgent
                               </Button>
-                              <Button size="sm" variant="outline" onClick={() => sendReminder(r, "email")}>
+                              <Button size="sm" variant="outline" disabled={!canEmail} onClick={() => sendReminder(r, "email")}>
                                 <Mail className="h-3.5 w-3.5" /> Email
                               </Button>
                             </>
@@ -412,10 +490,10 @@ export default function Relances() {
                             </Button>
                           ) : (
                             <>
-                              <Button size="sm" variant="outline" onClick={() => sendReminder(r, "email")}>
+                              <Button size="sm" variant="outline" disabled={!canEmail} onClick={() => sendReminder(r, "email")}>
                                 <Mail className="h-3.5 w-3.5" /> Email
                               </Button>
-                              <Button size="sm" variant="outline" onClick={() => sendReminder(r, "sms")}>
+                              <Button size="sm" variant="outline" disabled={!canSms} onClick={() => sendReminder(r, "sms")}>
                                 <Smartphone className="h-3.5 w-3.5" /> SMS
                               </Button>
                             </>
@@ -557,8 +635,18 @@ export default function Relances() {
         <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Éditeur de séquence</SheetTitle>
-            <SheetDescription>Personnalisez l'étape sélectionnée.</SheetDescription>
+            <SheetDescription>
+              {canEditTemplates
+                ? "Personnalisez l'étape sélectionnée."
+                : "Consultez les paramètres de la séquence. L'édition est réservée aux offres Pro et Business."}
+            </SheetDescription>
           </SheetHeader>
+          {!canEditTemplates && (
+            <div className="mt-4 rounded-md border border-warning/30 bg-warning/5 p-3 text-xs text-foreground flex items-start gap-2">
+              <Lock className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+              <span>Lecture seule sur l'offre {planName}. Passez à Pro pour modifier les modèles, les délais et les canaux.</span>
+            </div>
+          )}
           {editingSeq && (
             <div className="mt-4 space-y-4">
               <div className="flex flex-wrap gap-2">
@@ -578,29 +666,42 @@ export default function Relances() {
                 <Input
                   type="number"
                   value={editingSeq.delayDays}
+                  disabled={!canEditTemplates}
                   onChange={e => setEditingSeq({ ...editingSeq, delayDays: Number(e.target.value) })}
                 />
               </div>
               <div className="space-y-2">
                 <Label>Canal</Label>
                 <div className="flex gap-2">
-                  {(["email", "sms", "whatsapp"] as Channel[]).map(c => (
-                    <Button
-                      key={c}
-                      type="button"
-                      variant={editingSeq.channel === c ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setEditingSeq({ ...editingSeq, channel: c })}
-                    >
-                      {c === "email" ? "Email" : c === "sms" ? "SMS" : "WhatsApp"}
-                    </Button>
-                  ))}
+                  {(["email", "sms", "whatsapp"] as Channel[]).map(c => {
+                    const channelLocked =
+                      (c === "email" && !canEmail) ||
+                      (c === "sms" && !canSms) ||
+                      (c === "whatsapp" && !canWhatsapp);
+                    return (
+                      <Button
+                        key={c}
+                        type="button"
+                        variant={editingSeq.channel === c ? "default" : "outline"}
+                        size="sm"
+                        disabled={!canEditTemplates || channelLocked}
+                        onClick={() => setEditingSeq({ ...editingSeq, channel: c })}
+                      >
+                        {channelLocked && <Lock className="h-3 w-3" />}
+                        {c === "email" ? "Email" : c === "sms" ? "SMS" : "WhatsApp"}
+                      </Button>
+                    );
+                  })}
                 </div>
+                {!canWhatsapp && (
+                  <p className="text-[11px] text-muted-foreground">WhatsApp disponible avec l'offre Pro.</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Objet du message</Label>
                 <Input
                   value={editingSeq.subject}
+                  disabled={!canEditTemplates}
                   onChange={e => setEditingSeq({ ...editingSeq, subject: e.target.value })}
                 />
               </div>
@@ -609,6 +710,7 @@ export default function Relances() {
                 <Textarea
                   rows={6}
                   value={editingSeq.body}
+                  disabled={!canEditTemplates}
                   onChange={e => setEditingSeq({ ...editingSeq, body: e.target.value })}
                 />
               </div>
@@ -619,8 +721,9 @@ export default function Relances() {
                     <button
                       key={v}
                       type="button"
+                      disabled={!canEditTemplates}
                       onClick={() => insertVariable(v)}
-                      className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium hover:bg-primary hover:text-primary-foreground transition"
+                      className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium hover:bg-primary hover:text-primary-foreground transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {v}
                     </button>
@@ -631,7 +734,13 @@ export default function Relances() {
           )}
           <SheetFooter className="mt-6">
             <Button variant="outline" onClick={() => setEditorOpen(false)}>Annuler</Button>
-            <Button onClick={saveSequence}>Enregistrer</Button>
+            {canEditTemplates ? (
+              <Button onClick={saveSequence}>Enregistrer</Button>
+            ) : (
+              <Button onClick={() => navigate("/settings?tab=subscription")} className="bg-warning hover:bg-warning/90 text-warning-foreground">
+                <Sparkles className="h-4 w-4" /> Passer à Pro
+              </Button>
+            )}
           </SheetFooter>
         </SheetContent>
       </Sheet>
@@ -701,9 +810,20 @@ export default function Relances() {
                 <Button variant="outline" onClick={() => markAsPaid(detailReminder)}>
                   Marquer comme payé
                 </Button>
-                <Button onClick={() => sendReminder(detailReminder, detailReminder.daysLate > 7 ? "sms" : "email")}>
-                  <Send className="h-4 w-4" /> Envoyer une relance manuelle
-                </Button>
+                {(() => {
+                  // Choix du canal préférentiel selon les capacités du plan
+                  const preferred = detailReminder.daysLate > 7
+                    ? (canSms ? "sms" : (canEmail ? "email" : null))
+                    : (canEmail ? "email" : (canSms ? "sms" : null));
+                  return (
+                    <Button
+                      disabled={!preferred}
+                      onClick={() => preferred && sendReminder(detailReminder, preferred)}
+                    >
+                      <Send className="h-4 w-4" /> Envoyer une relance manuelle
+                    </Button>
+                  );
+                })()}
               </SheetFooter>
             </>
           )}
