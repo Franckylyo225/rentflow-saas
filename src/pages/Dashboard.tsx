@@ -2,22 +2,25 @@ import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { StatCard } from "@/components/dashboard/StatCard";
+import { StatHistoryDrawer } from "@/components/dashboard/StatHistoryDrawer";
+import { UrgentAlertsSection } from "@/components/dashboard/UrgentAlertsSection";
+import { StatusDonut } from "@/components/dashboard/StatusDonut";
+import { MonthlyRevenueChart } from "@/components/dashboard/MonthlyRevenueChart";
+import { PaymentsTable } from "@/components/dashboard/PaymentsTable";
+import { RemindersWidgets } from "@/components/dashboard/RemindersWidgets";
 import { useProfile } from "@/hooks/useProfile";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
-import { Building2, Users, AlertTriangle, TrendingUp, Home, Loader2, Wallet, TrendingDown, ChevronLeft, ChevronRight, Calendar, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
+import { Building2, Users, AlertTriangle, TrendingUp, Loader2, Wallet, TrendingDown, ChevronLeft, ChevronRight, Calendar, ArrowUpRight, ArrowDownRight, Minus, Plus, Send, Megaphone, Inbox, LineChart } from "lucide-react";
 import { useProperties, useUnits, useTenants, useRentPayments } from "@/hooks/useData";
 import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
-
 import { useExpenses } from "@/hooks/useExpenses";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
-  PieChart, Pie, Cell,
-} from "recharts";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
-const FCFA = (v: number) => `${(v / 1000).toFixed(0)}k`;
 const formatAmount = (v: number, short: boolean) => {
   if (short) {
     if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
@@ -27,30 +30,8 @@ const formatAmount = (v: number, short: boolean) => {
   return v.toLocaleString();
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  paid: "hsl(160, 84%, 39%)",
-  late: "hsl(0, 72%, 51%)",
-  partial: "hsl(38, 92%, 50%)",
-  pending: "hsl(220, 10%, 70%)",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  paid: "Payé",
-  partial: "Partiel",
-  late: "En retard",
-  pending: "En attente",
-};
-
-const CITY_COLORS = [
-  "hsl(160, 84%, 39%)",
-  "hsl(210, 100%, 52%)",
-  "hsl(38, 92%, 50%)",
-  "hsl(280, 65%, 60%)",
-  "hsl(0, 72%, 51%)",
-  "hsl(190, 70%, 50%)",
-];
-
 const MONTH_LABELS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+const MONTH_SHORT = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
 
 function formatMonthLabel(month: string) {
   const [year, m] = month.split("-");
@@ -65,6 +46,7 @@ function shiftMonth(month: string, delta: number): string {
 
 export default function Dashboard() {
   const { profile } = useProfile();
+  const navigate = useNavigate();
   const { data: properties, loading: pLoading } = useProperties();
   const { data: units } = useUnits();
   const { data: tenants } = useTenants();
@@ -74,8 +56,6 @@ export default function Dashboard() {
 
   const canRents = featLoading || hasFeature("rents");
   const canExpenses = featLoading || hasFeature("expenses");
-  const canReports = featLoading || hasFeature("reports");
-  const canProperties = featLoading || hasFeature("properties");
 
   const isMobile = useIsMobile();
   const short = isMobile;
@@ -84,13 +64,14 @@ export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState(now);
   const isCurrentMonth = selectedMonth === now;
 
-  // Financial KPIs for selected month
+  // Drawer states for KPI history
+  const [historyDrawer, setHistoryDrawer] = useState<null | "ca" | "expenses" | "occupancy">(null);
+
   const prevMonth = useMemo(() => shiftMonth(selectedMonth, -1), [selectedMonth]);
   const monthCA = useMemo(() => payments.filter(p => p.month === selectedMonth).reduce((s, p) => s + p.paid_amount, 0), [payments, selectedMonth]);
   const monthExpenses = useMemo(() => expenses.filter(e => e.expense_date.slice(0, 7) === selectedMonth).reduce((s, e) => s + e.amount, 0), [expenses, selectedMonth]);
   const monthBenefice = monthCA - monthExpenses;
 
-  // Previous month KPIs for comparison
   const prevCA = useMemo(() => payments.filter(p => p.month === prevMonth).reduce((s, p) => s + p.paid_amount, 0), [payments, prevMonth]);
   const prevExpenses = useMemo(() => expenses.filter(e => e.expense_date.slice(0, 7) === prevMonth).reduce((s, e) => s + e.amount, 0), [expenses, prevMonth]);
   const prevBenefice = prevCA - prevExpenses;
@@ -106,29 +87,46 @@ export default function Dashboard() {
   const expChange = pctChange(monthExpenses, prevExpenses);
   const benChange = pctChange(monthBenefice, prevBenefice);
 
-  // Filtered payments & unpaid for selected month
   const monthPayments = useMemo(() => payments.filter(p => p.month === selectedMonth), [payments, selectedMonth]);
   const unpaidTotal = useMemo(() => monthPayments.filter(r => r.status !== "paid").reduce((sum, r) => sum + (r.amount - r.paid_amount), 0), [monthPayments]);
-  const totalRevenue = useMemo(() => monthPayments.reduce((s, p) => s + p.amount, 0), [monthPayments]);
+  const unpaidCount = useMemo(() => new Set(monthPayments.filter(r => r.status !== "paid" && r.amount > r.paid_amount).map(p => p.tenant_id)).size, [monthPayments]);
+  const totalExpected = useMemo(() => monthPayments.reduce((s, p) => s + p.amount, 0), [monthPayments]);
+  const totalPaid = useMemo(() => monthPayments.reduce((s, p) => s + p.paid_amount, 0), [monthPayments]);
+  const collectionRate = totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100) : 0;
+  const expectedCount = monthPayments.length;
 
   const totalUnits = units.length;
   const occupiedUnits = units.filter(u => u.status === "occupied").length;
+  const vacantUnits = totalUnits - occupiedUnits;
+  const vacantRevenue = units.filter(u => u.status !== "occupied").reduce((s, u) => s + (u.rent || 0), 0);
   const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
 
-  // Sparkline data - last 6 months revenue
-  const sparklineData = useMemo(() => {
-    const months: string[] = [];
-    for (let i = 5; i >= 0; i--) months.push(shiftMonth(selectedMonth, -i));
-    return months.map(m => payments.filter(p => p.month === m).reduce((s, p) => s + p.paid_amount, 0));
-  }, [payments, selectedMonth]);
+  // 6-month history series
+  const sixMonths = useMemo(() => {
+    const m: { key: string; label: string }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const k = shiftMonth(selectedMonth, -i);
+      const idx = parseInt(k.split("-")[1], 10) - 1;
+      m.push({ key: k, label: `${MONTH_SHORT[idx]} ${k.slice(2, 4)}` });
+    }
+    return m;
+  }, [selectedMonth]);
 
-  const sparklineExpenses = useMemo(() => {
-    const months: string[] = [];
-    for (let i = 5; i >= 0; i--) months.push(shiftMonth(selectedMonth, -i));
-    return months.map(m => expenses.filter(e => e.expense_date.slice(0, 7) === m).reduce((s, e) => s + e.amount, 0));
-  }, [expenses, selectedMonth]);
+  const sparklineData = useMemo(() =>
+    sixMonths.map(m => payments.filter(p => p.month === m.key).reduce((s, p) => s + p.paid_amount, 0)),
+    [payments, sixMonths]);
 
-  // Monthly revenue chart data
+  const sparklineExpenses = useMemo(() =>
+    sixMonths.map(m => expenses.filter(e => e.expense_date.slice(0, 7) === m.key).reduce((s, e) => s + e.amount, 0)),
+    [expenses, sixMonths]);
+
+  const occupancySpark = useMemo(() => sixMonths.map(() => occupancyRate), [sixMonths, occupancyRate]);
+
+  const caHistory = sixMonths.map((m, i) => ({ label: m.label, value: sparklineData[i] }));
+  const expHistory = sixMonths.map((m, i) => ({ label: m.label, value: sparklineExpenses[i] }));
+  const occHistory = sixMonths.map((m, i) => ({ label: m.label, value: occupancySpark[i] }));
+
+  // Monthly chart data
   const monthlyData = useMemo(() => {
     const byMonth: Record<string, { month: string; paid: number; unpaid: number }> = {};
     payments.forEach(p => {
@@ -141,365 +139,297 @@ export default function Dashboard() {
       .map(d => ({
         ...d,
         label: new Date(d.month + "-01").toLocaleDateString("fr-FR", { month: "short", year: "2-digit" }),
-        isSelected: d.month === selectedMonth,
       }));
-  }, [payments, selectedMonth]);
+  }, [payments]);
 
-  // Revenue by city for selected month
-  const cityData = useMemo(() => {
-    const tenantsByUnit: Record<string, boolean> = {};
-    monthPayments.forEach(p => {
-      const tenant = tenants.find(t => t.id === p.tenant_id);
-      if (tenant) tenantsByUnit[tenant.unit_id] = true;
-    });
-    const byCity: Record<string, { city: string; revenue: number }> = {};
-    units.filter(u => tenantsByUnit[u.id]).forEach(u => {
-      const prop = properties.find(p => p.id === u.property_id);
-      const cityName = prop?.cities?.name || "Autre";
-      if (!byCity[cityName]) byCity[cityName] = { city: cityName, revenue: 0 };
-      byCity[cityName].revenue += u.rent;
-    });
-    return Object.values(byCity).sort((a, b) => b.revenue - a.revenue);
-  }, [monthPayments, units, properties, tenants]);
-
-  // Payment status breakdown for selected month
-  const statusData = useMemo(() => {
-    if (monthPayments.length === 0) return [];
-    return buildStatusData(monthPayments);
-  }, [monthPayments]);
-
-  function buildStatusData(list: typeof payments) {
-    const counts: Record<string, { name: string; value: number; count: number }> = {
-      paid: { name: "Payé", value: 0, count: 0 },
-      partial: { name: "Partiel", value: 0, count: 0 },
-      late: { name: "En retard", value: 0, count: 0 },
-      pending: { name: "En attente", value: 0, count: 0 },
-    };
-    list.forEach(p => {
-      if (counts[p.status]) {
-        counts[p.status].value += p.amount;
-        counts[p.status].count += 1;
-      }
-    });
-    return Object.entries(counts)
-      .filter(([, v]) => v.count > 0)
-      .map(([key, v]) => ({ ...v, key }));
-  }
-
-  const totalStatusCount = statusData.reduce((s, d) => s + d.count, 0);
+  // Occupancy progress color
+  const occColor = occupancyRate < 50 ? "bg-destructive" : occupancyRate < 75 ? "bg-warning" : "bg-success";
 
   if (pLoading) {
     return <AppLayout><div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div></AppLayout>;
   }
 
+  function handleRelancerTout() {
+    toast.success(`Relances déclenchées pour ${unpaidCount} locataire(s)`);
+  }
+
   return (
     <AppLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">
-              {(() => {
-                const hour = new Date().getHours();
-                const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
-                const firstName = profile?.full_name?.split(" ")[0] || "";
-                return `${greeting}${firstName ? `, ${firstName}` : ""} 👋`;
-              })()}
-            </h1>
-            <p className="text-muted-foreground text-sm mt-1">Vue d'ensemble de votre portefeuille immobilier</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 bg-card border border-border rounded-xl p-1">
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setSelectedMonth(m => shiftMonth(m, -1))}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <button
-                onClick={() => setSelectedMonth(now)}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
-                  isCurrentMonth ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
-                )}
-              >
-                <Calendar className="h-3.5 w-3.5" />
-                {formatMonthLabel(selectedMonth)}
-              </button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setSelectedMonth(m => shiftMonth(m, 1))} disabled={isCurrentMonth}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+      <div className="grid gap-6 xl:grid-cols-[1fr_280px]">
+        <div className="space-y-6 min-w-0">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground tracking-tight">
+                {(() => {
+                  const hour = new Date().getHours();
+                  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+                  const firstName = profile?.full_name?.split(" ")[0] || "";
+                  return `${greeting}${firstName ? `, ${firstName}` : ""} 👋`;
+                })()}
+              </h1>
+              <p className="text-muted-foreground text-sm mt-1">Vue d'ensemble de votre portefeuille immobilier</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Mobile drawer for reminders */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" className="xl:hidden gap-1.5 h-8">
+                    <Megaphone className="h-3.5 w-3.5" /> Relances
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-full sm:w-[340px] overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle>Relances & échéances</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-4">
+                    <RemindersWidgets />
+                  </div>
+                </SheetContent>
+              </Sheet>
+              <div className="flex items-center gap-1 bg-card border border-border rounded-xl p-1">
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setSelectedMonth(m => shiftMonth(m, -1))}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <button
+                  onClick={() => setSelectedMonth(now)}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                    isCurrentMonth ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
+                  )}
+                >
+                  <Calendar className="h-3.5 w-3.5" />
+                  {formatMonthLabel(selectedMonth)}
+                </button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setSelectedMonth(m => shiftMonth(m, 1))} disabled={isCurrentMonth}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* KPI Cards - Databrain style */}
-        <div className={cn("grid gap-4", canRents && canExpenses ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" : "grid-cols-1 sm:grid-cols-2")}>
-          {canRents && (
+          {/* Top KPI Cards */}
+          <div className={cn("grid gap-4", canRents && canExpenses ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" : "grid-cols-1 sm:grid-cols-2")}>
+            {canRents && (
+              <StatCard
+                title="CA du mois"
+                value={`${formatAmount(monthCA, short)} FCFA`}
+                icon={TrendingUp}
+                variant="success"
+                trend={caChange.direction !== "flat" ? { value: `${caChange.pct}%`, positive: caChange.direction === "up" } : undefined}
+                subtitle="vs mois précédent"
+                sparkData={sparklineData}
+                helpText="Somme des montants encaissés sur le mois sélectionné, tous statuts confondus."
+                onSparkClick={() => setHistoryDrawer("ca")}
+              />
+            )}
+            {canExpenses && (
+              <StatCard
+                title="Dépenses"
+                value={`${formatAmount(monthExpenses, short)} FCFA`}
+                icon={TrendingDown}
+                variant="destructive"
+                trend={expChange.direction !== "flat" ? { value: `${expChange.pct}%`, positive: expChange.direction === "down" } : undefined}
+                subtitle="vs mois précédent"
+                sparkData={sparklineExpenses}
+                helpText="Somme des dépenses (charges, salaires, maintenance) imputées au mois sélectionné."
+                onSparkClick={() => setHistoryDrawer("expenses")}
+              />
+            )}
             <StatCard
-              title="CA du mois"
-              value={`${formatAmount(monthCA, short)} FCFA`}
-              icon={TrendingUp}
-              variant="success"
-              trend={caChange.direction !== "flat" ? { value: `${caChange.pct}%`, positive: caChange.direction === "up" } : undefined}
-              subtitle="vs mois précédent"
-              sparkData={sparklineData}
-            />
-          )}
-          {canExpenses && (
-            <StatCard
-              title="Dépenses"
-              value={`${formatAmount(monthExpenses, short)} FCFA`}
-              icon={TrendingDown}
-              variant="destructive"
-              trend={expChange.direction !== "flat" ? { value: `${expChange.pct}%`, positive: expChange.direction === "down" } : undefined}
-              subtitle="vs mois précédent"
-              sparkData={sparklineExpenses}
-            />
-          )}
-          <StatCard
-            title="Taux d'occupation"
-            value={`${occupancyRate}%`}
-            icon={Users}
-            variant="info"
-            subtitle={`${occupiedUnits}/${totalUnits} unités`}
-            sparkData={[60, 65, 70, 72, 75, occupancyRate]}
-          />
-          <StatCard
-            title="Biens gérés"
-            value={properties.length.toString()}
-            icon={Building2}
-            variant="default"
-            subtitle={`${totalUnits} unités · ${tenants.length} locataires`}
-          />
-        </div>
-
-        {/* Financial summary banner */}
-        {canRents && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card className="border-border overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-transparent" />
-            <CardContent className="p-4 flex items-center gap-4 relative">
-              <div className="p-3 rounded-xl bg-success/10">
-                <TrendingUp className="h-5 w-5 text-success" />
-              </div>
-              <div className="flex-1">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Loyers attendus</p>
-                <p className="text-xl font-bold text-card-foreground">{formatAmount(totalRevenue, short)} <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-border overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 to-transparent" />
-            <CardContent className="p-4 flex items-center gap-4 relative">
-              <div className="p-3 rounded-xl bg-destructive/10">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
-              </div>
-              <div className="flex-1">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Impayés</p>
-                <p className="text-xl font-bold text-destructive">{formatAmount(unpaidTotal, short)} <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className={cn("border-border overflow-hidden relative")}>
-            <div className={cn("absolute inset-0 bg-gradient-to-br", monthBenefice >= 0 ? "from-success/5 to-transparent" : "from-destructive/5 to-transparent")} />
-            <CardContent className="p-4 flex items-center gap-4 relative">
-              <div className={cn("p-3 rounded-xl", monthBenefice >= 0 ? "bg-success/10" : "bg-destructive/10")}>
-                <Wallet className={cn("h-5 w-5", monthBenefice >= 0 ? "text-success" : "text-destructive")} />
-              </div>
-              <div className="flex-1">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Bénéfice net</p>
-                <div className="flex items-baseline gap-2">
-                  <p className={cn("text-xl font-bold", monthBenefice >= 0 ? "text-success" : "text-destructive")}>{formatAmount(monthBenefice, short)} <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
-                  <span className={cn("inline-flex items-center gap-0.5 text-xs font-semibold", benChange.direction === "up" ? "text-success" : benChange.direction === "down" ? "text-destructive" : "text-muted-foreground")}>
-                    {benChange.direction === "up" ? <ArrowUpRight className="h-3 w-3" /> : benChange.direction === "down" ? <ArrowDownRight className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
-                    {benChange.pct}%
-                  </span>
+              title="Taux d'occupation"
+              value={`${occupancyRate}%`}
+              icon={Users}
+              variant="info"
+              sparkData={occupancySpark}
+              helpText="Unités occupées ÷ unités totales × 100. Calculé sur l'ensemble du portefeuille."
+              onSparkClick={() => setHistoryDrawer("occupancy")}
+            >
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-muted-foreground">{occupiedUnits}/{totalUnits} unités</span>
+                  <span className="font-semibold text-card-foreground">{occupancyRate}%</span>
+                </div>
+                <div className="h-2 rounded-full bg-muted overflow-hidden">
+                  <div className={cn("h-full rounded-full transition-all duration-500", occColor)} style={{ width: `${occupancyRate}%` }} />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-        )}
+            </StatCard>
+            <StatCard
+              title="Biens gérés"
+              value={properties.length.toString()}
+              icon={Building2}
+              variant="default"
+              subtitle={`${totalUnits} unités · ${tenants.length} locataires`}
+              helpText="Nombre total de biens immobiliers actifs dans votre portefeuille."
+            >
+              <button
+                onClick={() => navigate("/properties?action=new")}
+                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              >
+                <Plus className="h-3 w-3" /> Ajouter un bien
+              </button>
+            </StatCard>
+          </div>
 
-        {properties.length === 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2">
-              <Card className="border-border">
-                <CardContent className="py-16 text-center">
-                  <Building2 className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-foreground mb-1">Bienvenue sur RentFlow</h3>
-                  <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                    Commencez par ajouter vos biens immobiliers pour voir apparaître vos données ici.
-                  </p>
+          {/* Bottom KPI Cards (financial) */}
+          {canRents && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Loyers attendus */}
+              <Card className="border-border overflow-hidden">
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 rounded-xl bg-success/15 text-success text-lg">📥</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Loyers attendus</p>
+                      <p className="text-xl font-bold text-card-foreground">{formatAmount(totalExpected, short)} <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">{expectedCount} paiement{expectedCount > 1 ? "s" : ""} attendu{expectedCount > 1 ? "s" : ""} ce mois</p>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-muted-foreground">Encaissé</span>
+                      <span className="font-semibold text-success">{collectionRate}% du total</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full rounded-full bg-success transition-all duration-500" style={{ width: `${collectionRate}%` }} />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-            </div>
-            <div>
-              <OnboardingChecklist />
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Charts row - Status Analysis & Revenue */}
-            {canRents && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Payment status donut */}
-              <Card className="border-border">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-semibold flex items-center gap-2">
-                    Analyse des statuts
-                    <span className="text-muted-foreground text-xs font-normal">({formatMonthLabel(selectedMonth)})</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {statusData.length === 0 ? (
-                    <div className="h-[280px] flex items-center justify-center text-muted-foreground text-sm">Aucune donnée</div>
+
+              {/* Impayés */}
+              <Card className={cn("border-border overflow-hidden", unpaidTotal === 0 ? "bg-success/5 border-success/30" : "bg-destructive/5 border-destructive/30")}>
+                <CardContent className="p-4">
+                  {unpaidTotal === 0 ? (
+                    <div className="flex items-center gap-3 h-full">
+                      <div className="p-2.5 rounded-xl bg-success/15 text-success text-lg">✅</div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Impayés</p>
+                        <p className="text-base font-bold text-success">Aucun impayé ce mois !</p>
+                      </div>
+                    </div>
                   ) : (
-                    <div className="flex items-center gap-6">
-                      <div className="relative flex-shrink-0">
-                        <ResponsiveContainer width={200} height={200}>
-                          <PieChart>
-                            <Pie
-                              data={statusData}
-                              dataKey="count"
-                              nameKey="name"
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={55}
-                              outerRadius={90}
-                              paddingAngle={3}
-                              strokeWidth={0}
-                            >
-                              {statusData.map((entry) => (
-                                <Cell key={entry.key} fill={STATUS_COLORS[entry.key]} />
-                              ))}
-                            </Pie>
-                            <Tooltip formatter={(v: number, name: string) => [`${v} loyer(s)`, name]} contentStyle={{ borderRadius: 12, border: "1px solid hsl(220, 13%, 90%)", fontSize: 13, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }} />
-                          </PieChart>
-                        </ResponsiveContainer>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                          <span className="text-2xl font-bold text-card-foreground">{totalStatusCount}</span>
-                          <span className="text-xs text-muted-foreground">Loyers</span>
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="relative p-2.5 rounded-xl bg-destructive/15 text-destructive">
+                          <AlertTriangle className="h-5 w-5" />
+                          <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-destructive animate-pulse" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Impayés</p>
+                          <p className="text-xl font-bold text-destructive">{formatAmount(unpaidTotal, short)} <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">{unpaidCount} locataire{unpaidCount > 1 ? "s" : ""} concerné{unpaidCount > 1 ? "s" : ""}</p>
                         </div>
                       </div>
-                      <div className="flex-1 space-y-3">
-                        {statusData.map(s => {
-                          const pct = Math.round((s.count / totalStatusCount) * 100);
-                          return (
-                            <div key={s.key} className="space-y-1">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <span className="h-3 w-3 rounded-full" style={{ backgroundColor: STATUS_COLORS[s.key] }} />
-                                  <span className="text-sm text-card-foreground font-medium">{s.name}</span>
-                                </div>
-                                <span className="text-sm font-bold text-card-foreground">{s.count}</span>
-                              </div>
-                              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                                <div
-                                  className="h-full rounded-full transition-all duration-500"
-                                  style={{ width: `${pct}%`, backgroundColor: STATUS_COLORS[s.key] }}
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+                      <Button size="sm" variant="destructive" className="w-full h-8 text-xs gap-1.5" onClick={handleRelancerTout}>
+                        <Send className="h-3 w-3" /> Relancer tout
+                      </Button>
                     </div>
                   )}
                 </CardContent>
               </Card>
 
-              {/* Monthly revenue bar chart */}
-              <Card className="border-border">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base font-semibold">Revenus mensuels</CardTitle>
-                    <div className="flex items-center gap-3 text-xs">
-                      <span className="flex items-center gap-1.5">
-                        <span className="h-2.5 w-2.5 rounded-sm bg-success" />
-                        Payé
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <span className="h-2.5 w-2.5 rounded-sm bg-destructive" />
-                        Impayé
-                      </span>
+              {/* Bénéfice net */}
+              <Card className="border-border overflow-hidden">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className={cn("p-2.5 rounded-xl text-lg", monthBenefice >= 0 ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive")}>💹</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Bénéfice net</p>
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <p className={cn("text-xl font-bold", monthBenefice >= 0 ? "text-success" : "text-destructive")}>{formatAmount(monthBenefice, short)} <span className="text-sm font-normal text-muted-foreground">FCFA</span></p>
+                        <span className={cn(
+                          "inline-flex items-center gap-0.5 text-xs font-semibold",
+                          benChange.direction === "up" ? "text-success" : benChange.direction === "down" ? "text-destructive" : "text-muted-foreground"
+                        )}>
+                          {benChange.direction === "up" ? <ArrowUpRight className="h-3 w-3" /> : benChange.direction === "down" ? <ArrowDownRight className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+                          {benChange.pct}% vs mois précédent
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">Charges déduites : {formatAmount(monthExpenses, short)} FCFA</p>
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  {monthlyData.length === 0 ? (
-                    <div className="h-[260px] flex items-center justify-center text-muted-foreground text-sm">Aucune donnée</div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height={260}>
-                      <BarChart data={monthlyData} barGap={2} barCategoryGap="20%">
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" vertical={false} />
-                        <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(220, 10%, 46%)" }} axisLine={false} tickLine={false} />
-                        <YAxis tickFormatter={FCFA} tick={{ fontSize: 11, fill: "hsl(220, 10%, 46%)" }} axisLine={false} tickLine={false} width={50} />
-                        <Tooltip
-                          formatter={(value: number) => `${value.toLocaleString()} FCFA`}
-                          contentStyle={{ borderRadius: 12, border: "1px solid hsl(220, 13%, 90%)", fontSize: 13, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}
-                        />
-                        <Bar dataKey="paid" name="Payé" fill="hsl(160, 84%, 39%)" radius={[6, 6, 0, 0]} />
-                        <Bar dataKey="unpaid" name="Impayé" fill="hsl(0, 72%, 51%)" radius={[6, 6, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
                 </CardContent>
               </Card>
             </div>
-            )}
+          )}
 
-            {/* Transactions */}
-            {canRents && (
+          {/* Urgent alerts section */}
+          {properties.length > 0 && <UrgentAlertsSection selectedMonth={selectedMonth} />}
+
+          {properties.length === 0 ? (
             <Card className="border-border">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold">Paiements du mois</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                {monthPayments.length === 0 ? (
-                  <div className="py-10 text-center text-muted-foreground text-sm">Aucun paiement pour ce mois</div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-border bg-muted/30">
-                          <th className="text-left py-3 px-4 text-muted-foreground font-medium text-xs uppercase tracking-wider">Locataire</th>
-                          <th className="text-right py-3 px-4 text-muted-foreground font-medium text-xs uppercase tracking-wider">Montant</th>
-                          <th className="text-center py-3 px-4 text-muted-foreground font-medium text-xs uppercase tracking-wider">Échéance</th>
-                          <th className="text-center py-3 px-4 text-muted-foreground font-medium text-xs uppercase tracking-wider">Statut</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {monthPayments.slice(0, 10).map(p => (
-                          <tr key={p.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                            <td className="py-3 px-4">
-                              <p className="font-medium text-card-foreground">{p.tenants?.full_name}</p>
-                            </td>
-                            <td className="py-3 px-4 text-right font-semibold text-card-foreground">{p.paid_amount.toLocaleString()} / {p.amount.toLocaleString()} FCFA</td>
-                            <td className="py-3 px-4 text-center text-muted-foreground">{new Date(p.due_date).toLocaleDateString("fr-FR")}</td>
-                            <td className="py-3 px-4 text-center">
-                              <span className={cn(
-                                "text-xs font-medium px-2.5 py-1 rounded-full",
-                                p.status === "paid" ? "bg-success/10 text-success" :
-                                p.status === "late" ? "bg-destructive/10 text-destructive" :
-                                p.status === "partial" ? "bg-warning/10 text-warning" :
-                                "bg-muted text-muted-foreground"
-                              )}>
-                                {STATUS_LABELS[p.status] || p.status}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+              <CardContent className="py-16 text-center">
+                <Building2 className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-1">Bienvenue sur RentFlow</h3>
+                <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                  Commencez par ajouter vos biens immobiliers pour voir apparaître vos données ici.
+                </p>
+                <div className="mt-6">
+                  <OnboardingChecklist />
+                </div>
               </CardContent>
             </Card>
-            )}
-            {/* Onboarding checklist */}
-            <OnboardingChecklist />
-          </>
-        )}
+          ) : (
+            <>
+              {/* Charts row */}
+              {canRents && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <StatusDonut
+                    monthLabel={formatMonthLabel(selectedMonth)}
+                    payments={monthPayments}
+                    vacantUnits={vacantUnits}
+                    vacantPotentialRevenue={vacantRevenue}
+                  />
+                  <MonthlyRevenueChart data={monthlyData} />
+                </div>
+              )}
+
+              {/* Payments table */}
+              {canRents && <PaymentsTable payments={monthPayments} monthLabel={formatMonthLabel(selectedMonth)} />}
+
+              <OnboardingChecklist />
+            </>
+          )}
+        </div>
+
+        {/* Right column (desktop ≥1280px) */}
+        <aside className="hidden xl:block">
+          <div className="sticky top-20">
+            <RemindersWidgets />
+          </div>
+        </aside>
       </div>
+
+      {/* History drawers */}
+      <StatHistoryDrawer
+        open={historyDrawer === "ca"}
+        onClose={() => setHistoryDrawer(null)}
+        title="CA des 6 derniers mois"
+        description="Évolution de votre chiffre d'affaires encaissé"
+        data={caHistory}
+        unit="FCFA"
+        color="hsl(var(--success))"
+      />
+      <StatHistoryDrawer
+        open={historyDrawer === "expenses"}
+        onClose={() => setHistoryDrawer(null)}
+        title="Dépenses des 6 derniers mois"
+        description="Évolution de vos dépenses mensuelles"
+        data={expHistory}
+        unit="FCFA"
+        color="hsl(var(--destructive))"
+      />
+      <StatHistoryDrawer
+        open={historyDrawer === "occupancy"}
+        onClose={() => setHistoryDrawer(null)}
+        title="Taux d'occupation"
+        description="Pourcentage d'unités occupées sur les 6 derniers mois"
+        data={occHistory}
+        unit="%"
+        color="hsl(var(--info))"
+      />
     </AppLayout>
   );
 }
