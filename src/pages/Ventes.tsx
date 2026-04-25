@@ -41,6 +41,41 @@ export default function Ventes() {
   const [editing, setEditing] = useState<SaleListing | null>(null);
   const [deleting, setDeleting] = useState<SaleListing | null>(null);
 
+  // Search & pagination
+  const PAGE_SIZE = 5;
+  const [listingsSearch, setListingsSearch] = useState("");
+  const [listingsPage, setListingsPage] = useState(1);
+  const [salesSearch, setSalesSearch] = useState("");
+  const [salesPage, setSalesPage] = useState(1);
+
+  const filteredListings = useMemo(() => {
+    const q = listingsSearch.trim().toLowerCase();
+    if (!q) return listings;
+    return listings.filter(l =>
+      l.name.toLowerCase().includes(q) ||
+      l.location.toLowerCase().includes(q) ||
+      String(l.askingPrice).includes(q)
+    );
+  }, [listings, listingsSearch]);
+
+  const filteredSales = useMemo(() => {
+    const q = salesSearch.trim().toLowerCase();
+    if (!q) return sales;
+    return sales.filter(s =>
+      s.name.toLowerCase().includes(q) ||
+      s.location.toLowerCase().includes(q) ||
+      s.buyerName.toLowerCase().includes(q) ||
+      String(s.salePrice).includes(q)
+    );
+  }, [sales, salesSearch]);
+
+  const listingsTotalPages = Math.max(1, Math.ceil(filteredListings.length / PAGE_SIZE));
+  const salesTotalPages = Math.max(1, Math.ceil(filteredSales.length / PAGE_SIZE));
+  const safeListingsPage = Math.min(listingsPage, listingsTotalPages);
+  const safeSalesPage = Math.min(salesPage, salesTotalPages);
+  const pagedListings = filteredListings.slice((safeListingsPage - 1) * PAGE_SIZE, safeListingsPage * PAGE_SIZE);
+  const pagedSales = filteredSales.slice((safeSalesPage - 1) * PAGE_SIZE, safeSalesPage * PAGE_SIZE);
+
   // KPI
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
