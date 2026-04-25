@@ -42,6 +42,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminContacts from "./pages/admin/AdminContacts";
 import AdminCampaigns from "./pages/admin/AdminCampaigns";
+import AdminMarketingDashboard from "./pages/admin/AdminMarketingDashboard";
 import { SuperAdminRoute } from "./components/admin/SuperAdminRoute";
 import NotFound from "./pages/NotFound";
 import TermsOfService from "./pages/legal/TermsOfService";
