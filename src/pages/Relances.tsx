@@ -400,6 +400,56 @@ export default function Relances() {
           </div>
         )}
 
+        {/* Quota d'envois manuels (Pro) */}
+        {!planLoading && isPro && (
+          <div className={cn(
+            "rounded-lg border px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between",
+            quotaReached
+              ? "border-destructive/40 bg-destructive/5"
+              : quotaWarning
+                ? "border-warning/40 bg-warning/5"
+                : "border-border bg-card"
+          )}>
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              <Send className={cn(
+                "h-5 w-5 flex-shrink-0 mt-0.5",
+                quotaReached ? "text-destructive" : quotaWarning ? "text-warning" : "text-muted-foreground"
+              )} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground">
+                  Envois manuels — {manualSentThisMonth} / {monthlyManualQuota} ce mois
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {quotaReached
+                    ? "Quota mensuel atteint. Les nouveaux envois manuels sont bloqués jusqu'au mois prochain."
+                    : quotaWarning
+                      ? `Plus que ${manualRemaining} envoi${manualRemaining > 1 ? "s" : ""} disponible${manualRemaining > 1 ? "s" : ""} ce mois.`
+                      : `${manualRemaining} envoi${manualRemaining > 1 ? "s" : ""} restant${manualRemaining > 1 ? "s" : ""}. Les relances automatiques ne sont pas comptées.`}
+                </p>
+                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={cn(
+                      "h-full transition-all",
+                      quotaReached ? "bg-destructive" : quotaWarning ? "bg-warning" : "bg-success"
+                    )}
+                    style={{ width: `${Math.min(quotaRatio * 100, 100)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+            {(quotaWarning || quotaReached) && (
+              <Button
+                size="sm"
+                variant={quotaReached ? "default" : "outline"}
+                onClick={() => navigate("/settings?tab=subscription")}
+                className="flex-shrink-0"
+              >
+                Passer à Business
+              </Button>
+            )}
+          </div>
+        )}
+
         {/* KPI cards */}
         <div className="grid gap-4 grid-cols-2 xl:grid-cols-4">
           <Card>
