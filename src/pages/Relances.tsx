@@ -962,6 +962,7 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
   const [name, setName] = useState("");
   const [delay, setDelay] = useState(0);
   const [channel, setChannel] = useState<Channel>("email");
+  const [sendTime, setSendTime] = useState("09:00");
 
   return (
     <div className="space-y-4">
@@ -969,10 +970,14 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
         <Label>Nom de la séquence</Label>
         <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex : Relance J+30" />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div className="space-y-2">
           <Label>Délai (jours)</Label>
           <Input type="number" value={delay} onChange={e => setDelay(Number(e.target.value))} />
+        </div>
+        <div className="space-y-2">
+          <Label>Heure</Label>
+          <Input type="time" value={sendTime} onChange={e => setSendTime(e.target.value || "09:00")} />
         </div>
         <div className="space-y-2">
           <Label>Canal</Label>
@@ -1000,12 +1005,13 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
             step: delay >= 0 ? `J+${delay}` : `J${delay}`,
             stepColor: delay > 7 ? "destructive" : delay > 0 ? "warning" : "success",
             name: name.trim(),
-            description: `${channel === "email" ? "Email" : "SMS"} · ${Math.abs(delay)} jour(s) ${delay >= 0 ? "après" : "avant"} l'échéance`,
+            description: `${channel === "email" ? "Email" : "SMS"} · ${Math.abs(delay)} jour(s) ${delay >= 0 ? "après" : "avant"} l'échéance · ${sendTime}`,
             active: true,
             delayDays: delay,
             channel,
             subject: name.trim(),
             body: "Bonjour [Prénom], ...",
+            sendTime,
           })}
         >
           Créer
