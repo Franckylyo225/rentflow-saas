@@ -783,14 +783,31 @@ export default function Relances() {
                   </Button>
                 ))}
               </div>
-              <div className="space-y-2">
-                <Label>Délai (jours)</Label>
-                <Input
-                  type="number"
-                  value={editingSeq.delayDays}
-                  disabled={!canEditTemplates}
-                  onChange={e => setEditingSeq({ ...editingSeq, delayDays: Number(e.target.value) })}
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Délai (jours)</Label>
+                  <Input
+                    type="number"
+                    value={editingSeq.delayDays}
+                    disabled={!canEditTemplates}
+                    onChange={e => setEditingSeq({ ...editingSeq, delayDays: Number(e.target.value) })}
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Négatif = avant échéance · Positif = après
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Heure d'envoi</Label>
+                  <Input
+                    type="time"
+                    value={editingSeq.sendTime}
+                    disabled={!canEditTemplates}
+                    onChange={e => setEditingSeq({ ...editingSeq, sendTime: e.target.value || "09:00" })}
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Heure locale (Abidjan, GMT)
+                  </p>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Canal</Label>
