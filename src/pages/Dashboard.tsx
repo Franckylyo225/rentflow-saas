@@ -229,9 +229,20 @@ export default function Dashboard() {
                 trend={caChange.direction !== "flat" ? { value: `${caChange.pct}%`, positive: caChange.direction === "up" } : undefined}
                 subtitle="vs mois précédent"
                 sparkData={sparklineData}
-                helpText="Somme des montants encaissés sur le mois sélectionné, tous statuts confondus."
+                helpText="Loyers encaissés + ventes immobilières du mois sélectionné."
                 onSparkClick={() => setHistoryDrawer("ca")}
-              />
+              >
+                <div className="space-y-1 text-[11px]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">📋 Loyers</span>
+                    <span className="font-medium text-card-foreground">{formatAmount(monthRents, short)} FCFA</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">🏠 Ventes</span>
+                    <span className="font-medium text-card-foreground">{formatAmount(monthSalesAmount, short)} FCFA</span>
+                  </div>
+                </div>
+              </StatCard>
             )}
             {canExpenses && (
               <StatCard
