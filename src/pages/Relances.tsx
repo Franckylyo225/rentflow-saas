@@ -813,21 +813,39 @@ export default function Relances() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Canal</Label>
+                <Label>Canaux d'envoi</Label>
                 <div className="flex gap-2">
-                  {(["email", "sms"] as Channel[]).map(c => (
-                    <Button
-                      key={c}
-                      type="button"
-                      variant={editingSeq.channel === c ? "default" : "outline"}
-                      size="sm"
-                      disabled={!canEditTemplates}
-                      onClick={() => setEditingSeq({ ...editingSeq, channel: c })}
-                    >
-                      {c === "email" ? "Email" : "SMS"}
-                    </Button>
-                  ))}
+                  {(["email", "sms"] as Channel[]).map(c => {
+                    const selected = editingSeq.channels.includes(c);
+                    return (
+                      <Button
+                        key={c}
+                        type="button"
+                        variant={selected ? "default" : "outline"}
+                        size="sm"
+                        disabled={!canEditTemplates}
+                        onClick={() => {
+                          const next = selected
+                            ? editingSeq.channels.filter(x => x !== c)
+                            : [...editingSeq.channels, c];
+                          // Au moins un canal doit rester sélectionné
+                          if (next.length === 0) {
+                            toast.error("Sélectionnez au moins un canal d'envoi.");
+                            return;
+                          }
+                          setEditingSeq({ ...editingSeq, channels: next });
+                        }}
+                      >
+                        {c === "email" ? <Mail className="h-3.5 w-3.5" /> : <Smartphone className="h-3.5 w-3.5" />}
+                        {c === "email" ? "Email" : "SMS"}
+                        {selected && <CheckCircle2 className="h-3.5 w-3.5 ml-1" />}
+                      </Button>
+                    );
+                  })}
                 </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Vous pouvez activer Email et SMS simultanément pour cette étape.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label>Objet du message</Label>
