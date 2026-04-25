@@ -259,10 +259,14 @@ export type Database = {
       }
       campaign_recipients: {
         Row: {
+          bounce_type: string | null
+          bounced_at: string | null
           campaign_id: string
           click_count: number
+          complained_at: string | null
           contact_id: string
           created_at: string
+          delivered_at: string | null
           email: string
           error_message: string | null
           first_clicked_at: string | null
@@ -271,12 +275,17 @@ export type Database = {
           open_count: number
           sent_at: string | null
           status: string
+          unsubscribed_at: string | null
         }
         Insert: {
+          bounce_type?: string | null
+          bounced_at?: string | null
           campaign_id: string
           click_count?: number
+          complained_at?: string | null
           contact_id: string
           created_at?: string
+          delivered_at?: string | null
           email: string
           error_message?: string | null
           first_clicked_at?: string | null
@@ -285,12 +294,17 @@ export type Database = {
           open_count?: number
           sent_at?: string | null
           status?: string
+          unsubscribed_at?: string | null
         }
         Update: {
+          bounce_type?: string | null
+          bounced_at?: string | null
           campaign_id?: string
           click_count?: number
+          complained_at?: string | null
           contact_id?: string
           created_at?: string
+          delivered_at?: string | null
           email?: string
           error_message?: string | null
           first_clicked_at?: string | null
@@ -299,6 +313,7 @@ export type Database = {
           open_count?: number
           sent_at?: string | null
           status?: string
+          unsubscribed_at?: string | null
         }
         Relationships: [
           {
@@ -644,6 +659,54 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_webhook_events: {
+        Row: {
+          contact_id: string | null
+          created_at: string
+          email: string | null
+          event_type: string
+          id: string
+          payload: Json
+          provider: string
+          recipient_id: string | null
+        }
+        Insert: {
+          contact_id?: string | null
+          created_at?: string
+          email?: string | null
+          event_type: string
+          id?: string
+          payload: Json
+          provider?: string
+          recipient_id?: string | null
+        }
+        Update: {
+          contact_id?: string | null
+          created_at?: string
+          email?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          provider?: string
+          recipient_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_webhook_events_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_webhook_events_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_recipients"
             referencedColumns: ["id"]
           },
         ]
@@ -1015,12 +1078,17 @@ export type Database = {
       }
       marketing_contacts: {
         Row: {
+          bounce_count: number
           company: string | null
+          complained_at: string | null
           created_at: string
+          deliverability: string
           email: string
           full_name: string | null
           id: string
           last_activity_at: string | null
+          last_bounce_at: string | null
+          last_bounce_type: string | null
           notes: string | null
           organization_id: string | null
           phone: string | null
@@ -1029,15 +1097,21 @@ export type Database = {
           status: string
           subscribed: boolean
           tags: string[]
+          unsubscribed_at: string | null
           updated_at: string
         }
         Insert: {
+          bounce_count?: number
           company?: string | null
+          complained_at?: string | null
           created_at?: string
+          deliverability?: string
           email: string
           full_name?: string | null
           id?: string
           last_activity_at?: string | null
+          last_bounce_at?: string | null
+          last_bounce_type?: string | null
           notes?: string | null
           organization_id?: string | null
           phone?: string | null
@@ -1046,15 +1120,21 @@ export type Database = {
           status?: string
           subscribed?: boolean
           tags?: string[]
+          unsubscribed_at?: string | null
           updated_at?: string
         }
         Update: {
+          bounce_count?: number
           company?: string | null
+          complained_at?: string | null
           created_at?: string
+          deliverability?: string
           email?: string
           full_name?: string | null
           id?: string
           last_activity_at?: string | null
+          last_bounce_at?: string | null
+          last_bounce_type?: string | null
           notes?: string | null
           organization_id?: string | null
           phone?: string | null
@@ -1063,6 +1143,7 @@ export type Database = {
           status?: string
           subscribed?: boolean
           tags?: string[]
+          unsubscribed_at?: string | null
           updated_at?: string
         }
         Relationships: [
