@@ -17,9 +17,10 @@ import {
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Loader2, Upload, Search, Users } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Upload, Search, Users, FileSpreadsheet } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import * as XLSX from "xlsx";
 
 interface Contact {
   id: string;
@@ -163,41 +164,87 @@ export default function AdminContacts() {
     fetchData();
   };
 
+  const normalizeRows = (rawRows: Record<string, any>[]): { email: string; full_name: string | null; phone: string | null; company: string | null; source: string; status: string }[] => {
+    const norm = (k: string) => k.toString().trim().toLowerCase().replace(/\s+/g, "_");
+    const aliases: Record<string, string> = {
+      email: "email", "e-mail": "email", mail: "email", courriel: "email",
+      full_name: "full_name", name: "full_name", nom: "full_name", "nom_complet": "full_name", fullname: "full_name",
+      phone: "phone", telephone: "phone", "téléphone": "phone", tel: "phone", mobile: "phone",
+      company: "company", societe: "company", "société": "company", entreprise: "company", organisation: "company",
+    };
+    return rawRows.map(r => {
+      const obj: Record<string, any> = {};
+      for (const k of Object.keys(r)) {
+        const key = aliases[norm(k)] ?? norm(k);
+        obj[key] = r[k];
+      }
+      const email = (obj.email ?? "").toString().trim().toLowerCase();
+      return {
+        email,
+        full_name: obj.full_name ? String(obj.full_name).trim() || null : null,
+        phone: obj.phone ? String(obj.phone).trim() || null : null,
+        company: obj.company ? String(obj.company).trim() || null : null,
+        source: "import",
+        status: "new",
+      };
+    }).filter(r => r.email && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(r.email));
+  };
+
+  const importRows = async (rows: ReturnType<typeof normalizeRows>) => {
+    if (!rows.length) { toast.error("Aucun email valide trouvé"); return; }
+    // Dedupe by email (keep last)
+    const map = new Map(rows.map(r => [r.email, r]));
+    const unique = Array.from(map.values());
+    setSaving(true);
+    const { error } = await supabase.from("marketing_contacts").upsert(unique, { onConflict: "email" });
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`${unique.length} contact(s) importé(s)`);
+    setImportOpen(false);
+    setCsvText("");
+    fetchData();
+  };
+
   const handleImport = async () => {
     const lines = csvText.trim().split(/\r?\n/);
     if (lines.length < 2) {
       toast.error("CSV vide ou invalide");
       return;
     }
-    const header = lines[0].split(",").map(h => h.trim().toLowerCase());
-    const idx = (k: string) => header.indexOf(k);
-    const emailIdx = idx("email");
-    if (emailIdx === -1) {
-      toast.error("Le CSV doit contenir une colonne 'email'");
+    const header = lines[0].split(",").map(h => h.trim());
+    const rawRows = lines.slice(1).map(l => {
+      const cols = l.split(",").map(c => c.trim());
+      const r: Record<string, any> = {};
+      header.forEach((h, i) => { r[h] = cols[i] ?? ""; });
+      return r;
+    });
+    const rows = normalizeRows(rawRows);
+    if (!rows.length) {
+      toast.error("Aucun email valide. Vérifiez la colonne 'email'.");
       return;
     }
-    const rows = lines.slice(1).map(l => {
-      const cols = l.split(",").map(c => c.trim());
-      return {
-        email: (cols[emailIdx] || "").toLowerCase(),
-        full_name: idx("full_name") !== -1 ? cols[idx("full_name")] || null : null,
-        phone: idx("phone") !== -1 ? cols[idx("phone")] || null : null,
-        company: idx("company") !== -1 ? cols[idx("company")] || null : null,
-        source: "import",
-        status: "new",
-      };
-    }).filter(r => r.email && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(r.email));
+    await importRows(rows);
+  };
 
-    if (!rows.length) { toast.error("Aucun email valide trouvé"); return; }
-
-    setSaving(true);
-    const { error } = await supabase.from("marketing_contacts").upsert(rows, { onConflict: "email" });
-    setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success(`${rows.length} contact(s) importé(s)`);
-    setImportOpen(false);
-    setCsvText("");
-    fetchData();
+  const handleFileUpload = async (file: File) => {
+    try {
+      setSaving(true);
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      if (!ws) { toast.error("Fichier vide"); setSaving(false); return; }
+      const rawRows: Record<string, any>[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
+      const rows = normalizeRows(rawRows);
+      setSaving(false);
+      if (!rows.length) {
+        toast.error("Aucun email valide. Vérifiez la colonne 'email'.");
+        return;
+      }
+      await importRows(rows);
+    } catch (e: any) {
+      setSaving(false);
+      toast.error(`Lecture du fichier impossible: ${e.message ?? e}`);
+    }
   };
 
   return (
@@ -345,16 +392,48 @@ export default function AdminContacts() {
         </DialogContent>
       </Dialog>
 
-      {/* Import CSV */}
+      {/* Import CSV / Excel */}
       <Dialog open={importOpen} onOpenChange={setImportOpen}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Importer des contacts (CSV)</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Format attendu (1ère ligne = en-têtes) : <code className="text-xs bg-muted px-1.5 py-0.5 rounded">email,full_name,phone,company</code>
-            </p>
+          <DialogHeader><DialogTitle>Importer des contacts</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="rounded-lg border-2 border-dashed border-border p-6 text-center hover:border-primary/40 transition-colors">
+              <FileSpreadsheet className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+              <p className="text-sm font-medium mb-1">Importer un fichier Excel ou CSV</p>
+              <p className="text-xs text-muted-foreground mb-3">
+                Formats acceptés : .xlsx, .xls, .csv — Colonnes : <code className="text-xs bg-muted px-1 rounded">email</code> (requis), <code className="text-xs bg-muted px-1 rounded">full_name</code>, <code className="text-xs bg-muted px-1 rounded">phone</code>, <code className="text-xs bg-muted px-1 rounded">company</code>
+              </p>
+              <input
+                id="contacts-file-input"
+                type="file"
+                accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleFileUpload(f);
+                  e.target.value = "";
+                }}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={saving}
+                onClick={() => document.getElementById("contacts-file-input")?.click()}
+              >
+                {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                Choisir un fichier
+              </Button>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">ou coller du CSV</span>
+              </div>
+            </div>
+
             <Textarea
-              rows={10}
+              rows={8}
               placeholder="email,full_name,phone,company&#10;jean@example.com,Jean Dupont,+225...,Agence X"
               value={csvText}
               onChange={(e) => setCsvText(e.target.value)}
@@ -362,10 +441,10 @@ export default function AdminContacts() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setImportOpen(false)}>Annuler</Button>
-            <Button onClick={handleImport} disabled={saving}>
+            <Button variant="outline" onClick={() => setImportOpen(false)}>Fermer</Button>
+            <Button onClick={handleImport} disabled={saving || !csvText.trim()}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Importer
+              Importer le CSV collé
             </Button>
           </DialogFooter>
         </DialogContent>
