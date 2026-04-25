@@ -635,8 +635,18 @@ export default function Relances() {
         <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Éditeur de séquence</SheetTitle>
-            <SheetDescription>Personnalisez l'étape sélectionnée.</SheetDescription>
+            <SheetDescription>
+              {canEditTemplates
+                ? "Personnalisez l'étape sélectionnée."
+                : "Consultez les paramètres de la séquence. L'édition est réservée aux offres Pro et Business."}
+            </SheetDescription>
           </SheetHeader>
+          {!canEditTemplates && (
+            <div className="mt-4 rounded-md border border-warning/30 bg-warning/5 p-3 text-xs text-foreground flex items-start gap-2">
+              <Lock className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+              <span>Lecture seule sur l'offre {planName}. Passez à Pro pour modifier les modèles, les délais et les canaux.</span>
+            </div>
+          )}
           {editingSeq && (
             <div className="mt-4 space-y-4">
               <div className="flex flex-wrap gap-2">
@@ -656,29 +666,42 @@ export default function Relances() {
                 <Input
                   type="number"
                   value={editingSeq.delayDays}
+                  disabled={!canEditTemplates}
                   onChange={e => setEditingSeq({ ...editingSeq, delayDays: Number(e.target.value) })}
                 />
               </div>
               <div className="space-y-2">
                 <Label>Canal</Label>
                 <div className="flex gap-2">
-                  {(["email", "sms", "whatsapp"] as Channel[]).map(c => (
-                    <Button
-                      key={c}
-                      type="button"
-                      variant={editingSeq.channel === c ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setEditingSeq({ ...editingSeq, channel: c })}
-                    >
-                      {c === "email" ? "Email" : c === "sms" ? "SMS" : "WhatsApp"}
-                    </Button>
-                  ))}
+                  {(["email", "sms", "whatsapp"] as Channel[]).map(c => {
+                    const channelLocked =
+                      (c === "email" && !canEmail) ||
+                      (c === "sms" && !canSms) ||
+                      (c === "whatsapp" && !canWhatsapp);
+                    return (
+                      <Button
+                        key={c}
+                        type="button"
+                        variant={editingSeq.channel === c ? "default" : "outline"}
+                        size="sm"
+                        disabled={!canEditTemplates || channelLocked}
+                        onClick={() => setEditingSeq({ ...editingSeq, channel: c })}
+                      >
+                        {channelLocked && <Lock className="h-3 w-3" />}
+                        {c === "email" ? "Email" : c === "sms" ? "SMS" : "WhatsApp"}
+                      </Button>
+                    );
+                  })}
                 </div>
+                {!canWhatsapp && (
+                  <p className="text-[11px] text-muted-foreground">WhatsApp disponible avec l'offre Pro.</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Objet du message</Label>
                 <Input
                   value={editingSeq.subject}
+                  disabled={!canEditTemplates}
                   onChange={e => setEditingSeq({ ...editingSeq, subject: e.target.value })}
                 />
               </div>
@@ -687,6 +710,7 @@ export default function Relances() {
                 <Textarea
                   rows={6}
                   value={editingSeq.body}
+                  disabled={!canEditTemplates}
                   onChange={e => setEditingSeq({ ...editingSeq, body: e.target.value })}
                 />
               </div>
@@ -697,8 +721,9 @@ export default function Relances() {
                     <button
                       key={v}
                       type="button"
+                      disabled={!canEditTemplates}
                       onClick={() => insertVariable(v)}
-                      className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium hover:bg-primary hover:text-primary-foreground transition"
+                      className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium hover:bg-primary hover:text-primary-foreground transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {v}
                     </button>
@@ -709,7 +734,13 @@ export default function Relances() {
           )}
           <SheetFooter className="mt-6">
             <Button variant="outline" onClick={() => setEditorOpen(false)}>Annuler</Button>
-            <Button onClick={saveSequence}>Enregistrer</Button>
+            {canEditTemplates ? (
+              <Button onClick={saveSequence}>Enregistrer</Button>
+            ) : (
+              <Button onClick={() => navigate("/settings?tab=subscription")} className="bg-warning hover:bg-warning/90 text-warning-foreground">
+                <Sparkles className="h-4 w-4" /> Passer à Pro
+              </Button>
+            )}
           </SheetFooter>
         </SheetContent>
       </Sheet>
