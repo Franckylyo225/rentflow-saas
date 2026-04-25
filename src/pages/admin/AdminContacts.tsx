@@ -164,41 +164,87 @@ export default function AdminContacts() {
     fetchData();
   };
 
+  const normalizeRows = (rawRows: Record<string, any>[]): { email: string; full_name: string | null; phone: string | null; company: string | null; source: string; status: string }[] => {
+    const norm = (k: string) => k.toString().trim().toLowerCase().replace(/\s+/g, "_");
+    const aliases: Record<string, string> = {
+      email: "email", "e-mail": "email", mail: "email", courriel: "email",
+      full_name: "full_name", name: "full_name", nom: "full_name", "nom_complet": "full_name", fullname: "full_name",
+      phone: "phone", telephone: "phone", "téléphone": "phone", tel: "phone", mobile: "phone",
+      company: "company", societe: "company", "société": "company", entreprise: "company", organisation: "company",
+    };
+    return rawRows.map(r => {
+      const obj: Record<string, any> = {};
+      for (const k of Object.keys(r)) {
+        const key = aliases[norm(k)] ?? norm(k);
+        obj[key] = r[k];
+      }
+      const email = (obj.email ?? "").toString().trim().toLowerCase();
+      return {
+        email,
+        full_name: obj.full_name ? String(obj.full_name).trim() || null : null,
+        phone: obj.phone ? String(obj.phone).trim() || null : null,
+        company: obj.company ? String(obj.company).trim() || null : null,
+        source: "import",
+        status: "new",
+      };
+    }).filter(r => r.email && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(r.email));
+  };
+
+  const importRows = async (rows: ReturnType<typeof normalizeRows>) => {
+    if (!rows.length) { toast.error("Aucun email valide trouvé"); return; }
+    // Dedupe by email (keep last)
+    const map = new Map(rows.map(r => [r.email, r]));
+    const unique = Array.from(map.values());
+    setSaving(true);
+    const { error } = await supabase.from("marketing_contacts").upsert(unique, { onConflict: "email" });
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`${unique.length} contact(s) importé(s)`);
+    setImportOpen(false);
+    setCsvText("");
+    fetchData();
+  };
+
   const handleImport = async () => {
     const lines = csvText.trim().split(/\r?\n/);
     if (lines.length < 2) {
       toast.error("CSV vide ou invalide");
       return;
     }
-    const header = lines[0].split(",").map(h => h.trim().toLowerCase());
-    const idx = (k: string) => header.indexOf(k);
-    const emailIdx = idx("email");
-    if (emailIdx === -1) {
-      toast.error("Le CSV doit contenir une colonne 'email'");
+    const header = lines[0].split(",").map(h => h.trim());
+    const rawRows = lines.slice(1).map(l => {
+      const cols = l.split(",").map(c => c.trim());
+      const r: Record<string, any> = {};
+      header.forEach((h, i) => { r[h] = cols[i] ?? ""; });
+      return r;
+    });
+    const rows = normalizeRows(rawRows);
+    if (!rows.length) {
+      toast.error("Aucun email valide. Vérifiez la colonne 'email'.");
       return;
     }
-    const rows = lines.slice(1).map(l => {
-      const cols = l.split(",").map(c => c.trim());
-      return {
-        email: (cols[emailIdx] || "").toLowerCase(),
-        full_name: idx("full_name") !== -1 ? cols[idx("full_name")] || null : null,
-        phone: idx("phone") !== -1 ? cols[idx("phone")] || null : null,
-        company: idx("company") !== -1 ? cols[idx("company")] || null : null,
-        source: "import",
-        status: "new",
-      };
-    }).filter(r => r.email && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(r.email));
+    await importRows(rows);
+  };
 
-    if (!rows.length) { toast.error("Aucun email valide trouvé"); return; }
-
-    setSaving(true);
-    const { error } = await supabase.from("marketing_contacts").upsert(rows, { onConflict: "email" });
-    setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success(`${rows.length} contact(s) importé(s)`);
-    setImportOpen(false);
-    setCsvText("");
-    fetchData();
+  const handleFileUpload = async (file: File) => {
+    try {
+      setSaving(true);
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      if (!ws) { toast.error("Fichier vide"); setSaving(false); return; }
+      const rawRows: Record<string, any>[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
+      const rows = normalizeRows(rawRows);
+      setSaving(false);
+      if (!rows.length) {
+        toast.error("Aucun email valide. Vérifiez la colonne 'email'.");
+        return;
+      }
+      await importRows(rows);
+    } catch (e: any) {
+      setSaving(false);
+      toast.error(`Lecture du fichier impossible: ${e.message ?? e}`);
+    }
   };
 
   return (
