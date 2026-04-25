@@ -22,6 +22,7 @@ import FinancialReports from "./pages/FinancialReports";
 import SettingsPage from "./pages/Settings";
 import Notifications from "./pages/Notifications";
 import Patrimoine from "./pages/Patrimoine";
+import Ventes from "./pages/Ventes";
 import PatrimoineDetail from "./pages/PatrimoineDetail";
 import MfaVerify from "./pages/MfaVerify";
 import ResetPassword from "./pages/ResetPassword";
@@ -87,6 +88,7 @@ const App = () => (
               <Route path="/tenants" element={<ProtectedRoute><FeatureGate featureKey="tenants"><Tenants /></FeatureGate></ProtectedRoute>} />
               <Route path="/tenants/:id" element={<ProtectedRoute><FeatureGate featureKey="tenants"><TenantDetail /></FeatureGate></ProtectedRoute>} />
               <Route path="/rents" element={<ProtectedRoute><FeatureGate featureKey="rents"><Rents /></FeatureGate></ProtectedRoute>} />
+              <Route path="/ventes" element={<ProtectedRoute><Ventes /></ProtectedRoute>} />
               <Route path="/expenses" element={<ProtectedRoute><FeatureGate featureKey="expenses"><Expenses /></FeatureGate></ProtectedRoute>} />
               <Route path="/employees" element={<ProtectedRoute><FeatureGate featureKey="employees"><Employees /></FeatureGate></ProtectedRoute>} />
               <Route path="/financial-reports" element={<ProtectedRoute><FeatureGate featureKey="reports"><FinancialReports /></FeatureGate></ProtectedRoute>} />

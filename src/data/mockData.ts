@@ -137,6 +137,7 @@ export const navItems = [
   
   { label: "Locataires", icon: Users, path: "/tenants", featureKey: "tenants" },
   { label: "Loyers", icon: CreditCard, path: "/rents", featureKey: "rents" },
+  { label: "Ventes", icon: Home, path: "/ventes", featureKey: "property_sales" },
   { label: "Dépenses", icon: Receipt, path: "/expenses", featureKey: "expenses" },
   { label: "Salaires", icon: Users2, path: "/employees", featureKey: "employees" },
   { label: "Rapports", icon: BarChart3, path: "/financial-reports", featureKey: "reports" },
