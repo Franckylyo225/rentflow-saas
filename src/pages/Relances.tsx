@@ -700,29 +700,19 @@ export default function Relances() {
               <div className="space-y-2">
                 <Label>Canal</Label>
                 <div className="flex gap-2">
-                  {(["email", "sms", "whatsapp"] as Channel[]).map(c => {
-                    const channelLocked =
-                      (c === "email" && !canEmail) ||
-                      (c === "sms" && !canSms) ||
-                      (c === "whatsapp" && !canWhatsapp);
-                    return (
-                      <Button
-                        key={c}
-                        type="button"
-                        variant={editingSeq.channel === c ? "default" : "outline"}
-                        size="sm"
-                        disabled={!canEditTemplates || channelLocked}
-                        onClick={() => setEditingSeq({ ...editingSeq, channel: c })}
-                      >
-                        {channelLocked && <Lock className="h-3 w-3" />}
-                        {c === "email" ? "Email" : c === "sms" ? "SMS" : "WhatsApp"}
-                      </Button>
-                    );
-                  })}
+                  {(["email", "sms"] as Channel[]).map(c => (
+                    <Button
+                      key={c}
+                      type="button"
+                      variant={editingSeq.channel === c ? "default" : "outline"}
+                      size="sm"
+                      disabled={!canEditTemplates}
+                      onClick={() => setEditingSeq({ ...editingSeq, channel: c })}
+                    >
+                      {c === "email" ? "Email" : "SMS"}
+                    </Button>
+                  ))}
                 </div>
-                {!canWhatsapp && (
-                  <p className="text-[11px] text-muted-foreground">WhatsApp disponible avec l'offre Pro.</p>
-                )}
               </div>
               <div className="space-y-2">
                 <Label>Objet du message</Label>
