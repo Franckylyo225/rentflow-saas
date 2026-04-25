@@ -126,27 +126,94 @@ export function RemindersWidgets() {
     };
   }, [orgId, proAccess]);
 
-  // Simulated upcoming events (lease ends)
-  const events = useMemo(() => {
-    const out: { date: string; label: string; target: string }[] = [];
-    tenants.slice(0, 4).forEach((t, i) => {
+  // ===== Real upcoming events: lease ends + unpaid rent dues =====
+  const { data: rentPayments } = useRentPayments();
+
+  type EventKind = "lease_end" | "rent_due" | "rent_late";
+  interface UpcomingEvent {
+    id: string;
+    date: Date;
+    kind: EventKind;
+    label: string;
+    target: string;
+    href: string;
+    daysUntil: number;
+    urgent: boolean;
+  }
+
+  const events = useMemo<UpcomingEvent[]>(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const horizon = new Date(today);
+    horizon.setDate(horizon.getDate() + 90); // window: next 90 days
+
+    const out: UpcomingEvent[] = [];
+
+    // 1) Lease ends within 90 days
+    tenants.forEach((t) => {
       if (!t.lease_start || !t.lease_duration) return;
-      const start = new Date(t.lease_start);
-      const end = new Date(start);
+      const end = new Date(t.lease_start);
       end.setMonth(end.getMonth() + t.lease_duration);
+      if (end < today || end > horizon) return;
+      const daysUntil = Math.ceil((end.getTime() - today.getTime()) / 86400000);
       out.push({
-        date: end.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }),
-        label: i === 0 ? "Fin bail" : i === 1 ? "Visite" : i === 2 ? "Renouvellement" : "Échéance",
-        target: t.units?.properties?.name || t.units?.name || t.full_name,
+        id: `lease-${t.id}`,
+        date: end,
+        kind: "lease_end",
+        label: daysUntil <= 30 ? "Fin de bail" : "Renouvellement à prévoir",
+        target: `${t.full_name} — ${t.units?.properties?.name || t.units?.name || "Bien"}`,
+        href: `/tenants/${t.id}`,
+        daysUntil,
+        urgent: daysUntil <= 30,
       });
     });
-    if (out.length === 0) {
-      const d = new Date();
-      d.setDate(d.getDate() + 7);
-      out.push({ date: d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }), label: "Aucun événement", target: "—" });
-    }
-    return out.slice(0, 4);
-  }, [tenants]);
+
+    // 2) Rent dues in next 30 days that aren't fully paid
+    rentPayments.forEach((rp) => {
+      if (!rp.due_date) return;
+      const due = new Date(rp.due_date);
+      due.setHours(0, 0, 0, 0);
+      const daysUntil = Math.ceil((due.getTime() - today.getTime()) / 86400000);
+
+      // Skip fully paid
+      if (rp.status === "paid") return;
+      // Only show upcoming (next 14d) or recently late (last 30d)
+      if (daysUntil > 14 || daysUntil < -30) return;
+
+      const tenantName = rp.tenants?.full_name || "Locataire";
+      const unitName = rp.tenants?.units?.properties?.name || rp.tenants?.units?.name || "";
+      const isLate = daysUntil < 0 || rp.status === "late";
+
+      out.push({
+        id: `rent-${rp.id}`,
+        date: due,
+        kind: isLate ? "rent_late" : "rent_due",
+        label: isLate
+          ? `Loyer en retard (${Math.abs(daysUntil)}j)`
+          : daysUntil === 0
+            ? "Loyer dû aujourd'hui"
+            : `Loyer à venir (J-${daysUntil})`,
+        target: `${tenantName}${unitName ? ` — ${unitName}` : ""}`,
+        href: rp.tenants?.id ? `/tenants/${rp.tenants.id}` : "/rents",
+        daysUntil,
+        urgent: isLate || daysUntil <= 3,
+      });
+    });
+
+    return out
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .slice(0, 5);
+  }, [tenants, rentPayments]);
+
+  function fmtEventDate(d: Date) {
+    return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  }
+
+  function eventIcon(kind: EventKind) {
+    if (kind === "lease_end") return <FileSignature className="h-3.5 w-3.5 text-info flex-shrink-0" />;
+    if (kind === "rent_late") return <AlertTriangle className="h-3.5 w-3.5 text-destructive flex-shrink-0" />;
+    return <Wallet className="h-3.5 w-3.5 text-success flex-shrink-0" />;
+  }
 
   async function setAllSchedules(active: boolean) {
     if (!orgId || schedules.length === 0) return;
