@@ -64,17 +64,46 @@ interface Sequence {
   description: string;
   active: boolean;
   delayDays: number;
-  channels: Channel[]; // au moins un canal — peut combiner email + SMS
-  subject: string;
-  body: string;
+  channels: Channel[]; // au moins un canal — par défaut email + sms
+  emailSubject: string;
+  emailBody: string;
+  smsBody: string;
   sendTime: string; // format "HH:mm" — heure locale d'envoi
 }
 
 const initialSequences: Sequence[] = [
-  { id: "s1", step: "J-3", stepColor: "success", name: "Rappel avant échéance", description: "Email · 3 jours avant la date", active: true, delayDays: -3, channels: ["email"], subject: "Rappel : votre loyer arrive à échéance", body: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien] est dû le [Date échéance]. Lien de paiement : [Lien paiement]", sendTime: "09:00" },
-  { id: "s2", step: "J+1", stepColor: "warning", name: "Relance J+1", description: "Email + SMS · 1 jour après l'échéance", active: true, delayDays: 1, channels: ["email", "sms"], subject: "Loyer en retard de paiement", body: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien] n'a pas encore été reçu. Merci de régulariser.", sendTime: "09:00" },
-  { id: "s3", step: "J+7", stepColor: "destructive", name: "Relance urgente", description: "SMS prioritaire · 7 jours après l'échéance", active: true, delayDays: 7, channels: ["sms"], subject: "Relance urgente", body: "[Prénom], votre loyer de [Montant] est en retard de 7 jours. Merci de régulariser sous 48h.", sendTime: "09:00" },
-  { id: "s4", step: "J+15", stepColor: "muted", name: "Mise en demeure", description: "Email formel · 15 jours après l'échéance", active: false, delayDays: 15, channels: ["email"], subject: "Mise en demeure", body: "Bonjour [Prénom], faute de règlement de [Montant] pour [Bien], nous vous mettons en demeure de payer sous 8 jours.", sendTime: "09:00" },
+  {
+    id: "s1", step: "J-3", stepColor: "success", name: "Rappel avant échéance",
+    description: "Email + SMS · 3 jours avant la date", active: true, delayDays: -3,
+    channels: ["email", "sms"], sendTime: "09:00",
+    emailSubject: "Rappel : votre loyer arrive à échéance",
+    emailBody: "Bonjour [Prénom],\n\nNous vous rappelons que votre loyer de [Montant] pour [Bien] est dû le [Date échéance].\n\nLien de paiement : [Lien paiement]\n\nCordialement,\n[Nom agence]",
+    smsBody: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien] est dû le [Date échéance]. — [Nom agence]",
+  },
+  {
+    id: "s2", step: "J+1", stepColor: "warning", name: "Relance J+1",
+    description: "Email + SMS · 1 jour après l'échéance", active: true, delayDays: 1,
+    channels: ["email", "sms"], sendTime: "09:00",
+    emailSubject: "Loyer en retard de paiement",
+    emailBody: "Bonjour [Prénom],\n\nVotre loyer de [Montant] pour [Bien] n'a pas encore été reçu. Merci de régulariser votre situation dans les plus brefs délais.\n\nCordialement,\n[Nom agence]",
+    smsBody: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien] n'a pas été reçu. Merci de régulariser. — [Nom agence]",
+  },
+  {
+    id: "s3", step: "J+7", stepColor: "destructive", name: "Relance urgente",
+    description: "Email + SMS · 7 jours après l'échéance", active: true, delayDays: 7,
+    channels: ["email", "sms"], sendTime: "09:00",
+    emailSubject: "Relance urgente — loyer impayé",
+    emailBody: "Bonjour [Prénom],\n\nVotre loyer de [Montant] pour [Bien] est en retard de 7 jours. Merci de régulariser sous 48h pour éviter toute procédure.\n\nCordialement,\n[Nom agence]",
+    smsBody: "[Prénom], votre loyer de [Montant] est en retard de 7 jours. Régularisez sous 48h. — [Nom agence]",
+  },
+  {
+    id: "s4", step: "J+15", stepColor: "muted", name: "Mise en demeure",
+    description: "Email + SMS · 15 jours après l'échéance", active: false, delayDays: 15,
+    channels: ["email", "sms"], sendTime: "09:00",
+    emailSubject: "Mise en demeure",
+    emailBody: "Bonjour [Prénom],\n\nFaute de règlement de [Montant] pour [Bien], nous vous mettons en demeure de payer sous 8 jours.\n\nCordialement,\n[Nom agence]",
+    smsBody: "[Prénom], mise en demeure : régularisez [Montant] sous 8 jours. — [Nom agence]",
+  },
 ];
 
 interface HistoryItem {
