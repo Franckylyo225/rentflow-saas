@@ -477,10 +477,10 @@ export default function Relances() {
                         <div className="flex items-center justify-end gap-2">
                           {r.daysLate > 7 ? (
                             <>
-                              <Button size="sm" variant="destructive" onClick={() => sendReminder(r, "sms")}>
+                              <Button size="sm" variant="destructive" disabled={!canSms} onClick={() => sendReminder(r, "sms")}>
                                 <Smartphone className="h-3.5 w-3.5" /> SMS urgent
                               </Button>
-                              <Button size="sm" variant="outline" onClick={() => sendReminder(r, "email")}>
+                              <Button size="sm" variant="outline" disabled={!canEmail} onClick={() => sendReminder(r, "email")}>
                                 <Mail className="h-3.5 w-3.5" /> Email
                               </Button>
                             </>
@@ -490,10 +490,10 @@ export default function Relances() {
                             </Button>
                           ) : (
                             <>
-                              <Button size="sm" variant="outline" onClick={() => sendReminder(r, "email")}>
+                              <Button size="sm" variant="outline" disabled={!canEmail} onClick={() => sendReminder(r, "email")}>
                                 <Mail className="h-3.5 w-3.5" /> Email
                               </Button>
-                              <Button size="sm" variant="outline" onClick={() => sendReminder(r, "sms")}>
+                              <Button size="sm" variant="outline" disabled={!canSms} onClick={() => sendReminder(r, "sms")}>
                                 <Smartphone className="h-3.5 w-3.5" /> SMS
                               </Button>
                             </>
