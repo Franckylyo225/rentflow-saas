@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { NewsletterForm } from "./NewsletterForm";
 
 const FOOTER_LINKS = {
   Produit: [
@@ -21,13 +22,17 @@ export function LandingFooter() {
   return (
     <footer className="border-t border-border">
       <div className="max-w-6xl mx-auto px-5 sm:px-8 py-16">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-10">
           {/* Brand */}
-          <div className="col-span-2 md:col-span-1">
+          <div className="col-span-2 md:col-span-2">
             <img src="/logo-horizontal.png" alt="RentFlow" className="h-8 mb-5" />
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mb-5">
               La plateforme de gestion locative conçue pour l'Afrique.
             </p>
+            <p className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">
+              Restez informé
+            </p>
+            <NewsletterForm source="landing-footer" />
           </div>
 
           {/* Links */}
