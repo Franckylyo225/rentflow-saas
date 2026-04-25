@@ -1987,6 +1987,94 @@ export type Database = {
           },
         ]
       }
+      property_listings: {
+        Row: {
+          asking_price: number
+          created_at: string
+          id: string
+          listed_at: string
+          location: string
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          asking_price?: number
+          created_at?: string
+          id?: string
+          listed_at?: string
+          location?: string
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          asking_price?: number
+          created_at?: string
+          id?: string
+          listed_at?: string
+          location?: string
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_listings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_sales: {
+        Row: {
+          buyer_name: string
+          commission: number
+          created_at: string
+          id: string
+          location: string
+          name: string
+          organization_id: string
+          sale_date: string
+          sale_price: number
+          updated_at: string
+        }
+        Insert: {
+          buyer_name?: string
+          commission?: number
+          created_at?: string
+          id?: string
+          location?: string
+          name: string
+          organization_id: string
+          sale_date?: string
+          sale_price?: number
+          updated_at?: string
+        }
+        Update: {
+          buyer_name?: string
+          commission?: number
+          created_at?: string
+          id?: string
+          location?: string
+          name?: string
+          organization_id?: string
+          sale_date?: string
+          sale_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_sales_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rent_payments: {
         Row: {
           amount: number
