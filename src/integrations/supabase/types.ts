@@ -209,6 +209,114 @@ export type Database = {
           },
         ]
       }
+      campaign_events: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          event_type: string
+          id: string
+          ip_address: string | null
+          recipient_id: string
+          url: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          recipient_id: string
+          url?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          recipient_id?: string
+          url?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_events_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_recipients: {
+        Row: {
+          campaign_id: string
+          click_count: number
+          contact_id: string
+          created_at: string
+          email: string
+          error_message: string | null
+          first_clicked_at: string | null
+          first_opened_at: string | null
+          id: string
+          open_count: number
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          campaign_id: string
+          click_count?: number
+          contact_id: string
+          created_at?: string
+          email: string
+          error_message?: string | null
+          first_clicked_at?: string | null
+          first_opened_at?: string | null
+          id?: string
+          open_count?: number
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          campaign_id?: string
+          click_count?: number
+          contact_id?: string
+          created_at?: string
+          email?: string
+          error_message?: string | null
+          first_clicked_at?: string | null
+          first_opened_at?: string | null
+          id?: string
+          open_count?: number
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_recipients_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cities: {
         Row: {
           country_id: string | null
@@ -847,6 +955,122 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_campaigns: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          html_content: string
+          id: string
+          name: string
+          segment_filter: Json
+          sent_at: string | null
+          status: string
+          subject: string
+          total_clicked: number
+          total_failed: number
+          total_opened: number
+          total_recipients: number
+          total_sent: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          html_content?: string
+          id?: string
+          name: string
+          segment_filter?: Json
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          total_clicked?: number
+          total_failed?: number
+          total_opened?: number
+          total_recipients?: number
+          total_sent?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          html_content?: string
+          id?: string
+          name?: string
+          segment_filter?: Json
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          total_clicked?: number
+          total_failed?: number
+          total_opened?: number
+          total_recipients?: number
+          total_sent?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      marketing_contacts: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          last_activity_at: string | null
+          notes: string | null
+          organization_id: string | null
+          phone: string | null
+          score: number
+          source: string
+          status: string
+          subscribed: boolean
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          last_activity_at?: string | null
+          notes?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          score?: number
+          source?: string
+          status?: string
+          subscribed?: boolean
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          last_activity_at?: string | null
+          notes?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          score?: number
+          source?: string
+          status?: string
+          subscribed?: boolean
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_contacts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
