@@ -119,8 +119,12 @@ export default function Dashboard() {
   }, [selectedMonth]);
 
   const sparklineData = useMemo(() =>
-    sixMonths.map(m => payments.filter(p => p.month === m.key).reduce((s, p) => s + p.paid_amount, 0)),
-    [payments, sixMonths]);
+    sixMonths.map(m => {
+      const r = payments.filter(p => p.month === m.key).reduce((s, p) => s + p.paid_amount, 0);
+      const v = sales.filter(s => s.saleDate.slice(0, 7) === m.key).reduce((s, x) => s + x.salePrice, 0);
+      return r + v;
+    }),
+    [payments, sales, sixMonths]);
 
   const sparklineExpenses = useMemo(() =>
     sixMonths.map(m => expenses.filter(e => e.expense_date.slice(0, 7) === m.key).reduce((s, e) => s + e.amount, 0)),
