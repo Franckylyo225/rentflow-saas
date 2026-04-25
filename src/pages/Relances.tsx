@@ -155,15 +155,6 @@ function ChannelTag({ channel }: { channel: Channel }) {
   );
 }
 
-function ResultBadge({ result }: { result: HistoryItem["result"] }) {
-  const map: Record<HistoryItem["result"], string> = {
-    "Payé": "bg-success/15 text-success border-success/30",
-    "Ouvert": "bg-info/15 text-info border-info/30",
-    "Sans réponse": "bg-muted text-muted-foreground border-border",
-    "Erreur envoi": "bg-destructive/15 text-destructive border-destructive/30",
-  };
-  return <Badge className={cn("border", map[result], "hover:" + map[result])}>{result}</Badge>;
-}
 
 // ----------------- Main page -----------------
 
