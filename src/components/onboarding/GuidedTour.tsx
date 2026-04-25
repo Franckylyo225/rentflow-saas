@@ -172,10 +172,11 @@ export function GuidedTour({ open: controlledOpen, onOpenChange }: GuidedTourPro
 
   useEffect(() => {
     if (isControlled) return;
+    if (!dataReady) return; // attendre les données pour éviter un flash
     if (allDone) return;
     const dismissed = typeof window !== "undefined" && localStorage.getItem(STORAGE_KEY) === "1";
     if (!dismissed) setInternalOpen(true);
-  }, [allDone, isControlled]);
+  }, [allDone, isControlled, dataReady]);
 
   useEffect(() => {
     setStepIdx(firstIncompleteIdx);
@@ -191,6 +192,9 @@ export function GuidedTour({ open: controlledOpen, onOpenChange }: GuidedTourPro
     });
   };
 
+  // En mode non contrôlé, ne rien afficher tant que les données ne sont pas chargées
+  // (sinon la fenêtre s'ouvre puis se ferme dès que les données arrivent → "flash")
+  if (!isControlled && !dataReady) return null;
   if (allDone && !isControlled) return null;
   if (!open) return null;
 
