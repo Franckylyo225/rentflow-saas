@@ -15,6 +15,7 @@ import {
   Receipt,
   Mail,
   Contact as ContactIcon,
+  BarChart3,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
