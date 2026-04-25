@@ -268,6 +268,10 @@ export default function Relances() {
 
   const saveSequence = () => {
     if (!editingSeq) return;
+    if (!canEditTemplates) {
+      upgradeNotice("L'édition des modèles de relance est réservée aux offres Pro et Business.");
+      return;
+    }
     setSequences(prev => prev.map(s => s.id === editingSeq.id ? editingSeq : s));
     setEditorOpen(false);
     toast.success("Séquence enregistrée ✓");
