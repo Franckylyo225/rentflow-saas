@@ -664,17 +664,9 @@ export default function Relances() {
           <SheetHeader>
             <SheetTitle>Éditeur de séquence</SheetTitle>
             <SheetDescription>
-              {canEditTemplates
-                ? "Personnalisez l'étape sélectionnée."
-                : "Consultez les paramètres de la séquence. L'édition est réservée aux offres Pro et Business."}
+              Personnalisez l'étape sélectionnée (objet, message, canal et délai).
             </SheetDescription>
           </SheetHeader>
-          {!canEditTemplates && (
-            <div className="mt-4 rounded-md border border-warning/30 bg-warning/5 p-3 text-xs text-foreground flex items-start gap-2">
-              <Lock className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
-              <span>Lecture seule sur l'offre {planName}. Passez à Pro pour modifier les modèles, les délais et les canaux.</span>
-            </div>
-          )}
           {editingSeq && (
             <div className="mt-4 space-y-4">
               <div className="flex flex-wrap gap-2">
