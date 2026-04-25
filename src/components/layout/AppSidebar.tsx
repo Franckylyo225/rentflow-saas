@@ -145,7 +145,7 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
               <Button
                 size="sm"
                 className="w-full h-7 text-xs gap-1 bg-success hover:bg-success/90 text-success-foreground"
-                onClick={() => navigate("/pricing")}
+                onClick={() => navigate("/settings?tab=subscription")}
               >
                 {expired ? "Souscrire" : "Passer à Pro"} <ArrowUpRight className="h-3 w-3" />
               </Button>
