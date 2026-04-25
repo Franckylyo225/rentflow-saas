@@ -22,10 +22,11 @@ import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Plus, ArrowUp, ArrowDown, ArrowUpDown, Mail, MessageSquare, Smartphone,
-  AlertTriangle, CheckCircle2, Clock, Send, Lock, Sparkles,
+  AlertTriangle, CheckCircle2, Clock, Send, Lock, Sparkles, FlaskConical,
 } from "lucide-react";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TestSendDialog } from "@/components/relances/TestSendDialog";
 
 // ----------------- Types & mock data -----------------
 
