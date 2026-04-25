@@ -130,10 +130,13 @@ interface GuidedTourProps {
 
 export function GuidedTour({ open: controlledOpen, onOpenChange }: GuidedTourProps) {
   const navigate = useNavigate();
-  const { data: properties } = useProperties();
-  const { data: units } = useUnits();
-  const { data: tenants } = useTenants();
-  const { data: payments } = useRentPayments();
+  const { data: properties, loading: loadingProperties } = useProperties();
+  const { data: units, loading: loadingUnits } = useUnits();
+  const { data: tenants, loading: loadingTenants } = useTenants();
+  const { data: payments, loading: loadingPayments } = useRentPayments();
+
+  // Tant que les données ne sont pas chargées, on ne peut pas évaluer l'état du tour.
+  const dataReady = !loadingProperties && !loadingUnits && !loadingTenants && !loadingPayments;
 
   const ctx: TourContext = useMemo(
     () => ({
@@ -146,7 +149,7 @@ export function GuidedTour({ open: controlledOpen, onOpenChange }: GuidedTourPro
   );
 
   const completedCount = STEPS.filter((s) => s.isComplete(ctx)).length;
-  const allDone = completedCount === STEPS.length;
+  const allDone = dataReady && completedCount === STEPS.length;
 
   const firstIncompleteIdx = useMemo(() => {
     const idx = STEPS.findIndex((s) => !s.isComplete(ctx));
@@ -169,10 +172,11 @@ export function GuidedTour({ open: controlledOpen, onOpenChange }: GuidedTourPro
 
   useEffect(() => {
     if (isControlled) return;
+    if (!dataReady) return; // attendre les données pour éviter un flash
     if (allDone) return;
     const dismissed = typeof window !== "undefined" && localStorage.getItem(STORAGE_KEY) === "1";
     if (!dismissed) setInternalOpen(true);
-  }, [allDone, isControlled]);
+  }, [allDone, isControlled, dataReady]);
 
   useEffect(() => {
     setStepIdx(firstIncompleteIdx);
@@ -188,6 +192,9 @@ export function GuidedTour({ open: controlledOpen, onOpenChange }: GuidedTourPro
     });
   };
 
+  // En mode non contrôlé, ne rien afficher tant que les données ne sont pas chargées
+  // (sinon la fenêtre s'ouvre puis se ferme dès que les données arrivent → "flash")
+  if (!isControlled && !dataReady) return null;
   if (allDone && !isControlled) return null;
   if (!open) return null;
 
