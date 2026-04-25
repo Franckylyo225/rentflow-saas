@@ -273,6 +273,44 @@ export default function Ventes() {
           toast.success(`Vente enregistrée — +${fmt(data.salePrice)} FCFA ajouté au CA ✅`);
         }}
       />
+
+      <EditListingDialog
+        listing={editing}
+        onOpenChange={(o) => { if (!o) setEditing(null); }}
+        onSave={(id, data) => {
+          updateListing(id, data);
+          toast.success("Bien mis à jour");
+          setEditing(null);
+        }}
+      />
+
+      <AlertDialog open={!!deleting} onOpenChange={(o) => { if (!o) setDeleting(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce bien&nbsp;?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous êtes sur le point de retirer&nbsp;
+              <span className="font-semibold text-foreground">{deleting?.name}</span>&nbsp;
+              de la liste des biens à vendre. Cette action est définitive.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleting) {
+                  removeListing(deleting.id);
+                  toast.success("Bien retiré de la liste");
+                }
+                setDeleting(null);
+              }}
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
