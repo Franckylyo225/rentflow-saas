@@ -146,15 +146,17 @@ export default function Relances() {
   const { hasFeature, planName, loading: planLoading } = useFeatureAccess();
 
   // Capacités selon le plan
-  const canEmail = hasFeature("email_reminders");
-  const canSms = hasFeature("sms_reminders");
-  const canEditTemplates = hasFeature("sms_templates_edit");
-  const canSchedule = hasFeature("sms_schedule");
-  const canFullAuto = hasFeature("sms_auto_full");
-  // Whatsapp réservé aux plans Pro/Business via sms_auto_full
-  const canWhatsapp = canFullAuto;
-  // Création de séquence personnalisée = Pro+
-  const canCreateSequence = canEditTemplates;
+  const isPro = hasFeature("sms_auto_full") || hasFeature("sms_schedule") || hasFeature("sms_templates_edit");
+  // Starter et Pro peuvent tous deux personnaliser les modèles (email + SMS)
+  const canEditTemplates = true;
+  // Envoi manuel : réservé à Pro/Business
+  const canManualSend = isPro;
+  const canEmail = canManualSend;
+  const canSms = canManualSend;
+  // Nombre maximum de séquences activables simultanément
+  const maxActiveSequences = isPro ? 3 : 1;
+  // Création de séquence personnalisée : Pro+
+  const canCreateSequence = isPro;
 
   const [globalActive, setGlobalActive] = useState(true);
   const [confirmOff, setConfirmOff] = useState(false);
