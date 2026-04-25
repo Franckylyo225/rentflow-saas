@@ -15,6 +15,7 @@ import {
   Receipt,
   Mail,
   Contact as ContactIcon,
+  BarChart3,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -45,6 +46,7 @@ const NAV_ITEMS = [
   { label: "Utilisateurs", href: "/admin/users", icon: UserCheck },
   { label: "Contacts CRM", href: "/admin/contacts", icon: ContactIcon },
   { label: "Campagnes Email", href: "/admin/campaigns", icon: Mail },
+  { label: "Marketing Analytics", href: "/admin/marketing", icon: BarChart3 },
   { label: "Paramètres", href: "/admin/settings", icon: Settings },
 ];
 
