@@ -1,17 +1,15 @@
 import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Building2, Banknote, Bell, Users, Shield, Loader2, CreditCard, FileText, MessageSquare, History } from "lucide-react";
+import { Building2, Banknote, Users, Shield, Loader2, CreditCard, FileText, History } from "lucide-react";
 import { ReminderHistoryTable } from "@/components/settings/ReminderHistoryTable";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { GeneralTab } from "@/components/settings/GeneralTab";
 import { FinanceTab } from "@/components/settings/FinanceTab";
-import { NotificationsTab } from "@/components/settings/NotificationsTab";
 import { UsersRolesTab } from "@/components/settings/UsersRolesTab";
 import { SecurityTab } from "@/components/settings/SecurityTab";
 import { SubscriptionTab } from "@/components/settings/SubscriptionTab";
 import { ContractTemplatesTab } from "@/components/settings/ContractTemplatesTab";
-import { SmsSettingsTab } from "@/components/settings/SmsSettingsTab";
 
 export default function SettingsPage() {
   const { settings, loading, updateSettings, uploadLogo } = useOrganizationSettings();
@@ -34,8 +32,6 @@ export default function SettingsPage() {
             <TabsList className="flex-wrap h-auto gap-1 p-1">
               <TabsTrigger value="general" className="gap-1.5"><Building2 className="h-3.5 w-3.5" /> Général</TabsTrigger>
               <TabsTrigger value="finance" className="gap-1.5"><Banknote className="h-3.5 w-3.5" /> Finance</TabsTrigger>
-              <TabsTrigger value="notifications" className="gap-1.5"><Bell className="h-3.5 w-3.5" /> Notifications Email</TabsTrigger>
-              <TabsTrigger value="sms" className="gap-1.5"><MessageSquare className="h-3.5 w-3.5" /> Notification SMS</TabsTrigger>
               <TabsTrigger value="history" className="gap-1.5"><History className="h-3.5 w-3.5" /> Historique relances</TabsTrigger>
               <TabsTrigger value="users" className="gap-1.5"><Users className="h-3.5 w-3.5" /> Utilisateurs & Rôles</TabsTrigger>
               <TabsTrigger value="security" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Sécurité</TabsTrigger>
@@ -49,15 +45,6 @@ export default function SettingsPage() {
 
             <TabsContent value="finance">
               <FinanceTab settings={settings} onSave={updateSettings} />
-            </TabsContent>
-
-
-            <TabsContent value="notifications">
-              <NotificationsTab />
-            </TabsContent>
-
-            <TabsContent value="sms">
-              <SmsSettingsTab />
             </TabsContent>
 
             <TabsContent value="history">
