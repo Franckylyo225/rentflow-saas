@@ -1087,7 +1087,7 @@ export default function Relances() {
 function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreate: (s: Sequence) => void }) {
   const [name, setName] = useState("");
   const [delay, setDelay] = useState(0);
-  const [channels, setChannels] = useState<Channel[]>(["email"]);
+  const [channels, setChannels] = useState<Channel[]>(["email", "sms"]);
   const [sendTime, setSendTime] = useState("09:00");
 
   const toggleChannel = (c: Channel) => {
