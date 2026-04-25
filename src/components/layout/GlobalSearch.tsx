@@ -102,6 +102,35 @@ export function GlobalSearch() {
         </kbd>
       </div>
 
+      {open && query.trim().length < 2 && (
+        <div className="absolute top-full mt-1 right-0 sm:left-0 w-72 sm:w-80 bg-popover border border-border rounded-lg shadow-lg z-50 overflow-hidden">
+          <div className="px-3 pt-2.5 pb-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Suggestions rapides</div>
+          <ul className="pb-1">
+            <li>
+              <button onClick={() => { setOpen(false); navigate("/properties"); }} className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent transition-colors">
+                <span className="text-base">🏠</span>
+                <span className="text-sm font-medium text-popover-foreground">Biens récents</span>
+              </button>
+            </li>
+            <li>
+              <button onClick={() => { setOpen(false); navigate("/tenants"); }} className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent transition-colors">
+                <span className="text-base">👤</span>
+                <span className="text-sm font-medium text-popover-foreground">Locataires récents</span>
+              </button>
+            </li>
+            <li>
+              <button onClick={() => { setOpen(false); navigate("/rents"); }} className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent transition-colors">
+                <span className="text-base">💰</span>
+                <span className="text-sm font-medium text-popover-foreground">Derniers paiements</span>
+              </button>
+            </li>
+          </ul>
+          <div className="border-t border-border px-3 py-1.5 text-[10px] text-muted-foreground">
+            Tapez au moins 2 caractères pour rechercher
+          </div>
+        </div>
+      )}
+
       {open && query.trim().length >= 2 && (
         <div className="absolute top-full mt-1 right-0 sm:left-0 w-72 sm:w-80 bg-popover border border-border rounded-lg shadow-lg z-50 overflow-hidden">
           {results.length === 0 ? (
