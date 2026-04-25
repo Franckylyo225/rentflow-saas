@@ -654,9 +654,20 @@ export default function Relances() {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-foreground text-sm">{seq.name}</p>
                     <p className="text-xs text-muted-foreground truncate">{seq.description}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> Envoi à {seq.sendTime}
-                    </p>
+                    <div className="mt-1 flex items-center gap-2 flex-wrap">
+                      <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {seq.sendTime}
+                      </span>
+                      {seq.channels.map(c => (
+                        <span
+                          key={c}
+                          className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-medium text-foreground"
+                        >
+                          {c === "email" ? <Mail className="h-2.5 w-2.5" /> : <Smartphone className="h-2.5 w-2.5" />}
+                          {c === "email" ? "Email" : "SMS"}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {seq.active && globalActive ? (
