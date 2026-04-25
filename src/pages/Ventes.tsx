@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Home, TrendingUp, Wallet, Plus, Pencil, Trash2, CheckCircle2, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Home, TrendingUp, Wallet, Plus, Pencil, Trash2, CheckCircle2, ArrowUpRight, ArrowDownRight, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { FeatureLockedCard } from "@/components/auth/FeatureLockedCard";
 import { usePropertySales, SALES_COMMISSION_RATE, type SaleListing } from "@/hooks/usePropertySales";
@@ -40,6 +40,41 @@ export default function Ventes() {
   const [prefilledPrice, setPrefilledPrice] = useState<number | null>(null);
   const [editing, setEditing] = useState<SaleListing | null>(null);
   const [deleting, setDeleting] = useState<SaleListing | null>(null);
+
+  // Search & pagination
+  const PAGE_SIZE = 5;
+  const [listingsSearch, setListingsSearch] = useState("");
+  const [listingsPage, setListingsPage] = useState(1);
+  const [salesSearch, setSalesSearch] = useState("");
+  const [salesPage, setSalesPage] = useState(1);
+
+  const filteredListings = useMemo(() => {
+    const q = listingsSearch.trim().toLowerCase();
+    if (!q) return listings;
+    return listings.filter(l =>
+      l.name.toLowerCase().includes(q) ||
+      l.location.toLowerCase().includes(q) ||
+      String(l.askingPrice).includes(q)
+    );
+  }, [listings, listingsSearch]);
+
+  const filteredSales = useMemo(() => {
+    const q = salesSearch.trim().toLowerCase();
+    if (!q) return sales;
+    return sales.filter(s =>
+      s.name.toLowerCase().includes(q) ||
+      s.location.toLowerCase().includes(q) ||
+      s.buyerName.toLowerCase().includes(q) ||
+      String(s.salePrice).includes(q)
+    );
+  }, [sales, salesSearch]);
+
+  const listingsTotalPages = Math.max(1, Math.ceil(filteredListings.length / PAGE_SIZE));
+  const salesTotalPages = Math.max(1, Math.ceil(filteredSales.length / PAGE_SIZE));
+  const safeListingsPage = Math.min(listingsPage, listingsTotalPages);
+  const safeSalesPage = Math.min(salesPage, salesTotalPages);
+  const pagedListings = filteredListings.slice((safeListingsPage - 1) * PAGE_SIZE, safeListingsPage * PAGE_SIZE);
+  const pagedSales = filteredSales.slice((safeSalesPage - 1) * PAGE_SIZE, safeSalesPage * PAGE_SIZE);
 
   // KPI
   const now = new Date();
@@ -159,11 +194,22 @@ export default function Ventes() {
         {/* Section 1 — Actifs à vendre */}
         <Card className="border-border">
           <CardContent className="p-0">
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <h2 className="text-base font-semibold text-card-foreground">Biens à vendre ({listings.length})</h2>
-              <Button variant="outline" size="sm" onClick={() => setAddOpen(true)} className="gap-1.5">
-                <Plus className="h-3.5 w-3.5" /> Ajouter un bien
-              </Button>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b border-border">
+              <h2 className="text-base font-semibold text-card-foreground">Biens à vendre ({filteredListings.length})</h2>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    value={listingsSearch}
+                    onChange={(e) => { setListingsSearch(e.target.value); setListingsPage(1); }}
+                    placeholder="Rechercher un bien…"
+                    className="pl-8 h-9 w-full sm:w-64"
+                  />
+                </div>
+                <Button variant="outline" size="sm" onClick={() => setAddOpen(true)} className="gap-1.5">
+                  <Plus className="h-3.5 w-3.5" /> Ajouter un bien
+                </Button>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <Table>
@@ -178,11 +224,13 @@ export default function Ventes() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {listings.length === 0 ? (
+                  {pagedListings.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">Aucun bien à vendre actuellement.</TableCell>
+                      <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">
+                        {listingsSearch ? "Aucun bien ne correspond à votre recherche." : "Aucun bien à vendre actuellement."}
+                      </TableCell>
                     </TableRow>
-                  ) : listings.map(l => (
+                  ) : pagedListings.map(l => (
                     <TableRow key={l.id}>
                       <TableCell className="font-medium">{l.name}</TableCell>
                       <TableCell className="text-muted-foreground">{l.location}</TableCell>
@@ -214,14 +262,38 @@ export default function Ventes() {
                 </TableBody>
               </Table>
             </div>
+            {filteredListings.length > 0 && (
+              <div className="flex items-center justify-between gap-2 p-3 border-t border-border">
+                <p className="text-xs text-muted-foreground">
+                  Page {safeListingsPage} sur {listingsTotalPages} — {filteredListings.length} bien{filteredListings.length > 1 ? "s" : ""}
+                </p>
+                <div className="inline-flex gap-1">
+                  <Button size="sm" variant="outline" className="h-8 gap-1" disabled={safeListingsPage <= 1} onClick={() => setListingsPage(p => Math.max(1, p - 1))}>
+                    <ChevronLeft className="h-3.5 w-3.5" /> Préc.
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-8 gap-1" disabled={safeListingsPage >= listingsTotalPages} onClick={() => setListingsPage(p => Math.min(listingsTotalPages, p + 1))}>
+                    Suiv. <ChevronRight className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Section 2 — Historique des ventes */}
         <Card className="border-border">
           <CardContent className="p-0">
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <h2 className="text-base font-semibold text-card-foreground">Historique des ventes ({sales.length})</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b border-border">
+              <h2 className="text-base font-semibold text-card-foreground">Historique des ventes ({filteredSales.length})</h2>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  value={salesSearch}
+                  onChange={(e) => { setSalesSearch(e.target.value); setSalesPage(1); }}
+                  placeholder="Rechercher (bien, acheteur…)"
+                  className="pl-8 h-9 w-full sm:w-64"
+                />
+              </div>
             </div>
             <div className="overflow-x-auto">
               <Table>
@@ -237,11 +309,13 @@ export default function Ventes() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sales.length === 0 ? (
+                  {pagedSales.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-8">Aucune vente enregistrée.</TableCell>
+                      <TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-8">
+                        {salesSearch ? "Aucune vente ne correspond à votre recherche." : "Aucune vente enregistrée."}
+                      </TableCell>
                     </TableRow>
-                  ) : sales.map(s => (
+                  ) : pagedSales.map(s => (
                     <TableRow key={s.id}>
                       <TableCell className="font-medium">{s.name}</TableCell>
                       <TableCell className="text-muted-foreground">{s.location}</TableCell>
@@ -257,6 +331,21 @@ export default function Ventes() {
                 </TableBody>
               </Table>
             </div>
+            {filteredSales.length > 0 && (
+              <div className="flex items-center justify-between gap-2 p-3 border-t border-border">
+                <p className="text-xs text-muted-foreground">
+                  Page {safeSalesPage} sur {salesTotalPages} — {filteredSales.length} vente{filteredSales.length > 1 ? "s" : ""}
+                </p>
+                <div className="inline-flex gap-1">
+                  <Button size="sm" variant="outline" className="h-8 gap-1" disabled={safeSalesPage <= 1} onClick={() => setSalesPage(p => Math.max(1, p - 1))}>
+                    <ChevronLeft className="h-3.5 w-3.5" /> Préc.
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-8 gap-1" disabled={safeSalesPage >= salesTotalPages} onClick={() => setSalesPage(p => Math.min(salesTotalPages, p + 1))}>
+                    Suiv. <ChevronRight className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
