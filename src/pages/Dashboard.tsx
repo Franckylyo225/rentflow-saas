@@ -70,11 +70,15 @@ export default function Dashboard() {
   const [historyDrawer, setHistoryDrawer] = useState<null | "ca" | "expenses" | "occupancy">(null);
 
   const prevMonth = useMemo(() => shiftMonth(selectedMonth, -1), [selectedMonth]);
-  const monthCA = useMemo(() => payments.filter(p => p.month === selectedMonth).reduce((s, p) => s + p.paid_amount, 0), [payments, selectedMonth]);
+  const monthRents = useMemo(() => payments.filter(p => p.month === selectedMonth).reduce((s, p) => s + p.paid_amount, 0), [payments, selectedMonth]);
+  const monthSalesAmount = useMemo(() => sales.filter(s => s.saleDate.slice(0, 7) === selectedMonth).reduce((s, x) => s + x.salePrice, 0), [sales, selectedMonth]);
+  const monthCA = monthRents + monthSalesAmount;
   const monthExpenses = useMemo(() => expenses.filter(e => e.expense_date.slice(0, 7) === selectedMonth).reduce((s, e) => s + e.amount, 0), [expenses, selectedMonth]);
   const monthBenefice = monthCA - monthExpenses;
 
-  const prevCA = useMemo(() => payments.filter(p => p.month === prevMonth).reduce((s, p) => s + p.paid_amount, 0), [payments, prevMonth]);
+  const prevRents = useMemo(() => payments.filter(p => p.month === prevMonth).reduce((s, p) => s + p.paid_amount, 0), [payments, prevMonth]);
+  const prevSalesAmount = useMemo(() => sales.filter(s => s.saleDate.slice(0, 7) === prevMonth).reduce((s, x) => s + x.salePrice, 0), [sales, prevMonth]);
+  const prevCA = prevRents + prevSalesAmount;
   const prevExpenses = useMemo(() => expenses.filter(e => e.expense_date.slice(0, 7) === prevMonth).reduce((s, e) => s + e.amount, 0), [expenses, prevMonth]);
   const prevBenefice = prevCA - prevExpenses;
 
