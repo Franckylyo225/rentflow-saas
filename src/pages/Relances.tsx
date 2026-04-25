@@ -744,13 +744,7 @@ export default function Relances() {
           )}
           <SheetFooter className="mt-6">
             <Button variant="outline" onClick={() => setEditorOpen(false)}>Annuler</Button>
-            {canEditTemplates ? (
-              <Button onClick={saveSequence}>Enregistrer</Button>
-            ) : (
-              <Button onClick={() => navigate("/settings?tab=subscription")} className="bg-warning hover:bg-warning/90 text-warning-foreground">
-                <Sparkles className="h-4 w-4" /> Passer à Pro
-              </Button>
-            )}
+            <Button onClick={saveSequence}>Enregistrer</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
