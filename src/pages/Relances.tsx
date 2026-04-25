@@ -19,11 +19,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Plus, ArrowUp, ArrowDown, ArrowUpDown, Mail, MessageSquare, Smartphone,
-  AlertTriangle, CheckCircle2, Clock, Send,
+  AlertTriangle, CheckCircle2, Clock, Send, Lock, Sparkles,
 } from "lucide-react";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 // ----------------- Types & mock data -----------------
 
