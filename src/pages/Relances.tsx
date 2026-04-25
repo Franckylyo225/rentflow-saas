@@ -982,8 +982,23 @@ export default function Relances() {
 function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreate: (s: Sequence) => void }) {
   const [name, setName] = useState("");
   const [delay, setDelay] = useState(0);
-  const [channel, setChannel] = useState<Channel>("email");
+  const [channels, setChannels] = useState<Channel[]>(["email"]);
   const [sendTime, setSendTime] = useState("09:00");
+
+  const toggleChannel = (c: Channel) => {
+    setChannels(prev => {
+      const next = prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c];
+      if (next.length === 0) {
+        toast.error("Sélectionnez au moins un canal d'envoi.");
+        return prev;
+      }
+      return next;
+    });
+  };
+
+  const channelLabel = channels.length === 2
+    ? "Email + SMS"
+    : channels[0] === "email" ? "Email" : "SMS";
 
   return (
     <div className="space-y-4">
@@ -991,30 +1006,35 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
         <Label>Nom de la séquence</Label>
         <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex : Relance J+30" />
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
           <Label>Délai (jours)</Label>
           <Input type="number" value={delay} onChange={e => setDelay(Number(e.target.value))} />
         </div>
         <div className="space-y-2">
-          <Label>Heure</Label>
+          <Label>Heure d'envoi</Label>
           <Input type="time" value={sendTime} onChange={e => setSendTime(e.target.value || "09:00")} />
         </div>
-        <div className="space-y-2">
-          <Label>Canal</Label>
-          <div className="flex gap-1">
-            {(["email", "sms"] as Channel[]).map(c => (
+      </div>
+      <div className="space-y-2">
+        <Label>Canaux d'envoi</Label>
+        <div className="flex gap-2">
+          {(["email", "sms"] as Channel[]).map(c => {
+            const selected = channels.includes(c);
+            return (
               <Button
                 key={c}
                 type="button"
                 size="sm"
-                variant={channel === c ? "default" : "outline"}
-                onClick={() => setChannel(c)}
+                variant={selected ? "default" : "outline"}
+                onClick={() => toggleChannel(c)}
               >
+                {c === "email" ? <Mail className="h-3.5 w-3.5" /> : <Smartphone className="h-3.5 w-3.5" />}
                 {c === "email" ? "Email" : "SMS"}
+                {selected && <CheckCircle2 className="h-3.5 w-3.5 ml-1" />}
               </Button>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
       <DialogFooter>
@@ -1026,10 +1046,10 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
             step: delay >= 0 ? `J+${delay}` : `J${delay}`,
             stepColor: delay > 7 ? "destructive" : delay > 0 ? "warning" : "success",
             name: name.trim(),
-            description: `${channel === "email" ? "Email" : "SMS"} · ${Math.abs(delay)} jour(s) ${delay >= 0 ? "après" : "avant"} l'échéance · ${sendTime}`,
+            description: `${channelLabel} · ${Math.abs(delay)} jour(s) ${delay >= 0 ? "après" : "avant"} l'échéance · ${sendTime}`,
             active: true,
             delayDays: delay,
-            channel,
+            channels,
             subject: name.trim(),
             body: "Bonjour [Prénom], ...",
             sendTime,
