@@ -66,13 +66,14 @@ interface Sequence {
   channel: Channel;
   subject: string;
   body: string;
+  sendTime: string; // format "HH:mm" — heure locale d'envoi
 }
 
 const initialSequences: Sequence[] = [
-  { id: "s1", step: "J-3", stepColor: "success", name: "Rappel avant échéance", description: "Email automatique · 3 jours avant la date", active: true, delayDays: -3, channel: "email", subject: "Rappel : votre loyer arrive à échéance", body: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien] est dû le [Date échéance]. Lien de paiement : [Lien paiement]" },
-  { id: "s2", step: "J+1", stepColor: "warning", name: "Relance J+1", description: "Email + SMS · 1 jour après l'échéance", active: true, delayDays: 1, channel: "email", subject: "Loyer en retard de paiement", body: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien] n'a pas encore été reçu. Merci de régulariser." },
-  { id: "s3", step: "J+7", stepColor: "destructive", name: "Relance urgente", description: "SMS prioritaire · 7 jours après l'échéance", active: true, delayDays: 7, channel: "sms", subject: "Relance urgente", body: "[Prénom], votre loyer de [Montant] est en retard de 7 jours. Merci de régulariser sous 48h." },
-  { id: "s4", step: "J+15", stepColor: "muted", name: "Mise en demeure", description: "Email formel · 15 jours après l'échéance", active: false, delayDays: 15, channel: "email", subject: "Mise en demeure", body: "Bonjour [Prénom], faute de règlement de [Montant] pour [Bien], nous vous mettons en demeure de payer sous 8 jours." },
+  { id: "s1", step: "J-3", stepColor: "success", name: "Rappel avant échéance", description: "Email automatique · 3 jours avant la date", active: true, delayDays: -3, channel: "email", subject: "Rappel : votre loyer arrive à échéance", body: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien] est dû le [Date échéance]. Lien de paiement : [Lien paiement]", sendTime: "09:00" },
+  { id: "s2", step: "J+1", stepColor: "warning", name: "Relance J+1", description: "Email + SMS · 1 jour après l'échéance", active: true, delayDays: 1, channel: "email", subject: "Loyer en retard de paiement", body: "Bonjour [Prénom], votre loyer de [Montant] pour [Bien] n'a pas encore été reçu. Merci de régulariser.", sendTime: "10:00" },
+  { id: "s3", step: "J+7", stepColor: "destructive", name: "Relance urgente", description: "SMS prioritaire · 7 jours après l'échéance", active: true, delayDays: 7, channel: "sms", subject: "Relance urgente", body: "[Prénom], votre loyer de [Montant] est en retard de 7 jours. Merci de régulariser sous 48h.", sendTime: "11:00" },
+  { id: "s4", step: "J+15", stepColor: "muted", name: "Mise en demeure", description: "Email formel · 15 jours après l'échéance", active: false, delayDays: 15, channel: "email", subject: "Mise en demeure", body: "Bonjour [Prénom], faute de règlement de [Montant] pour [Bien], nous vous mettons en demeure de payer sous 8 jours.", sendTime: "14:00" },
 ];
 
 interface HistoryItem {
@@ -653,6 +654,9 @@ export default function Relances() {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-foreground text-sm">{seq.name}</p>
                     <p className="text-xs text-muted-foreground truncate">{seq.description}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                      <Clock className="h-3 w-3" /> Envoi à {seq.sendTime}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2">
                     {seq.active && globalActive ? (
@@ -782,14 +786,31 @@ export default function Relances() {
                   </Button>
                 ))}
               </div>
-              <div className="space-y-2">
-                <Label>Délai (jours)</Label>
-                <Input
-                  type="number"
-                  value={editingSeq.delayDays}
-                  disabled={!canEditTemplates}
-                  onChange={e => setEditingSeq({ ...editingSeq, delayDays: Number(e.target.value) })}
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Délai (jours)</Label>
+                  <Input
+                    type="number"
+                    value={editingSeq.delayDays}
+                    disabled={!canEditTemplates}
+                    onChange={e => setEditingSeq({ ...editingSeq, delayDays: Number(e.target.value) })}
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Négatif = avant échéance · Positif = après
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Heure d'envoi</Label>
+                  <Input
+                    type="time"
+                    value={editingSeq.sendTime}
+                    disabled={!canEditTemplates}
+                    onChange={e => setEditingSeq({ ...editingSeq, sendTime: e.target.value || "09:00" })}
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Heure locale (Abidjan, GMT)
+                  </p>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Canal</Label>
@@ -944,6 +965,7 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
   const [name, setName] = useState("");
   const [delay, setDelay] = useState(0);
   const [channel, setChannel] = useState<Channel>("email");
+  const [sendTime, setSendTime] = useState("09:00");
 
   return (
     <div className="space-y-4">
@@ -951,10 +973,14 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
         <Label>Nom de la séquence</Label>
         <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex : Relance J+30" />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div className="space-y-2">
           <Label>Délai (jours)</Label>
           <Input type="number" value={delay} onChange={e => setDelay(Number(e.target.value))} />
+        </div>
+        <div className="space-y-2">
+          <Label>Heure</Label>
+          <Input type="time" value={sendTime} onChange={e => setSendTime(e.target.value || "09:00")} />
         </div>
         <div className="space-y-2">
           <Label>Canal</Label>
@@ -982,12 +1008,13 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
             step: delay >= 0 ? `J+${delay}` : `J${delay}`,
             stepColor: delay > 7 ? "destructive" : delay > 0 ? "warning" : "success",
             name: name.trim(),
-            description: `${channel === "email" ? "Email" : "SMS"} · ${Math.abs(delay)} jour(s) ${delay >= 0 ? "après" : "avant"} l'échéance`,
+            description: `${channel === "email" ? "Email" : "SMS"} · ${Math.abs(delay)} jour(s) ${delay >= 0 ? "après" : "avant"} l'échéance · ${sendTime}`,
             active: true,
             delayDays: delay,
             channel,
             subject: name.trim(),
             body: "Bonjour [Prénom], ...",
+            sendTime,
           })}
         >
           Créer
