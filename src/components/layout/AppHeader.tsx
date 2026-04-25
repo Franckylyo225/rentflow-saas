@@ -35,28 +35,33 @@ export function AppHeader({ onMenuClick, orgName, userName }: AppHeaderProps) {
       <div className="flex items-center gap-2 sm:gap-3">
         <GlobalSearch />
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl" title="Actions rapides">
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52 rounded-xl">
-            <DropdownMenuItem onClick={() => navigate("/properties?action=new")} className="rounded-lg">
-              <Building2 className="h-4 w-4 mr-2" /> Nouveau bien
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/tenants?action=new")} className="rounded-lg">
-              <UserPlus className="h-4 w-4 mr-2" /> Nouveau locataire
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate("/rents?action=new")} className="rounded-lg">
-              <Banknote className="h-4 w-4 mr-2" /> Enregistrer un paiement
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/expenses?action=new")} className="rounded-lg">
-              <Receipt className="h-4 w-4 mr-2" /> Ajouter une dépense
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl">
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52 rounded-xl">
+                <DropdownMenuItem onClick={() => navigate("/properties?action=new")} className="rounded-lg">
+                  <Building2 className="h-4 w-4 mr-2" /> Nouveau bien
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/tenants?action=new")} className="rounded-lg">
+                  <UserPlus className="h-4 w-4 mr-2" /> Nouveau locataire
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/rents?action=new")} className="rounded-lg">
+                  <Banknote className="h-4 w-4 mr-2" /> Enregistrer un paiement
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/expenses?action=new")} className="rounded-lg">
+                  <Receipt className="h-4 w-4 mr-2" /> Ajouter une dépense
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </TooltipTrigger>
+          <TooltipContent>Actions rapides</TooltipContent>
+        </Tooltip>
 
         {/* Dark mode toggle */}
         <Tooltip>
