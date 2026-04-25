@@ -392,16 +392,48 @@ export default function AdminContacts() {
         </DialogContent>
       </Dialog>
 
-      {/* Import CSV */}
+      {/* Import CSV / Excel */}
       <Dialog open={importOpen} onOpenChange={setImportOpen}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Importer des contacts (CSV)</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Format attendu (1ère ligne = en-têtes) : <code className="text-xs bg-muted px-1.5 py-0.5 rounded">email,full_name,phone,company</code>
-            </p>
+          <DialogHeader><DialogTitle>Importer des contacts</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="rounded-lg border-2 border-dashed border-border p-6 text-center hover:border-primary/40 transition-colors">
+              <FileSpreadsheet className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+              <p className="text-sm font-medium mb-1">Importer un fichier Excel ou CSV</p>
+              <p className="text-xs text-muted-foreground mb-3">
+                Formats acceptés : .xlsx, .xls, .csv — Colonnes : <code className="text-xs bg-muted px-1 rounded">email</code> (requis), <code className="text-xs bg-muted px-1 rounded">full_name</code>, <code className="text-xs bg-muted px-1 rounded">phone</code>, <code className="text-xs bg-muted px-1 rounded">company</code>
+              </p>
+              <input
+                id="contacts-file-input"
+                type="file"
+                accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleFileUpload(f);
+                  e.target.value = "";
+                }}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={saving}
+                onClick={() => document.getElementById("contacts-file-input")?.click()}
+              >
+                {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                Choisir un fichier
+              </Button>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">ou coller du CSV</span>
+              </div>
+            </div>
+
             <Textarea
-              rows={10}
+              rows={8}
               placeholder="email,full_name,phone,company&#10;jean@example.com,Jean Dupont,+225...,Agence X"
               value={csvText}
               onChange={(e) => setCsvText(e.target.value)}
@@ -409,10 +441,10 @@ export default function AdminContacts() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setImportOpen(false)}>Annuler</Button>
-            <Button onClick={handleImport} disabled={saving}>
+            <Button variant="outline" onClick={() => setImportOpen(false)}>Fermer</Button>
+            <Button onClick={handleImport} disabled={saving || !csvText.trim()}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Importer
+              Importer le CSV collé
             </Button>
           </DialogFooter>
         </DialogContent>
