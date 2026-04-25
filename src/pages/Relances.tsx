@@ -841,16 +841,51 @@ export default function Relances() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    history.map(h => (
-                      <TableRow key={h.id}>
-                        <TableCell className="font-medium">{h.tenant}</TableCell>
-                        <TableCell><ChannelTag channel={h.channel} /></TableCell>
-                        <TableCell className="text-muted-foreground text-sm">{h.date}</TableCell>
-                      </TableRow>
-                    ))
+                    history
+                      .slice((historyPage - 1) * HISTORY_PAGE_SIZE, historyPage * HISTORY_PAGE_SIZE)
+                      .map(h => (
+                        <TableRow key={h.id}>
+                          <TableCell className="font-medium">{h.tenant}</TableCell>
+                          <TableCell><ChannelTag channel={h.channel} /></TableCell>
+                          <TableCell className="text-muted-foreground text-sm">{h.date}</TableCell>
+                        </TableRow>
+                      ))
                   )}
                 </TableBody>
               </Table>
+              {!historyLoading && history.length > 0 && (() => {
+                const totalPages = Math.max(1, Math.ceil(history.length / HISTORY_PAGE_SIZE));
+                const from = (historyPage - 1) * HISTORY_PAGE_SIZE + 1;
+                const to = Math.min(historyPage * HISTORY_PAGE_SIZE, history.length);
+                return (
+                  <div className="border-t border-border px-4 py-3 flex items-center justify-between gap-2 flex-wrap">
+                    <span className="text-xs text-muted-foreground">
+                      {from}–{to} sur {history.length}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={historyPage <= 1}
+                        onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
+                      >
+                        Précédent
+                      </Button>
+                      <span className="text-xs text-muted-foreground">
+                        Page {historyPage} / {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={historyPage >= totalPages}
+                        onClick={() => setHistoryPage(p => Math.min(totalPages, p + 1))}
+                      >
+                        Suivant
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })()}
               <div className="border-t border-border px-4 py-3 text-right">
                 <Link to="/relances/historique" className="text-sm font-medium text-primary hover:underline">
                   Voir tout l'historique →
