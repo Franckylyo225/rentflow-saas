@@ -726,6 +726,39 @@ export default function Relances() {
         </DialogContent>
       </Dialog>
 
+      {/* Quota atteint dialog */}
+      <Dialog open={quotaReachedOpen} onOpenChange={setQuotaReachedOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Quota mensuel atteint
+            </DialogTitle>
+            <DialogDescription className="pt-2 space-y-2">
+              <span className="block">
+                Vous avez utilisé vos <strong>{monthlyManualQuota} envois manuels</strong> inclus
+                dans l'offre <strong>{planName}</strong> pour ce mois-ci.
+              </span>
+              <span className="block">
+                Les <strong>relances automatiques</strong> de vos séquences continuent de fonctionner
+                normalement et ne sont pas comptées dans ce quota.
+              </span>
+              <span className="block">
+                Pour envoyer davantage de relances manuelles, passez à l'offre
+                <strong> Business</strong> (envois illimités) ou attendez le renouvellement
+                de votre quota le <strong>1er du mois prochain</strong>.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setQuotaReachedOpen(false)}>Compris</Button>
+            <Button onClick={() => { setQuotaReachedOpen(false); navigate("/settings?tab=subscription"); }}>
+              Voir l'offre Business
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Sequence editor drawer */}
       <Sheet open={editorOpen} onOpenChange={setEditorOpen}>
         <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
