@@ -182,9 +182,10 @@ export default function Relances() {
   const [reminders, setReminders] = useState(initialReminders);
   const [sequences, setSequences] = useState(initialSequences);
   const [previousSeqStates, setPreviousSeqStates] = useState<Record<string, boolean> | null>(null);
-  const [filter, setFilter] = useState<"all" | "email" | "sms">("all");
+  const [filter, setFilter] = useState<"all" | "auto" | "manual">("all");
   const [sortKey, setSortKey] = useState<"daysLate" | "amount">("daysLate");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [manualTarget, setManualTarget] = useState<UrgentReminder | null>(null);
   const [detailReminder, setDetailReminder] = useState<UrgentReminder | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingSeq, setEditingSeq] = useState<Sequence | null>(null);
