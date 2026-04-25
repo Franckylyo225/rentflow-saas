@@ -96,43 +96,62 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
             );
           })}
         </nav>
-        {/* Subscription indicator */}
-        {!planLoading && planName && (
-          <div className="mx-3 mb-2 rounded-lg border border-border bg-muted/30 px-3 py-2.5 space-y-2">
-            <div className="flex items-center gap-2">
-              <CreditCard className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                {planName}
-              </Badge>
-            </div>
-            {daysUntilExpiry !== null && (
-              <p className={cn(
-                "text-xs font-medium",
-                expired
-                  ? "text-destructive"
-                  : daysUntilExpiry <= 15
-                    ? "text-destructive"
-                    : daysUntilExpiry <= 20
-                      ? "text-warning"
-                      : "text-muted-foreground"
-              )}>
-                {expired
-                  ? subscriptionStatus === "trial" ? "Essai expiré" : "Abonnement expiré"
-                  : `${daysUntilExpiry} jour${daysUntilExpiry > 1 ? "s" : ""} restant${daysUntilExpiry > 1 ? "s" : ""}`}
-              </p>
-            )}
-            {(daysUntilExpiry !== null && daysUntilExpiry <= 20) && (
+        {/* Subscription / trial card */}
+        {!planLoading && planName && (() => {
+          const isTrial = subscriptionStatus === "trial";
+          const trialTotalDays = 30;
+          const trialProgress = isTrial && daysUntilExpiry !== null
+            ? Math.max(0, Math.min(100, Math.round(((trialTotalDays - daysUntilExpiry) / trialTotalDays) * 100)))
+            : 0;
+          return (
+            <div className="mx-3 mb-2 rounded-xl border border-success/30 bg-gradient-to-br from-success/10 via-success/5 to-transparent p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-base">🔥</span>
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-success/20 text-success border-success/30">
+                    {isTrial ? "Essai" : ""} {planName}
+                  </Badge>
+                </div>
+                {!expired && daysUntilExpiry !== null && (
+                  <span className={cn(
+                    "text-[10px] font-bold whitespace-nowrap",
+                    daysUntilExpiry <= 7 ? "text-destructive" : daysUntilExpiry <= 15 ? "text-warning" : "text-success"
+                  )}>
+                    J-{daysUntilExpiry}
+                  </span>
+                )}
+              </div>
+              {daysUntilExpiry !== null && (
+                <p className={cn(
+                  "text-[11px] font-medium",
+                  expired ? "text-destructive" : "text-foreground"
+                )}>
+                  {expired
+                    ? (isTrial ? "Essai expiré" : "Abonnement expiré")
+                    : `${daysUntilExpiry} jour${daysUntilExpiry > 1 ? "s" : ""} restant${daysUntilExpiry > 1 ? "s" : ""}`}
+                </p>
+              )}
+              {isTrial && !expired && (
+                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={cn(
+                      "h-full rounded-full transition-all duration-500",
+                      daysUntilExpiry !== null && daysUntilExpiry <= 7 ? "bg-destructive" : daysUntilExpiry !== null && daysUntilExpiry <= 15 ? "bg-warning" : "bg-success"
+                    )}
+                    style={{ width: `${trialProgress}%` }}
+                  />
+                </div>
+              )}
               <Button
                 size="sm"
-                variant={expired || (daysUntilExpiry <= 15) ? "default" : "outline"}
-                className="w-full h-7 text-xs gap-1"
-                onClick={() => navigate("/settings?tab=subscription")}
+                className="w-full h-7 text-xs gap-1 bg-success hover:bg-success/90 text-success-foreground"
+                onClick={() => navigate("/pricing")}
               >
-                {expired ? "Souscrire" : "Renouveler"} <ArrowUpRight className="h-3 w-3" />
+                {expired ? "Souscrire" : "Passer à Pro"} <ArrowUpRight className="h-3 w-3" />
               </Button>
-            )}
-          </div>
-        )}
+            </div>
+          );
+        })()}
 
 
         <div className="px-4 py-4 border-t border-border">
