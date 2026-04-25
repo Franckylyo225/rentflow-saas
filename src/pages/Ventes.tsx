@@ -346,9 +346,6 @@ export default function Ventes() {
                 </div>
               </div>
             )}
-                </TableBody>
-              </Table>
-            </div>
           </CardContent>
         </Card>
       </div>
