@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useTenants, useRentPayments } from "@/hooks/useData";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useProfile } from "@/hooks/useProfile";
-import { useOrgSettings } from "@/contexts/OrgSettingsContext";
+import { useOrganizationSettings } from "@/contexts/OrgSettingsContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -56,8 +56,8 @@ export function UrgentAlertsSection({ selectedMonth }: { selectedMonth: string }
   const { data: payments } = useRentPayments();
   const { hasFeature } = useFeatureAccess();
   const { profile } = useProfile();
-  const { settings } = useOrgSettings();
-  const orgName = settings?.sms_sender_name || settings?.name || "RentFlow";
+  const { settings } = useOrganizationSettings();
+  const orgName = (settings as any)?.sms_sender_name || (settings as any)?.name || "RentFlow";
 
   const canSms = hasFeature("sms_reminders");
   const canEmail = hasFeature("email_reminders");
