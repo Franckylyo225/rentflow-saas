@@ -280,10 +280,10 @@ export default function Relances() {
         });
       }
 
-      // Tri global desc (plus récent d'abord) puis limite à 8
+      // Tri global desc (plus récent d'abord)
       items.sort((a, b) => (a.id < b.id ? 1 : -1));
       if (!cancelled) {
-        setHistory(items.slice(0, 8));
+        setHistory(items);
         setHistoryLoading(false);
       }
     })();
