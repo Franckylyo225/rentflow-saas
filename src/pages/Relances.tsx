@@ -896,39 +896,93 @@ export default function Relances() {
                   Vous pouvez activer Email et SMS simultanément pour cette étape.
                 </p>
               </div>
-              <div className="space-y-2">
-                <Label>Objet du message</Label>
-                <Input
-                  value={editingSeq.subject}
-                  disabled={!canEditTemplates}
-                  onChange={e => setEditingSeq({ ...editingSeq, subject: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Corps du message</Label>
-                <Textarea
-                  rows={6}
-                  value={editingSeq.body}
-                  disabled={!canEditTemplates}
-                  onChange={e => setEditingSeq({ ...editingSeq, body: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Variables disponibles</Label>
-                <div className="flex flex-wrap gap-2">
-                  {variables.map(v => (
-                    <button
-                      key={v}
-                      type="button"
+              {/* Modèle Email */}
+              {editingSeq.channels.includes("email") && (
+                <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-info" />
+                    <h4 className="text-sm font-semibold">Modèle Email</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Objet de l'email</Label>
+                    <Input
+                      value={editingSeq.emailSubject}
                       disabled={!canEditTemplates}
-                      onClick={() => insertVariable(v)}
-                      className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium hover:bg-primary hover:text-primary-foreground transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {v}
-                    </button>
-                  ))}
+                      onChange={e => setEditingSeq({ ...editingSeq, emailSubject: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Corps de l'email</Label>
+                    <Textarea
+                      rows={6}
+                      value={editingSeq.emailBody}
+                      disabled={!canEditTemplates}
+                      onChange={e => setEditingSeq({ ...editingSeq, emailBody: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Insérer une variable</Label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {variables.map(v => (
+                        <button
+                          key={v}
+                          type="button"
+                          disabled={!canEditTemplates}
+                          onClick={() => insertVariable(v, "emailBody")}
+                          className="rounded-full border border-border bg-muted px-2.5 py-1 text-[11px] font-medium hover:bg-primary hover:text-primary-foreground transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {v}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Modèle SMS */}
+              {editingSeq.channels.includes("sms") && (
+                <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="h-4 w-4 text-success" />
+                    <h4 className="text-sm font-semibold">Modèle SMS</h4>
+                    <Badge variant="outline" className="ml-auto text-[10px]">
+                      {editingSeq.smsBody.length} car. · {Math.ceil(editingSeq.smsBody.length / 160) || 1} SMS
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Message SMS</Label>
+                    <Textarea
+                      rows={4}
+                      value={editingSeq.smsBody}
+                      disabled={!canEditTemplates}
+                      onChange={e => setEditingSeq({ ...editingSeq, smsBody: e.target.value })}
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Restez concis : 160 caractères = 1 SMS facturé.
+                    </p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Insérer une variable</Label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {variables.map(v => (
+                        <button
+                          key={v}
+                          type="button"
+                          disabled={!canEditTemplates}
+                          onClick={() => insertVariable(v, "smsBody")}
+                          className="rounded-full border border-border bg-muted px-2.5 py-1 text-[11px] font-medium hover:bg-primary hover:text-primary-foreground transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {v}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <p className="text-[11px] text-muted-foreground">
+                La variable <code>[Nom agence]</code> reprend automatiquement le nom de votre organisation et fait office de signature.
+              </p>
             </div>
           )}
           <SheetFooter className="mt-6">
