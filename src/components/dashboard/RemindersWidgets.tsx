@@ -371,17 +371,30 @@ export function RemindersWidgets() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <ul className="space-y-1.5">
-            {events.map((e, i) => (
-              <li key={i} className="flex items-center gap-2 text-xs">
-                <span className="text-base">📅</span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-card-foreground"><span className="text-muted-foreground">{e.date}</span> — {e.label}</p>
-                  <p className="text-muted-foreground truncate">{e.target}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+          {events.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic">Aucune échéance dans les 90 prochains jours.</p>
+          ) : (
+            <ul className="space-y-1">
+              {events.map((e) => (
+                <li key={e.id}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(e.href)}
+                    className="w-full flex items-center gap-2 text-xs p-1.5 rounded-md hover:bg-muted transition-colors text-left"
+                  >
+                    {eventIcon(e.kind)}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-card-foreground truncate">
+                        <span className="text-muted-foreground">{fmtEventDate(e.date)}</span> — {e.label}
+                      </p>
+                      <p className="text-muted-foreground truncate">{e.target}</p>
+                    </div>
+                    {e.urgent && <span className="h-1.5 w-1.5 rounded-full bg-destructive flex-shrink-0" />}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
           <Button variant="outline" size="sm" className="w-full h-8 text-xs gap-1 mt-2" onClick={() => navigate("/notifications")}>
             Voir calendrier <ArrowRight className="h-3 w-3" />
           </Button>
