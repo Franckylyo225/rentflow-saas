@@ -358,7 +358,7 @@ export default function Relances() {
         </div>
 
         {/* Plan limitation banner */}
-        {!planLoading && !canEditTemplates && (
+        {!planLoading && !isPro && (
           <div className="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 flex items-start gap-3">
             <Sparkles className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
             <div className="flex-1 text-sm">
@@ -366,8 +366,9 @@ export default function Relances() {
                 Vous êtes sur l'offre {planName}
               </p>
               <p className="text-muted-foreground mt-0.5">
-                Vous bénéficiez des relances automatiques de base (J-3 / J+1).
-                Passez à l'offre <strong>Pro</strong> pour personnaliser vos modèles, créer des séquences sur mesure et débloquer le canal WhatsApp.
+                Vous pouvez activer <strong>1 séquence automatique</strong> et personnaliser vos modèles
+                (email et SMS). Passez à l'offre <strong>Pro</strong> pour activer jusqu'à 3 séquences
+                et débloquer l'envoi manuel des relances.
               </p>
             </div>
             <Button
