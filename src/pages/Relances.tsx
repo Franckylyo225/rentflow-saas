@@ -237,12 +237,20 @@ export default function Relances() {
       upgradeNotice("L'envoi manuel de relances est réservé aux offres Pro et Business.");
       return;
     }
+    if (manualSentThisMonth >= monthlyManualQuota) {
+      setQuotaReachedOpen(true);
+      return;
+    }
     const label = channel === "email" ? "Email" : "SMS";
     const firstName = r.tenant.split(" ")[0];
     setReminders(prev => prev.map(x => x.id === r.id
       ? { ...x, lastReminderAt: "À l'instant", lastReminderChannel: channel, status: "Relancé" as ReminderStatus }
       : x));
-    toast.success(`Relance envoyée à ${firstName} par ${label} ✓`);
+    setManualSentThisMonth(n => n + 1);
+    const newRemaining = monthlyManualQuota - (manualSentThisMonth + 1);
+    toast.success(`Relance envoyée à ${firstName} par ${label} ✓`, {
+      description: `Quota : ${manualSentThisMonth + 1}/${monthlyManualQuota} envois manuels ce mois (${newRemaining} restants)`,
+    });
   };
 
   const markAsPaid = (r: UrgentReminder) => {
