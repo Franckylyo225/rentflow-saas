@@ -107,6 +107,7 @@ const App = () => (
               <Route path="/admin/settings" element={<SuperAdminRoute><AdminSettings /></SuperAdminRoute>} />
               <Route path="/admin/contacts" element={<SuperAdminRoute><AdminContacts /></SuperAdminRoute>} />
               <Route path="/admin/campaigns" element={<SuperAdminRoute><AdminCampaigns /></SuperAdminRoute>} />
+              <Route path="/admin/marketing" element={<SuperAdminRoute><AdminMarketingDashboard /></SuperAdminRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
