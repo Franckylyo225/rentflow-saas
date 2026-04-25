@@ -894,7 +894,7 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
             step: delay >= 0 ? `J+${delay}` : `J${delay}`,
             stepColor: delay > 7 ? "destructive" : delay > 0 ? "warning" : "success",
             name: name.trim(),
-            description: `${channel === "email" ? "Email" : channel === "sms" ? "SMS" : "WhatsApp"} · ${Math.abs(delay)} jour(s) ${delay >= 0 ? "après" : "avant"} l'échéance`,
+            description: `${channel === "email" ? "Email" : "SMS"} · ${Math.abs(delay)} jour(s) ${delay >= 0 ? "après" : "avant"} l'échéance`,
             active: true,
             delayDays: delay,
             channel,
