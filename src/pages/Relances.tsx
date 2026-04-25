@@ -993,6 +993,8 @@ export default function Relances() {
           )}
         </SheetContent>
       </Sheet>
+
+      <TestSendDialog open={testOpen} onOpenChange={setTestOpen} />
     </AppLayout>
   );
 }
