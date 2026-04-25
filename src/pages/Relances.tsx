@@ -157,6 +157,8 @@ export default function Relances() {
   const maxActiveSequences = isPro ? 3 : 1;
   // Création de séquence personnalisée : Pro+
   const canCreateSequence = isPro;
+  // Quota mensuel d'envois manuels (Pro uniquement, configurable côté admin SaaS plus tard)
+  const monthlyManualQuota = isPro ? 50 : 0;
 
   const [globalActive, setGlobalActive] = useState(true);
   const [confirmOff, setConfirmOff] = useState(false);
