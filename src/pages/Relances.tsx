@@ -87,7 +87,7 @@ const historyMock: HistoryItem[] = [
   { id: "h1", tenant: "N'Guessan Aya", channel: "email", date: "23 avr", result: "Payé" },
   { id: "h2", tenant: "Koné Ibrahim", channel: "sms", date: "21 avr", result: "Payé" },
   { id: "h3", tenant: "Yao Koffi", channel: "email", date: "19 avr", result: "Ouvert" },
-  { id: "h4", tenant: "Diallo Aïssatou", channel: "whatsapp", date: "18 avr", result: "Payé" },
+  { id: "h4", tenant: "Diallo Aïssatou", channel: "email", date: "18 avr", result: "Payé" },
   { id: "h5", tenant: "Aka Eric", channel: "sms", date: "15 avr", result: "Sans réponse" },
 ];
 
