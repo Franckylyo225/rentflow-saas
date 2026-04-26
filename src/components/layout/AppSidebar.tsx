@@ -99,6 +99,7 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
         {/* Subscription / trial card */}
         {!planLoading && planName && (() => {
           const isTrial = subscriptionStatus === "trial";
+          const isPro = (planName || "").toLowerCase().includes("pro");
           const trialTotalDays = 30;
           const trialProgress = isTrial && daysUntilExpiry !== null
             ? Math.max(0, Math.min(100, Math.round(((trialTotalDays - daysUntilExpiry) / trialTotalDays) * 100)))
@@ -147,7 +148,7 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
                 className="w-full h-7 text-xs gap-1 bg-success hover:bg-success/90 text-success-foreground"
                 onClick={() => navigate("/settings?tab=subscription")}
               >
-                {expired ? "Souscrire" : "Passer à Pro"} <ArrowUpRight className="h-3 w-3" />
+                {expired ? "Souscrire" : isPro ? "Gérer l'abonnement" : "Passer à Pro"} <ArrowUpRight className="h-3 w-3" />
               </Button>
             </div>
           );
