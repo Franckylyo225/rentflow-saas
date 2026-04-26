@@ -701,14 +701,19 @@ export default function Relances() {
           </Card>
           <Card>
             <CardContent className="p-4 space-y-1">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Taux de réponse</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Manuel ce mois</p>
               <p className={cn(
                 "text-3xl font-bold",
-                kpiResponseRate > 60 ? "text-success" : kpiResponseRate >= 30 ? "text-warning" : "text-destructive"
+                quotaReached ? "text-destructive" : quotaWarning ? "text-warning" : "text-foreground"
               )}>
-                {kpiResponseRate}%
+                {manualSentThisMonth}
+                {monthlyManualQuota > 0 && (
+                  <span className="text-base font-normal text-muted-foreground"> / {monthlyManualQuota}</span>
+                )}
               </p>
-              <p className="text-xs text-muted-foreground">paiement dans {kpiAvgDays}j en moyenne</p>
+              <p className="text-xs text-muted-foreground">
+                {monthlyManualQuota > 0 ? `${manualRemaining} envois restants` : "Réservé aux offres Pro"}
+              </p>
             </CardContent>
           </Card>
           <Card>
