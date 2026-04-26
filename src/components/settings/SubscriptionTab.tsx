@@ -86,6 +86,7 @@ export function SubscriptionTab() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [promoApplied, setPromoApplied] = useState<{ discount: number; final_price: number } | null>(null);
 
   const fetchData = async () => {
     if (!organizationId) return;
@@ -114,6 +115,7 @@ export function SubscriptionTab() {
   const handleSelectPlan = (slug: string) => {
     if (slug === currentSlug && !expired) return;
     setSelectedPlan(slug);
+    setPromoApplied(null);
   };
 
   const handleConfirmUpgrade = async () => {
