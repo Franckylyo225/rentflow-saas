@@ -83,6 +83,39 @@ export default function Onboarding() {
     }
   }, [profileLoading, organization, navigate]);
 
+  // Handle return from GeniusPay checkout (?payment=success|error)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get("payment");
+    if (!payment) return;
+
+    if (payment === "success") {
+      toast.success("Paiement reçu", {
+        description: "Votre abonnement sera activé dès confirmation. Finalisons votre compte.",
+      });
+      // Auto-finalize onboarding after successful payment
+      (async () => {
+        if (organization && !organization.onboarding_completed) {
+          await supabase
+            .from("organizations")
+            .update({ onboarding_completed: true })
+            .eq("id", organization.id);
+          await refetch();
+          navigate("/dashboard", { replace: true });
+        }
+      })();
+    } else if (payment === "error") {
+      toast.error("Paiement échoué ou annulé", {
+        description: "Vous pouvez réessayer ou commencer par l'essai gratuit.",
+      });
+      setStep(2);
+    }
+    params.delete("payment");
+    const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+    window.history.replaceState({}, "", newUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organization]);
+
   // Pre-fill
   useEffect(() => {
     if (organization) {
@@ -152,6 +185,45 @@ export default function Onboarding() {
 
   const handlePromoStep = () => {
     setStep(3);
+  };
+
+  const handlePayNow = async () => {
+    if (!organization || !selectedPlanData) return;
+    if (selectedPlanData.price_monthly <= 0) {
+      toast.error("Ce plan ne nécessite pas de paiement");
+      return;
+    }
+    const amount = promoApplied ? promoApplied.final_price : selectedPlanData.price_monthly;
+    if (amount < 200) {
+      toast.error("Montant trop faible pour le paiement en ligne");
+      return;
+    }
+    setSaving(true);
+    try {
+      const origin = window.location.origin;
+      const { data, error } = await supabase.functions.invoke("geniuspay-create-payment", {
+        body: {
+          plan_slug: selectedPlan,
+          amount,
+          success_url: `${origin}/onboarding?payment=success`,
+          error_url: `${origin}/onboarding?payment=error`,
+        },
+      });
+      if (error || !data?.checkout_url) {
+        throw new Error(error?.message || data?.error || "Impossible d'initier le paiement");
+      }
+      toast.info("Redirection vers le paiement sécurisé…", {
+        description: `Environnement : ${data.environment === "live" ? "Production" : "Sandbox (test)"}`,
+      });
+      setTimeout(() => {
+        window.location.href = data.checkout_url;
+      }, 600);
+    } catch (e) {
+      toast.error("Échec du paiement", {
+        description: e instanceof Error ? e.message : "Erreur inconnue",
+      });
+      setSaving(false);
+    }
   };
 
   const handleFinish = async () => {
@@ -585,22 +657,63 @@ export default function Onboarding() {
                 </div>
               )}
 
-              {/* Payment note */}
-              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-4 py-3">
-                <CreditCard className="h-3.5 w-3.5 shrink-0" />
-                <span>Aucun paiement requis pour démarrer. Le paiement en ligne sera disponible très bientôt.</span>
-              </div>
+              {/* Payment options */}
+              {selectedPlanData && selectedPlanData.price_monthly > 0 ? (
+                <div className="space-y-3">
+                  <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+                        <CreditCard className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-foreground">Payer maintenant</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Activez votre abonnement immédiatement via paiement sécurisé GeniusPay (Mobile Money, carte).
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      size="lg"
+                      className="w-full rounded-full gap-2 font-semibold"
+                      onClick={handlePayNow}
+                      disabled={saving}
+                    >
+                      {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                      Payer {formatPrice(promoApplied ? promoApplied.final_price : selectedPlanData.price_monthly)} FCFA
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-xs text-muted-foreground uppercase tracking-wide">ou</span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+
+                  <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-4 py-3">
+                    <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                    <span>Démarrez avec l'essai gratuit, vous pourrez payer à tout moment depuis vos paramètres.</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-4 py-3">
+                  <CreditCard className="h-3.5 w-3.5 shrink-0" />
+                  <span>Aucun paiement requis pour ce plan.</span>
+                </div>
+              )}
 
               <div className="flex justify-between">
-                <Button variant="ghost" onClick={() => setStep(1)} className="gap-2">
+                <Button variant="ghost" onClick={() => setStep(1)} className="gap-2" disabled={saving}>
                   <ArrowLeft className="h-4 w-4" /> Retour
                 </Button>
                 <Button
                   size="lg"
+                  variant={selectedPlanData && selectedPlanData.price_monthly > 0 ? "outline" : "default"}
                   className="rounded-full gap-2 font-semibold"
                   onClick={handlePromoStep}
+                  disabled={saving}
                 >
-                  Continuer <ArrowRight className="h-4 w-4" />
+                  {selectedPlanData && selectedPlanData.price_monthly > 0 ? "Commencer l'essai gratuit" : "Continuer"}
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
             </motion.div>
