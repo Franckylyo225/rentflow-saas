@@ -792,10 +792,17 @@ export default function Relances() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.length === 0 && (
+                  {remindersLoading && (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        Aucune relance planifiée.
+                        Chargement des relances…
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!remindersLoading && filtered.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        Aucune relance planifiée — aucun loyer en retard pour le moment.
                       </TableCell>
                     </TableRow>
                   )}
