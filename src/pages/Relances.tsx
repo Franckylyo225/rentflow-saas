@@ -171,6 +171,7 @@ export default function Relances() {
 
   const [globalActive, setGlobalActive] = useState(true);
   const [confirmOff, setConfirmOff] = useState(false);
+  // Reminders are loaded from rent_payments via loadReminders()
   const [reminders, setReminders] = useState<UrgentReminder[]>([]);
   const [remindersLoading, setRemindersLoading] = useState(true);
   const [sequences, setSequences] = useState(initialSequences);
