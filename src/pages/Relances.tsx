@@ -669,13 +669,27 @@ export default function Relances() {
                 Relances automatiques planifiées. À partir de 7 jours de retard, vous pouvez relancer manuellement.
               </p>
             </div>
-            <Tabs value={filter} onValueChange={(v) => setFilter(v as any)}>
-              <TabsList>
-                <TabsTrigger value="all">Tous ({counts.all})</TabsTrigger>
-                <TabsTrigger value="auto">Auto ({counts.auto})</TabsTrigger>
-                <TabsTrigger value="manual">Manuel possible ({counts.manual})</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={delayFilter} onValueChange={(v) => setDelayFilter(v as any)}>
+                <SelectTrigger className="h-9 w-[200px]">
+                  <SelectValue placeholder="Type de retard" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les retards ({delayCounts.all})</SelectItem>
+                  <SelectItem value="today">Aujourd'hui ({delayCounts.today})</SelectItem>
+                  <SelectItem value="light">Léger · 1–7j ({delayCounts.light})</SelectItem>
+                  <SelectItem value="important">Important · 8–30j ({delayCounts.important})</SelectItem>
+                  <SelectItem value="critical">Critique · 30j+ ({delayCounts.critical})</SelectItem>
+                </SelectContent>
+              </Select>
+              <Tabs value={filter} onValueChange={(v) => setFilter(v as any)}>
+                <TabsList>
+                  <TabsTrigger value="all">Tous ({counts.all})</TabsTrigger>
+                  <TabsTrigger value="auto">Auto ({counts.auto})</TabsTrigger>
+                  <TabsTrigger value="manual">Manuel possible ({counts.manual})</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             {/* Desktop table */}
