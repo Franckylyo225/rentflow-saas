@@ -1355,9 +1355,9 @@ export default function Relances() {
 
       <TestSendDialog open={testOpen} onOpenChange={setTestOpen} />
 
-      {/* Manual reminder dialog */}
+      {/* Manual reminder dialog (single) */}
       <ManualReminderDialog
-        target={manualTarget}
+        targets={manualTarget ? [manualTarget] : null}
         sequences={sequences}
         canEmail={canEmail}
         canSms={canSms}
@@ -1372,6 +1372,32 @@ export default function Relances() {
             description: seq ? `Modèle : ${seq.name}` : undefined,
           });
           setManualTarget(null);
+        }}
+      />
+
+      {/* Manual reminder dialog (bulk) */}
+      <ManualReminderDialog
+        targets={bulkTargets}
+        sequences={sequences}
+        canEmail={canEmail}
+        canSms={canSms}
+        quotaReached={quotaReached}
+        onClose={() => setBulkTargets(null)}
+        onSend={(channels, sequenceId) => {
+          if (!bulkTargets || bulkTargets.length === 0) return;
+          const seq = sequences.find(s => s.id === sequenceId);
+          const channelLabel = channels.map(c => c === "email" ? "Email" : "SMS").join(" + ");
+          let sentCount = 0;
+          for (const t of bulkTargets) {
+            if (manualSentThisMonth + sentCount >= monthlyManualQuota) break;
+            channels.forEach(c => sendReminder(t, c));
+            sentCount += 1;
+          }
+          toast.success(`Relances groupées envoyées à ${sentCount} locataire${sentCount > 1 ? "s" : ""} (${channelLabel}) ✓`, {
+            description: seq ? `Modèle : ${seq.name}` : undefined,
+          });
+          setBulkTargets(null);
+          clearSelection();
         }}
       />
     </AppLayout>
