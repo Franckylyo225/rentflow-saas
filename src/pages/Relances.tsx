@@ -706,11 +706,45 @@ export default function Relances() {
             </Tabs>
           </CardHeader>
           <CardContent className="p-0">
+            {/* Bulk action bar */}
+            {selectedReminders.length > 0 && (
+              <div className="flex flex-col gap-2 border-b border-border bg-primary/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-sm">
+                  <span className="font-semibold text-foreground">{selectedReminders.length}</span>{" "}
+                  <span className="text-muted-foreground">
+                    locataire{selectedReminders.length > 1 ? "s" : ""} sélectionné{selectedReminders.length > 1 ? "s" : ""} pour relance manuelle
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="ghost" onClick={clearSelection}>
+                    Annuler
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    disabled={!canManualSend || quotaReached}
+                    onClick={openBulkDialog}
+                  >
+                    <Send className="h-3.5 w-3.5" /> Relancer ({selectedReminders.length})
+                  </Button>
+                </div>
+              </div>
+            )}
             {/* Desktop table */}
             <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">
+                      {eligibleVisible.length > 0 && (
+                        <Checkbox
+                          checked={allEligibleSelected}
+                          onCheckedChange={toggleSelectAllEligible}
+                          aria-label="Sélectionner tous les locataires éligibles"
+                          {...(someEligibleSelected && !allEligibleSelected ? { "data-state": "indeterminate" as const } : {})}
+                        />
+                      )}
+                    </TableHead>
                     <TableHead>Locataire</TableHead>
                     <TableHead>Bien</TableHead>
                     <TableHead>
