@@ -588,7 +588,7 @@ export default function Onboarding() {
                   Choisissez votre formule
                 </h2>
                 <p className="text-muted-foreground">
-                  Essai gratuit sur tous les plans. <span className="font-medium text-primary">Aucun paiement requis.</span>
+                  Sélectionnez l'offre adaptée à votre activité.
                 </p>
               </div>
 
