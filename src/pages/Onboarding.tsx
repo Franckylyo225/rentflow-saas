@@ -187,6 +187,45 @@ export default function Onboarding() {
     setStep(3);
   };
 
+  const handlePayNow = async () => {
+    if (!organization || !selectedPlanData) return;
+    if (selectedPlanData.price_monthly <= 0) {
+      toast.error("Ce plan ne nécessite pas de paiement");
+      return;
+    }
+    const amount = promoApplied ? promoApplied.final_price : selectedPlanData.price_monthly;
+    if (amount < 200) {
+      toast.error("Montant trop faible pour le paiement en ligne");
+      return;
+    }
+    setSaving(true);
+    try {
+      const origin = window.location.origin;
+      const { data, error } = await supabase.functions.invoke("geniuspay-create-payment", {
+        body: {
+          plan_slug: selectedPlan,
+          amount,
+          success_url: `${origin}/onboarding?payment=success`,
+          error_url: `${origin}/onboarding?payment=error`,
+        },
+      });
+      if (error || !data?.checkout_url) {
+        throw new Error(error?.message || data?.error || "Impossible d'initier le paiement");
+      }
+      toast.info("Redirection vers le paiement sécurisé…", {
+        description: `Environnement : ${data.environment === "live" ? "Production" : "Sandbox (test)"}`,
+      });
+      setTimeout(() => {
+        window.location.href = data.checkout_url;
+      }, 600);
+    } catch (e) {
+      toast.error("Échec du paiement", {
+        description: e instanceof Error ? e.message : "Erreur inconnue",
+      });
+      setSaving(false);
+    }
+  };
+
   const handleFinish = async () => {
     if (!organization) return;
     setSaving(true);
