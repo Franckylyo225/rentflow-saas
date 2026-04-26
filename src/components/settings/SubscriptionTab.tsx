@@ -309,77 +309,110 @@ export function SubscriptionTab() {
           Sélectionnez le plan adapté à votre activité.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {plans.map((plan) => {
             const isCurrent = plan.slug === currentSlug && !expired;
             const isSelected = plan.slug === selectedPlan;
             const isCustom = plan.price_monthly === 0 && plan.max_properties === null;
-            const isMiddle = plans.length >= 2 && plan.slug === plans[Math.floor(plans.length / 2)]?.slug;
+            const isPopular = plans.length >= 2 && plan.slug === plans[Math.floor(plans.length / 2)]?.slug;
+
+            const features: string[] = [];
+            if (plan.max_properties !== null) {
+              features.push(`Jusqu'à ${plan.max_properties} unités`);
+            } else {
+              features.push("Unités illimitées");
+            }
+            if (plan.max_users !== null) {
+              features.push(`${plan.max_users} utilisateur${plan.max_users > 1 ? "s" : ""}`);
+            } else {
+              features.push("Utilisateurs illimités");
+            }
+            plan.feature_flags.forEach((flag) => {
+              features.push(FEATURE_LABELS[flag] || flag);
+            });
 
             return (
-              <Card
+              <div
                 key={plan.slug}
-                className={`relative cursor-pointer transition-all duration-200 ${
-                  isSelected
-                    ? "ring-2 ring-primary border-primary shadow-md"
-                    : isCurrent
-                      ? "border-primary/40 bg-primary/5"
-                      : "hover:shadow-md"
-                }`}
                 onClick={() => !isCurrent && handleSelectPlan(plan.slug)}
+                className={`relative flex flex-col rounded-2xl border-2 p-6 transition-all ${
+                  isCurrent
+                    ? "border-primary/40 bg-primary/5 cursor-default"
+                    : isSelected
+                      ? "border-primary bg-primary/5 shadow-md cursor-pointer"
+                      : isPopular
+                        ? "border-primary/30 bg-card hover:shadow-md cursor-pointer"
+                        : "border-border bg-card hover:border-primary/30 hover:shadow-sm cursor-pointer"
+                }`}
               >
-                {isMiddle && !isCurrent && (
-                  <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-0.5 rounded-full text-xs">
+                {isPopular && !isCurrent && (
+                  <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-0.5 text-xs rounded-full">
                     Recommandé
                   </Badge>
                 )}
                 {isCurrent && (
-                  <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-muted text-muted-foreground px-4 py-0.5 rounded-full text-xs border">
+                  <Badge variant="outline" className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-background px-4 py-0.5 text-xs rounded-full">
                     Plan actuel
                   </Badge>
                 )}
 
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">{plan.name}</CardTitle>
+                <div className="mb-4">
+                  <h3 className="text-lg font-bold text-foreground">{plan.name}</h3>
                   {plan.description && (
-                    <CardDescription className="text-xs">{plan.description}</CardDescription>
+                    <p className="text-xs text-muted-foreground mt-1">{plan.description}</p>
                   )}
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    {isCustom ? (
-                      <span className="text-2xl font-extrabold text-foreground">Sur mesure</span>
-                    ) : (
-                      <>
-                        <span className="text-2xl font-extrabold text-foreground">{formatPrice(plan.price_monthly)}</span>
-                        <span className="text-muted-foreground text-xs ml-1">FCFA/mois</span>
-                      </>
-                    )}
-                  </div>
+                </div>
 
-                  <ul className="space-y-2">
-                    <li className="flex items-center gap-2 text-xs">
-                      <Check className="h-3 w-3 text-primary shrink-0" />
-                      <span>{plan.max_properties !== null ? `${plan.max_properties} unités` : "Unités illimitées"}</span>
+                <div className="mb-5">
+                  {isCustom ? (
+                    <span className="text-2xl font-extrabold text-foreground">Sur mesure</span>
+                  ) : (
+                    <>
+                      <span className="text-2xl font-extrabold text-foreground">
+                        {formatPrice(plan.price_monthly)}
+                      </span>
+                      <span className="text-muted-foreground ml-1 text-xs">FCFA/mois</span>
+                    </>
+                  )}
+                </div>
+
+                <ul className="space-y-2 flex-1">
+                  {features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-xs">
+                      <div className="mt-0.5 p-0.5 rounded-full bg-primary/10">
+                        <Check className="h-3 w-3 text-primary" />
+                      </div>
+                      <span className="text-foreground">{f}</span>
                     </li>
-                    <li className="flex items-center gap-2 text-xs">
-                      <Check className="h-3 w-3 text-primary shrink-0" />
-                      <span>{plan.max_users !== null ? `${plan.max_users} utilisateur${plan.max_users > 1 ? "s" : ""}` : "Utilisateurs illimités"}</span>
-                    </li>
-                    {plan.feature_flags.slice(0, 4).map(flag => (
-                      <li key={flag} className="flex items-center gap-2 text-xs">
-                        <Check className="h-3 w-3 text-primary shrink-0" />
-                        <span>{FEATURE_LABELS[flag] || flag}</span>
-                      </li>
-                    ))}
-                    {plan.feature_flags.length > 4 && (
-                      <li className="text-xs text-muted-foreground pl-5">
-                        + {plan.feature_flags.length - 4} autres fonctionnalités
-                      </li>
-                    )}
-                  </ul>
-                </CardContent>
-              </Card>
+                  ))}
+                </ul>
+
+                <div className="mt-4">
+                  {isCurrent ? (
+                    <Button variant="outline" size="sm" className="w-full rounded-full" disabled>
+                      Plan actuel
+                    </Button>
+                  ) : isCustom ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full rounded-full"
+                      onClick={(e) => { e.stopPropagation(); window.open("/contact", "_blank"); }}
+                    >
+                      Contactez-nous
+                    </Button>
+                  ) : (
+                    <Button
+                      variant={isSelected ? "default" : "outline"}
+                      size="sm"
+                      className="w-full rounded-full"
+                      onClick={(e) => { e.stopPropagation(); handleSelectPlan(plan.slug); }}
+                    >
+                      {isSelected ? "✓ Sélectionné" : "Choisir cette offre"}
+                    </Button>
+                  )}
+                </div>
+              </div>
             );
           })}
         </div>
