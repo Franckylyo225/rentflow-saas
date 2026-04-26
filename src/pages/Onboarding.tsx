@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
   Check, ArrowRight, ArrowLeft, Building2, Sparkles, Rocket, Loader2,
-  MapPin, Home, Users, Briefcase, Tag, Gift, CreditCard,
+  MapPin, Home, Users, Briefcase, Tag, Gift, CreditCard, XCircle, CheckCircle2, RefreshCw,
 } from "lucide-react";
 import { PromoCodeInput } from "@/components/promo/PromoCodeInput";
 import { toast } from "sonner";
