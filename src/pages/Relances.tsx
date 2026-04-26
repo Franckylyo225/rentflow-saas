@@ -1493,7 +1493,7 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
 // ----------------- Manual reminder dialog -----------------
 
 function ManualReminderDialog({
-  target,
+  targets,
   sequences,
   canEmail,
   canSms,
@@ -1501,7 +1501,7 @@ function ManualReminderDialog({
   onClose,
   onSend,
 }: {
-  target: UrgentReminder | null;
+  targets: UrgentReminder[] | null;
   sequences: Sequence[];
   canEmail: boolean;
   canSms: boolean;
@@ -1512,19 +1512,29 @@ function ManualReminderDialog({
   const [sequenceId, setSequenceId] = useState<string>("");
   const [channels, setChannels] = useState<Channel[]>(["email", "sms"]);
 
+  const open = !!targets && targets.length > 0;
+  const isBulk = !!targets && targets.length > 1;
+  // Locataire utilisé pour l'aperçu (le premier de la sélection)
+  const previewTarget = targets && targets.length > 0 ? targets[0] : null;
+  // Pour la pré-sélection on prend le retard maximum
+  const maxDays = targets && targets.length > 0
+    ? Math.max(...targets.map(t => t.daysLate))
+    : 0;
+
   // Réinit à l'ouverture
   useEffect(() => {
-    if (target) {
-      // pré-sélectionne la séquence la plus pertinente (≥ 7j → "Relance urgente" ou la plus tardive disponible)
+    if (open && targets) {
+      // pré-sélectionne la séquence la plus pertinente (selon le retard max sélectionné)
       const sorted = [...sequences].sort((a, b) => b.delayDays - a.delayDays);
-      const best = sorted.find(s => s.delayDays <= target.daysLate) || sorted[0];
+      const best = sorted.find(s => s.delayDays <= maxDays) || sorted[0];
       setSequenceId(best?.id || "");
       const next: Channel[] = [];
       if (canEmail && best?.channels.includes("email")) next.push("email");
       if (canSms && best?.channels.includes("sms")) next.push("sms");
       setChannels(next.length > 0 ? next : (canEmail ? ["email"] : canSms ? ["sms"] : []));
     }
-  }, [target, sequences, canEmail, canSms]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, targets?.length, sequences, canEmail, canSms]);
 
   const seq = sequences.find(s => s.id === sequenceId);
 
@@ -1542,13 +1552,13 @@ function ManualReminderDialog({
   };
 
   const renderPreview = (text: string) => {
-    if (!target) return text;
-    const firstName = target.tenant.split(" ")[0];
+    if (!previewTarget) return text;
+    const firstName = previewTarget.tenant.split(" ")[0];
     return text
       .split("[Prénom]").join(firstName)
-      .split("[Nom]").join(target.tenant)
-      .split("[Montant]").join(fmtFCFA(target.amount))
-      .split("[Bien]").join(target.property)
+      .split("[Nom]").join(previewTarget.tenant)
+      .split("[Montant]").join(fmtFCFA(previewTarget.amount))
+      .split("[Bien]").join(previewTarget.property)
       .split("[Date échéance]").join("la date prévue")
       .split("[Lien paiement]").join("https://…")
       .split("[Nom agence]").join("Votre agence");
@@ -1560,24 +1570,48 @@ function ManualReminderDialog({
   };
 
   return (
-    <Dialog open={!!target} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Send className="h-5 w-5 text-primary" />
-            Relance manuelle
+            {isBulk ? "Relance manuelle groupée" : "Relance manuelle"}
           </DialogTitle>
           <DialogDescription>
-            {target && (
+            {isBulk && targets ? (
               <>
-                Envoyer une relance à <strong>{target.tenant}</strong> — {target.property} ({fmtFCFA(target.amount)} · {target.daysLate}j de retard)
+                Envoyer une relance à <strong>{targets.length} locataires</strong> sélectionnés.
+                Chacun recevra un message personnalisé avec ses propres données.
               </>
-            )}
+            ) : previewTarget ? (
+              <>
+                Envoyer une relance à <strong>{previewTarget.tenant}</strong> — {previewTarget.property} ({fmtFCFA(previewTarget.amount)} · {previewTarget.daysLate}j de retard)
+              </>
+            ) : null}
           </DialogDescription>
         </DialogHeader>
 
-        {target && (
+        {open && (
           <div className="space-y-5">
+            {/* Liste des destinataires en mode groupé */}
+            {isBulk && targets && (
+              <div className="rounded-lg border border-border bg-muted/30 p-3">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                  Destinataires ({targets.length})
+                </p>
+                <div className="max-h-32 overflow-y-auto space-y-1 text-sm">
+                  {targets.map(t => (
+                    <div key={t.id} className="flex items-center justify-between gap-2">
+                      <span className="font-medium truncate">{t.tenant}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {fmtFCFA(t.amount)} · {t.daysLate}j
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Choix du modèle */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Modèle de message</Label>
@@ -1642,6 +1676,11 @@ function ManualReminderDialog({
             {/* Aperçus */}
             {seq && (
               <div className="space-y-3">
+                {isBulk && (
+                  <p className="text-xs text-muted-foreground">
+                    Aperçu basé sur <strong>{previewTarget?.tenant}</strong>. Les variables seront personnalisées pour chaque destinataire.
+                  </p>
+                )}
                 {channels.includes("email") && (
                   <div className="rounded-lg border border-border bg-muted/30 p-3">
                     <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1.5">
@@ -1670,7 +1709,10 @@ function ManualReminderDialog({
             onClick={handleSend}
             disabled={!seq || channels.length === 0 || quotaReached}
           >
-            <Send className="h-4 w-4" /> Envoyer la relance
+            <Send className="h-4 w-4" />
+            {isBulk && targets
+              ? `Envoyer à ${targets.length} locataires`
+              : "Envoyer la relance"}
           </Button>
         </DialogFooter>
       </DialogContent>
