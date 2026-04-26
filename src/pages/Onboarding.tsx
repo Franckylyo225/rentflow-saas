@@ -266,6 +266,111 @@ export default function Onboarding() {
     );
   }
 
+  // Dedicated screen when returning from GeniusPay
+  if (paymentReturn === "success") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md w-full text-center space-y-8"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+            className="mx-auto h-20 w-20 rounded-3xl bg-primary/10 flex items-center justify-center"
+          >
+            <CheckCircle2 className="h-12 w-12 text-primary" strokeWidth={2.5} />
+          </motion.div>
+
+          <div className="space-y-3">
+            <h2 className="text-3xl font-extrabold text-foreground tracking-tight">
+              Paiement reçu 🎉
+            </h2>
+            <p className="text-muted-foreground">
+              Votre paiement a été enregistré. Votre abonnement sera activé automatiquement
+              dès la confirmation par GeniusPay (sous quelques instants).
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-muted/50 p-4 text-sm text-muted-foreground">
+            Vous pouvez dès maintenant accéder à votre espace et commencer à configurer votre activité.
+          </div>
+
+          <Button
+            size="lg"
+            className="w-full rounded-full gap-2 font-semibold h-12 shadow-lg shadow-primary/25"
+            onClick={handleFinalizeAfterPayment}
+            disabled={finalizing}
+          >
+            {finalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            Accéder à mon espace <ArrowRight className="h-4 w-4" />
+          </Button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (paymentReturn === "error") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md w-full text-center space-y-8"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+            className="mx-auto h-20 w-20 rounded-3xl bg-destructive/10 flex items-center justify-center"
+          >
+            <XCircle className="h-12 w-12 text-destructive" strokeWidth={2.5} />
+          </motion.div>
+
+          <div className="space-y-3">
+            <h2 className="text-3xl font-extrabold text-foreground tracking-tight">
+              Paiement non finalisé
+            </h2>
+            <p className="text-muted-foreground">
+              Le paiement a été annulé ou n'a pas abouti. Aucun montant n'a été débité.
+              Vous pouvez réessayer maintenant ou revenir à l'étape précédente.
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-muted/50 p-4 text-sm text-muted-foreground text-left space-y-2">
+            <p className="font-medium text-foreground">Causes possibles :</p>
+            <ul className="space-y-1 text-xs list-disc list-inside">
+              <li>Paiement annulé sur la page GeniusPay</li>
+              <li>Solde Mobile Money insuffisant</li>
+              <li>Carte bancaire refusée</li>
+              <li>Session expirée</li>
+            </ul>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Button
+              size="lg"
+              className="w-full rounded-full gap-2 font-semibold h-12"
+              onClick={handleRetryPayment}
+            >
+              <RefreshCw className="h-4 w-4" /> Réessayer le paiement
+            </Button>
+            <Button
+              variant="ghost"
+              size="lg"
+              className="w-full rounded-full gap-2 font-semibold"
+              onClick={() => { setPaymentReturn(null); setStep(1); }}
+            >
+              <ArrowLeft className="h-4 w-4" /> Choisir un autre plan
+            </Button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   const selectedPlanData = plans.find((p) => p.slug === selectedPlan);
   const popularSlug = plans.length >= 2 ? plans[Math.floor(plans.length / 2)]?.slug : null;
   const progressPct = ((step + 1) / STEPS.length) * 100;
