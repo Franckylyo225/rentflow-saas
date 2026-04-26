@@ -361,6 +361,16 @@ export default function Relances() {
     manual: reminders.filter(r => r.daysLate >= 7).length,
   };
 
+  // Pagination — Calendrier des relances
+  const REMINDERS_PAGE_SIZE = 8;
+  const [remindersPage, setRemindersPage] = useState(1);
+  useEffect(() => { setRemindersPage(1); }, [filter, sortKey, sortDir]);
+  const remindersTotalPages = Math.max(1, Math.ceil(filtered.length / REMINDERS_PAGE_SIZE));
+  const pagedReminders = useMemo(
+    () => filtered.slice((remindersPage - 1) * REMINDERS_PAGE_SIZE, remindersPage * REMINDERS_PAGE_SIZE),
+    [filtered, remindersPage]
+  );
+
   // Actions
   const sendReminder = (r: UrgentReminder, channel: "email" | "sms") => {
     if (!canManualSend) {
