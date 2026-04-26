@@ -171,7 +171,8 @@ export default function Relances() {
 
   const [globalActive, setGlobalActive] = useState(true);
   const [confirmOff, setConfirmOff] = useState(false);
-  const [reminders, setReminders] = useState(initialReminders);
+  const [reminders, setReminders] = useState<UrgentReminder[]>([]);
+  const [remindersLoading, setRemindersLoading] = useState(true);
   const [sequences, setSequences] = useState(initialSequences);
   const [previousSeqStates, setPreviousSeqStates] = useState<Record<string, boolean> | null>(null);
   const [filter, setFilter] = useState<"all" | "auto" | "manual">("all");
