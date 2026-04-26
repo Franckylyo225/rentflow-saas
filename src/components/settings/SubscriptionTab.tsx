@@ -159,10 +159,11 @@ export function SubscriptionTab() {
     // Paid plan → redirect to GeniusPay checkout
     setUpgrading(true);
     try {
+      const amount = promoApplied ? promoApplied.final_price : plan.price_monthly;
       const { data, error } = await supabase.functions.invoke("geniuspay-create-payment", {
         body: {
           plan_slug: selectedPlan,
-          amount: plan.price_monthly,
+          amount,
         },
       });
 
