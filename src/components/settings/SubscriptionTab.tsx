@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Check, ArrowRight, Loader2, Crown, Clock, AlertTriangle, History, Download } from "lucide-react";
 import { downloadInvoice, generateInvoiceNumber, type InvoiceData } from "@/lib/generateInvoice";
 import { PromoCodeInput } from "@/components/promo/PromoCodeInput";
+import { PaymentHistoryCard } from "@/components/settings/PaymentHistoryCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
@@ -430,6 +431,9 @@ export function SubscriptionTab() {
           </CardContent>
         </Card>
       )}
+
+      {/* Payment transactions history */}
+      <PaymentHistoryCard />
 
       {/* History */}
       <Card>
