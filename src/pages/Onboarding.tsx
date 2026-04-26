@@ -83,6 +83,39 @@ export default function Onboarding() {
     }
   }, [profileLoading, organization, navigate]);
 
+  // Handle return from GeniusPay checkout (?payment=success|error)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get("payment");
+    if (!payment) return;
+
+    if (payment === "success") {
+      toast.success("Paiement reçu", {
+        description: "Votre abonnement sera activé dès confirmation. Finalisons votre compte.",
+      });
+      // Auto-finalize onboarding after successful payment
+      (async () => {
+        if (organization && !organization.onboarding_completed) {
+          await supabase
+            .from("organizations")
+            .update({ onboarding_completed: true })
+            .eq("id", organization.id);
+          await refetch();
+          navigate("/dashboard", { replace: true });
+        }
+      })();
+    } else if (payment === "error") {
+      toast.error("Paiement échoué ou annulé", {
+        description: "Vous pouvez réessayer ou commencer par l'essai gratuit.",
+      });
+      setStep(2);
+    }
+    params.delete("payment");
+    const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+    window.history.replaceState({}, "", newUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organization]);
+
   // Pre-fill
   useEffect(() => {
     if (organization) {
