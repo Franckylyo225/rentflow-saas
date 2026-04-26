@@ -361,6 +361,16 @@ export default function Relances() {
     manual: reminders.filter(r => r.daysLate >= 7).length,
   };
 
+  // Pagination — Calendrier des relances
+  const REMINDERS_PAGE_SIZE = 8;
+  const [remindersPage, setRemindersPage] = useState(1);
+  useEffect(() => { setRemindersPage(1); }, [filter, sortKey, sortDir]);
+  const remindersTotalPages = Math.max(1, Math.ceil(filtered.length / REMINDERS_PAGE_SIZE));
+  const pagedReminders = useMemo(
+    () => filtered.slice((remindersPage - 1) * REMINDERS_PAGE_SIZE, remindersPage * REMINDERS_PAGE_SIZE),
+    [filtered, remindersPage]
+  );
+
   // Actions
   const sendReminder = (r: UrgentReminder, channel: "email" | "sms") => {
     if (!canManualSend) {
@@ -691,7 +701,7 @@ export default function Relances() {
                       </TableCell>
                     </TableRow>
                   )}
-                  {filtered.map((r) => {
+                  {pagedReminders.map((r) => {
                     const planned = getPlannedSequence(r.daysLate);
                     const manualEligible = r.daysLate >= 7;
                     return (
@@ -753,7 +763,7 @@ export default function Relances() {
 
             {/* Mobile card list */}
             <div className="md:hidden divide-y divide-border">
-              {filtered.map(r => {
+              {pagedReminders.map(r => {
                 const planned = getPlannedSequence(r.daysLate);
                 const manualEligible = r.daysLate >= 7;
                 return (
@@ -793,6 +803,37 @@ export default function Relances() {
                 );
               })}
             </div>
+
+            {filtered.length > 0 && (
+              <div className="border-t border-border px-4 py-3 flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-xs text-muted-foreground">
+                  {(remindersPage - 1) * REMINDERS_PAGE_SIZE + 1}
+                  –
+                  {Math.min(remindersPage * REMINDERS_PAGE_SIZE, filtered.length)} sur {filtered.length}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={remindersPage <= 1}
+                    onClick={() => setRemindersPage(p => Math.max(1, p - 1))}
+                  >
+                    Précédent
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    Page {remindersPage} / {remindersTotalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={remindersPage >= remindersTotalPages}
+                    onClick={() => setRemindersPage(p => Math.min(remindersTotalPages, p + 1))}
+                  >
+                    Suivant
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
