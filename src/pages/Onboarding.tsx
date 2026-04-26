@@ -402,7 +402,7 @@ export default function Onboarding() {
               variant="ghost"
               size="lg"
               className="w-full rounded-full gap-2 font-semibold"
-              onClick={() => { setPaymentReturn(null); setStep(1); }}
+              onClick={() => { clearPaymentReturn(); setStep(1); }}
             >
               <ArrowLeft className="h-4 w-4 shrink-0" />
               <span className="truncate">Choisir un autre plan</span>
