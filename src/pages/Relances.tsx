@@ -803,6 +803,37 @@ export default function Relances() {
                 );
               })}
             </div>
+
+            {filtered.length > 0 && (
+              <div className="border-t border-border px-4 py-3 flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-xs text-muted-foreground">
+                  {(remindersPage - 1) * REMINDERS_PAGE_SIZE + 1}
+                  –
+                  {Math.min(remindersPage * REMINDERS_PAGE_SIZE, filtered.length)} sur {filtered.length}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={remindersPage <= 1}
+                    onClick={() => setRemindersPage(p => Math.max(1, p - 1))}
+                  >
+                    Précédent
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    Page {remindersPage} / {remindersTotalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={remindersPage >= remindersTotalPages}
+                    onClick={() => setRemindersPage(p => Math.min(remindersTotalPages, p + 1))}
+                  >
+                    Suivant
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
