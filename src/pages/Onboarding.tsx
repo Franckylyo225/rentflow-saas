@@ -577,7 +577,7 @@ export default function Onboarding() {
                   Récapitulatif & facturation
                 </h2>
                 <p className="text-muted-foreground text-sm">
-                  Vérifiez votre formule. Le paiement sera activé prochainement.
+                  Vérifiez votre formule avant de procéder au paiement sécurisé.
                 </p>
               </div>
 
@@ -589,17 +589,24 @@ export default function Onboarding() {
                       <p className="text-xs text-muted-foreground uppercase tracking-wide">Formule sélectionnée</p>
                       <p className="text-lg font-bold text-foreground">{selectedPlanData.name}</p>
                     </div>
-                    <Badge variant="secondary" className="gap-1">
-                      <Sparkles className="h-3 w-3" />
-                      Essai gratuit
-                    </Badge>
+                    {selectedPlanData.price_monthly > 0 ? (
+                      <Badge variant="default" className="gap-1">
+                        <CreditCard className="h-3 w-3" />
+                        Paiement requis
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="gap-1">
+                        <Sparkles className="h-3 w-3" />
+                        Sans paiement
+                      </Badge>
+                    )}
                   </div>
 
                   <div className="h-px bg-border" />
 
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Abonnement mensuel</span>
+                      <span className="text-muted-foreground">Prix mensuel</span>
                       <span className="font-semibold text-foreground">
                         {selectedPlanData.price_monthly > 0
                           ? `${formatPrice(selectedPlanData.price_monthly)} FCFA`
@@ -609,34 +616,43 @@ export default function Onboarding() {
 
                     {promoApplied && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Réduction promo</span>
-                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                          -{formatPrice(promoApplied.discount)} FCFA
+                        <span className="text-muted-foreground flex items-center gap-1.5">
+                          <Tag className="h-3.5 w-3.5" />
+                          Remise promo
+                        </span>
+                        <span className="font-semibold text-primary">
+                          −{formatPrice(promoApplied.discount)} FCFA
                         </span>
                       </div>
                     )}
 
                     <div className="h-px bg-border" />
 
-                    <div className="flex justify-between text-sm">
-                      <span className="font-medium text-foreground">Total après essai</span>
-                      <span className="font-bold text-foreground">
+                    <div className="flex justify-between items-baseline text-sm pt-1">
+                      <span className="font-semibold text-foreground">
+                        {selectedPlanData.price_monthly > 0 ? "Total à payer" : "Total"}
+                      </span>
+                      <span className="font-extrabold text-xl text-foreground">
                         {promoApplied
                           ? `${formatPrice(promoApplied.final_price)} FCFA`
                           : selectedPlanData.price_monthly > 0
                           ? `${formatPrice(selectedPlanData.price_monthly)} FCFA`
                           : "Sur mesure"}
-                        <span className="text-muted-foreground font-normal">/mois</span>
+                        {selectedPlanData.price_monthly > 0 && (
+                          <span className="text-muted-foreground font-normal text-xs ml-1">/mois</span>
+                        )}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 text-xs text-primary bg-primary/5 rounded-lg px-3 py-2">
-                    <Sparkles className="h-3.5 w-3.5 shrink-0" />
-                    <span>
-                      {promoApplied ? "30 jours d'essai gratuit activés" : "7 jours d'essai gratuit inclus"}
-                    </span>
-                  </div>
+                  {selectedPlanData.price_monthly > 0 && promoApplied && (
+                    <div className="flex items-center gap-2 text-xs text-primary bg-primary/5 rounded-lg px-3 py-2">
+                      <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                      <span>
+                        Économie de {formatPrice(promoApplied.discount)} FCFA appliquée
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 
