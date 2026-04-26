@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import Landing from "./Landing";
+import LandingV2 from "./LandingV2";
 import { Loader2 } from "lucide-react";
 
 const Home = () => {
@@ -18,7 +18,7 @@ const Home = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <Landing />;
+  return <LandingV2 />;
 };
 
 export default Home;
