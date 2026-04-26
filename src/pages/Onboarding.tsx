@@ -693,19 +693,20 @@ export default function Onboarding() {
 
               {/* Plan recap card */}
               {selectedPlanData && (
-                <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
+                <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-4">
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div className="min-w-0 flex-1">
                       <p className="text-xs text-muted-foreground uppercase tracking-wide">Formule sélectionnée</p>
-                      <p className="text-lg font-bold text-foreground">{selectedPlanData.name}</p>
+                      <p className="text-lg font-bold text-foreground truncate">{selectedPlanData.name}</p>
                     </div>
                     {selectedPlanData.price_monthly > 0 ? (
-                      <Badge variant="default" className="gap-1">
+                      <Badge variant="default" className="gap-1 shrink-0">
                         <CreditCard className="h-3 w-3" />
-                        Paiement requis
+                        <span className="hidden xs:inline sm:inline">Paiement requis</span>
+                        <span className="xs:hidden sm:hidden">Paiement</span>
                       </Badge>
                     ) : (
-                      <Badge variant="secondary" className="gap-1">
+                      <Badge variant="secondary" className="gap-1 shrink-0">
                         <Sparkles className="h-3 w-3" />
                         Sans paiement
                       </Badge>
@@ -715,9 +716,9 @@ export default function Onboarding() {
                   <div className="h-px bg-border" />
 
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Prix mensuel</span>
-                      <span className="font-semibold text-foreground">
+                    <div className="flex justify-between items-center gap-3 text-sm">
+                      <span className="text-muted-foreground shrink-0">Prix mensuel</span>
+                      <span className="font-semibold text-foreground text-right break-all">
                         {selectedPlanData.price_monthly > 0
                           ? `${formatPrice(selectedPlanData.price_monthly)} FCFA`
                           : "Sur mesure"}
@@ -725,12 +726,12 @@ export default function Onboarding() {
                     </div>
 
                     {promoApplied && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground flex items-center gap-1.5">
+                      <div className="flex justify-between items-center gap-3 text-sm">
+                        <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
                           <Tag className="h-3.5 w-3.5" />
                           Remise promo
                         </span>
-                        <span className="font-semibold text-primary">
+                        <span className="font-semibold text-primary text-right break-all">
                           −{formatPrice(promoApplied.discount)} FCFA
                         </span>
                       </div>
@@ -738,11 +739,11 @@ export default function Onboarding() {
 
                     <div className="h-px bg-border" />
 
-                    <div className="flex justify-between items-baseline text-sm pt-1">
-                      <span className="font-semibold text-foreground">
+                    <div className="flex justify-between items-baseline gap-3 pt-1">
+                      <span className="font-semibold text-foreground text-sm shrink-0">
                         {selectedPlanData.price_monthly > 0 ? "Total à payer" : "Total"}
                       </span>
-                      <span className="font-extrabold text-xl text-foreground">
+                      <span className="font-extrabold text-lg sm:text-xl text-foreground text-right break-all">
                         {promoApplied
                           ? `${formatPrice(promoApplied.final_price)} FCFA`
                           : selectedPlanData.price_monthly > 0
@@ -756,9 +757,9 @@ export default function Onboarding() {
                   </div>
 
                   {selectedPlanData.price_monthly > 0 && promoApplied && (
-                    <div className="flex items-center gap-2 text-xs text-primary bg-primary/5 rounded-lg px-3 py-2">
-                      <Sparkles className="h-3.5 w-3.5 shrink-0" />
-                      <span>
+                    <div className="flex items-start gap-2 text-xs text-primary bg-primary/5 rounded-lg px-3 py-2">
+                      <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                      <span className="break-words">
                         Économie de {formatPrice(promoApplied.discount)} FCFA appliquée
                       </span>
                     </div>
@@ -790,38 +791,40 @@ export default function Onboarding() {
                     <div className="p-2 rounded-lg bg-primary/10 shrink-0">
                       <CreditCard className="h-4 w-4 text-primary" />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground">Payer maintenant</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
+                      <p className="text-xs text-muted-foreground mt-0.5 break-words">
                         Activez votre abonnement immédiatement via paiement sécurisé GeniusPay (Mobile Money, carte).
                       </p>
                     </div>
                   </div>
                   <Button
                     size="lg"
-                    className="w-full rounded-full gap-2 font-semibold"
+                    className="w-full rounded-full gap-2 font-semibold h-12 px-4 text-sm sm:text-base whitespace-normal"
                     onClick={handlePayNow}
                     disabled={saving}
                   >
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                    Payer {formatPrice(promoApplied ? promoApplied.final_price : selectedPlanData.price_monthly)} FCFA
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin shrink-0" /> : <CreditCard className="h-4 w-4 shrink-0" />}
+                    <span className="truncate">
+                      Payer {formatPrice(promoApplied ? promoApplied.final_price : selectedPlanData.price_monthly)} FCFA
+                    </span>
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-4 py-3">
+                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-4 py-3 text-center">
                   <CreditCard className="h-3.5 w-3.5 shrink-0" />
                   <span>Aucun paiement requis pour ce plan.</span>
                 </div>
               )}
 
-              <div className="flex justify-between">
-                <Button variant="ghost" onClick={() => setStep(1)} className="gap-2" disabled={saving}>
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-2">
+                <Button variant="ghost" onClick={() => setStep(1)} className="gap-2 w-full sm:w-auto" disabled={saving}>
                   <ArrowLeft className="h-4 w-4" /> Retour
                 </Button>
                 {(!selectedPlanData || selectedPlanData.price_monthly <= 0) && (
                   <Button
                     size="lg"
-                    className="rounded-full gap-2 font-semibold"
+                    className="rounded-full gap-2 font-semibold w-full sm:w-auto"
                     onClick={handlePromoStep}
                     disabled={saving}
                   >
