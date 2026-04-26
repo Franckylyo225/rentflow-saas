@@ -789,6 +789,17 @@ export default function Relances() {
                         )}
                         onClick={() => setDetailReminder(r)}
                       >
+                        <TableCell onClick={(e) => e.stopPropagation()} className="w-10">
+                          {r.daysLate >= 7 ? (
+                            <Checkbox
+                              checked={selectedIds.has(r.id)}
+                              onCheckedChange={() => toggleSelected(r.id)}
+                              aria-label={`Sélectionner ${r.tenant}`}
+                            />
+                          ) : (
+                            <span className="block h-4 w-4" aria-hidden="true" />
+                          )}
+                        </TableCell>
                         <TableCell className="font-medium">{r.tenant}</TableCell>
                         <TableCell className="text-muted-foreground">{r.property}</TableCell>
                         <TableCell className="font-semibold">{fmtFCFA(r.amount)}</TableCell>
