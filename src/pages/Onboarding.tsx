@@ -91,32 +91,35 @@ export default function Onboarding() {
     const payment = params.get("payment");
     if (!payment) return;
 
-    if (payment === "success") {
-      toast.success("Paiement reçu", {
-        description: "Votre abonnement sera activé dès confirmation. Finalisons votre compte.",
-      });
-      // Auto-finalize onboarding after successful payment
-      (async () => {
-        if (organization && !organization.onboarding_completed) {
-          await supabase
-            .from("organizations")
-            .update({ onboarding_completed: true })
-            .eq("id", organization.id);
-          await refetch();
-          navigate("/dashboard", { replace: true });
-        }
-      })();
-    } else if (payment === "error") {
-      toast.error("Paiement échoué ou annulé", {
-        description: "Vous pouvez réessayer ou commencer par l'essai gratuit.",
-      });
-      setStep(2);
+    if (payment === "success" || payment === "error") {
+      setPaymentReturn(payment);
     }
+
     params.delete("payment");
     const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
     window.history.replaceState({}, "", newUrl);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [organization]);
+  }, []);
+
+  const handleFinalizeAfterPayment = async () => {
+    if (!organization) return;
+    setFinalizing(true);
+    const { error } = await supabase
+      .from("organizations")
+      .update({ onboarding_completed: true })
+      .eq("id", organization.id);
+    if (error) {
+      toast.error("Erreur lors de la finalisation", { description: error.message });
+      setFinalizing(false);
+      return;
+    }
+    await refetch();
+    navigate("/dashboard", { replace: true });
+  };
+
+  const handleRetryPayment = () => {
+    setPaymentReturn(null);
+    setStep(2);
+  };
 
   // Pre-fill
   useEffect(() => {
