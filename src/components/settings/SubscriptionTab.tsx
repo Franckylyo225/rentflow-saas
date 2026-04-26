@@ -129,53 +129,81 @@ export function SubscriptionTab() {
       return;
     }
 
-    setUpgrading(true);
-    const { error } = await supabase
-      .from("subscriptions")
-      .update({
-        plan: selectedPlan,
-        status: "active",
-        current_period_start: new Date().toISOString(),
-        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      })
-      .eq("organization_id", organizationId);
+    // Free plan → no payment needed, switch directly
+    if (plan.price_monthly === 0) {
+      setUpgrading(true);
+      const { error } = await supabase
+        .from("subscriptions")
+        .update({
+          plan: selectedPlan,
+          status: "active",
+          current_period_start: new Date().toISOString(),
+          current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        })
+        .eq("organization_id", organizationId);
 
-    if (error) {
-      toast.error("Erreur lors du changement de plan", { description: error.message });
-    } else {
-      setSubscription(prev => prev ? {
-        ...prev,
-        plan: selectedPlan,
-        status: "active",
-        current_period_start: new Date().toISOString(),
-        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      } : prev);
-      toast.success("Plan mis à jour", {
-        description: `Vous êtes maintenant sur le plan ${plan.name}.`,
+      if (error) {
+        toast.error("Erreur lors du changement de plan", { description: error.message });
+      } else {
+        toast.success("Plan mis à jour");
+        fetchData();
+      }
+      setSelectedPlan(null);
+      setUpgrading(false);
+      return;
+    }
+
+    // Paid plan → redirect to GeniusPay checkout
+    setUpgrading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("geniuspay-create-payment", {
+        body: {
+          plan_slug: selectedPlan,
+          amount: plan.price_monthly,
+        },
       });
 
-      // Send payment/plan change confirmation email (fire-and-forget)
-      if (profile?.email) {
-        supabase.functions.invoke("send-email", {
-          body: {
-            templateName: "payment-confirmation",
-            recipientEmail: profile.email,
-            templateData: {
-              name: profile.full_name || "",
-              plan: plan.name,
-              amount: String(plan.price_monthly),
-            },
-            adminEmail: "admin@rent-flow.net",
-          },
-        }).catch(() => {});
+      if (error || !data?.checkout_url) {
+        throw new Error(error?.message || data?.error || "Impossible d'initier le paiement");
       }
 
-      // Refresh history
-      fetchData();
+      toast.info("Redirection vers le paiement sécurisé…", {
+        description: `Environnement : ${data.environment === "live" ? "Production" : "Sandbox (test)"}`,
+      });
+
+      // Brief delay so user sees the toast, then redirect
+      setTimeout(() => {
+        window.location.href = data.checkout_url;
+      }, 600);
+    } catch (e) {
+      toast.error("Échec du paiement", {
+        description: e instanceof Error ? e.message : "Erreur inconnue",
+      });
+      setUpgrading(false);
     }
-    setSelectedPlan(null);
-    setUpgrading(false);
   };
+
+  // Handle return from GeniusPay checkout
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get("payment");
+    if (payment === "success") {
+      toast.success("Paiement reçu", {
+        description: "Votre abonnement sera activé dès confirmation par GeniusPay.",
+      });
+      // Refresh after short delay to give webhook time to land
+      setTimeout(() => fetchData(), 1500);
+      params.delete("payment");
+      const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+      window.history.replaceState({}, "", newUrl);
+    } else if (payment === "error") {
+      toast.error("Paiement échoué ou annulé");
+      params.delete("payment");
+      const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
+      window.history.replaceState({}, "", newUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (loading) {
     return (
