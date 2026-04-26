@@ -863,9 +863,20 @@ export default function Relances() {
                     )}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-semibold text-foreground">{r.tenant}</p>
-                        <p className="text-xs text-muted-foreground">{r.property}</p>
+                      <div className="flex items-start gap-2">
+                        {manualEligible && (
+                          <span onClick={(e) => e.stopPropagation()} className="pt-0.5">
+                            <Checkbox
+                              checked={selectedIds.has(r.id)}
+                              onCheckedChange={() => toggleSelected(r.id)}
+                              aria-label={`Sélectionner ${r.tenant}`}
+                            />
+                          </span>
+                        )}
+                        <div>
+                          <p className="font-semibold text-foreground">{r.tenant}</p>
+                          <p className="text-xs text-muted-foreground">{r.property}</p>
+                        </div>
                       </div>
                       <DelayBadge days={r.daysLate} />
                     </div>
