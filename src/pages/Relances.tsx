@@ -50,16 +50,7 @@ interface UrgentReminder {
   autoReminded: boolean;
 }
 
-const initialReminders: UrgentReminder[] = [
-  { id: "r1", tenant: "Kouassi Amani", property: "Villa Angré F5", amount: 450000, daysLate: 12, lastReminderAt: "Il y a 4j", lastReminderChannel: "email", status: "Impayé", autoReminded: false },
-  { id: "r2", tenant: "Traoré Mariam", property: "Appt Riviera 2", amount: 280000, daysLate: 8, lastReminderAt: "Il y a 2j", lastReminderChannel: "sms", status: "Impayé", autoReminded: false },
-  { id: "r3", tenant: "Coulibaly Seydou", property: "Studio Marcory", amount: 150000, daysLate: 3, lastReminderAt: "Aujourd'hui", lastReminderChannel: "auto", status: "Relancé", autoReminded: true },
-  { id: "r4", tenant: "Bamba Fatou", property: "Duplex Deux-Plateaux", amount: 420000, daysLate: 1, lastReminderAt: null, lastReminderChannel: null, status: "En retard", autoReminded: false },
-  { id: "r5", tenant: "N'Guessan Aya", property: "Appt Cocody", amount: 200000, daysLate: 1, lastReminderAt: null, lastReminderChannel: null, status: "En retard", autoReminded: false },
-  { id: "r6", tenant: "Koné Ibrahim", property: "Villa Riviera 3", amount: 350000, daysLate: 2, lastReminderAt: "Hier", lastReminderChannel: "email", status: "Relancé", autoReminded: true },
-  { id: "r7", tenant: "Diallo Aïssatou", property: "Studio Angré", amount: 120000, daysLate: 5, lastReminderAt: "Il y a 3j", lastReminderChannel: "sms", status: "En retard", autoReminded: false },
-  { id: "r8", tenant: "Aka Eric", property: "Appt Marcory Rés.", amount: 180000, daysLate: 6, lastReminderAt: "Il y a 1j", lastReminderChannel: "email", status: "En retard", autoReminded: false },
-];
+// Les relances sont chargées dynamiquement depuis rent_payments (impayés/partiels en retard).
 
 interface Sequence {
   id: string;
