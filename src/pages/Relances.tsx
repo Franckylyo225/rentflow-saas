@@ -187,6 +187,8 @@ export default function Relances() {
   const [sortKey, setSortKey] = useState<"daysLate" | "amount">("daysLate");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [manualTarget, setManualTarget] = useState<UrgentReminder | null>(null);
+  const [bulkTargets, setBulkTargets] = useState<UrgentReminder[] | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [detailReminder, setDetailReminder] = useState<UrgentReminder | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingSeq, setEditingSeq] = useState<Sequence | null>(null);
