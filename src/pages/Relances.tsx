@@ -474,10 +474,11 @@ export default function Relances() {
   };
 
   const markAsPaid = (r: UrgentReminder) => {
-    const firstName = r.tenant.split(" ")[0];
-    setReminders(prev => prev.filter(x => x.id !== r.id));
     setDetailReminder(null);
-    toast.success(`Paiement enregistré pour ${firstName} ✓`);
+    navigate(`/rents?paymentId=${r.id}`);
+    toast.message("Enregistrer le paiement", {
+      description: `Vous allez être redirigé vers la fiche de paiement de ${r.tenant.split(" ")[0]}.`,
+    });
   };
 
   const handleToggleGlobal = (next: boolean) => {
