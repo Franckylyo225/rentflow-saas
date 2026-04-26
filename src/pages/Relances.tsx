@@ -184,6 +184,7 @@ export default function Relances() {
   const [sequences, setSequences] = useState(initialSequences);
   const [previousSeqStates, setPreviousSeqStates] = useState<Record<string, boolean> | null>(null);
   const [filter, setFilter] = useState<"all" | "auto" | "manual">("all");
+  const [delayFilter, setDelayFilter] = useState<"all" | "today" | "light" | "important" | "critical">("all");
   const [sortKey, setSortKey] = useState<"daysLate" | "amount">("daysLate");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [manualTarget, setManualTarget] = useState<UrgentReminder | null>(null);
