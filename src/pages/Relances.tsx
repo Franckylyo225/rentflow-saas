@@ -349,13 +349,17 @@ export default function Relances() {
     let list = reminders;
     if (filter === "auto") list = list.filter(r => r.daysLate < 7);
     else if (filter === "manual") list = list.filter(r => r.daysLate >= 7);
+    if (delayFilter === "today") list = list.filter(r => r.daysLate === 0);
+    else if (delayFilter === "light") list = list.filter(r => r.daysLate >= 1 && r.daysLate <= 7);
+    else if (delayFilter === "important") list = list.filter(r => r.daysLate >= 8 && r.daysLate <= 30);
+    else if (delayFilter === "critical") list = list.filter(r => r.daysLate > 30);
     const sorted = [...list].sort((a, b) => {
       const av = sortKey === "daysLate" ? a.daysLate : a.amount;
       const bv = sortKey === "daysLate" ? b.daysLate : b.amount;
       return sortDir === "asc" ? av - bv : bv - av;
     });
     return sorted;
-  }, [reminders, filter, sortKey, sortDir]);
+  }, [reminders, filter, delayFilter, sortKey, sortDir]);
 
   const counts = {
     all: reminders.length,
@@ -363,10 +367,18 @@ export default function Relances() {
     manual: reminders.filter(r => r.daysLate >= 7).length,
   };
 
+  const delayCounts = {
+    all: reminders.length,
+    today: reminders.filter(r => r.daysLate === 0).length,
+    light: reminders.filter(r => r.daysLate >= 1 && r.daysLate <= 7).length,
+    important: reminders.filter(r => r.daysLate >= 8 && r.daysLate <= 30).length,
+    critical: reminders.filter(r => r.daysLate > 30).length,
+  };
+
   // Pagination — Calendrier des relances
   const REMINDERS_PAGE_SIZE = 8;
   const [remindersPage, setRemindersPage] = useState(1);
-  useEffect(() => { setRemindersPage(1); }, [filter, sortKey, sortDir]);
+  useEffect(() => { setRemindersPage(1); }, [filter, delayFilter, sortKey, sortDir]);
   const remindersTotalPages = Math.max(1, Math.ceil(filtered.length / REMINDERS_PAGE_SIZE));
   const pagedReminders = useMemo(
     () => filtered.slice((remindersPage - 1) * REMINDERS_PAGE_SIZE, remindersPage * REMINDERS_PAGE_SIZE),
