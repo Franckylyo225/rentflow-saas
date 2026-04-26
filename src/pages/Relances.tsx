@@ -50,16 +50,7 @@ interface UrgentReminder {
   autoReminded: boolean;
 }
 
-const initialReminders: UrgentReminder[] = [
-  { id: "r1", tenant: "Kouassi Amani", property: "Villa Angré F5", amount: 450000, daysLate: 12, lastReminderAt: "Il y a 4j", lastReminderChannel: "email", status: "Impayé", autoReminded: false },
-  { id: "r2", tenant: "Traoré Mariam", property: "Appt Riviera 2", amount: 280000, daysLate: 8, lastReminderAt: "Il y a 2j", lastReminderChannel: "sms", status: "Impayé", autoReminded: false },
-  { id: "r3", tenant: "Coulibaly Seydou", property: "Studio Marcory", amount: 150000, daysLate: 3, lastReminderAt: "Aujourd'hui", lastReminderChannel: "auto", status: "Relancé", autoReminded: true },
-  { id: "r4", tenant: "Bamba Fatou", property: "Duplex Deux-Plateaux", amount: 420000, daysLate: 1, lastReminderAt: null, lastReminderChannel: null, status: "En retard", autoReminded: false },
-  { id: "r5", tenant: "N'Guessan Aya", property: "Appt Cocody", amount: 200000, daysLate: 1, lastReminderAt: null, lastReminderChannel: null, status: "En retard", autoReminded: false },
-  { id: "r6", tenant: "Koné Ibrahim", property: "Villa Riviera 3", amount: 350000, daysLate: 2, lastReminderAt: "Hier", lastReminderChannel: "email", status: "Relancé", autoReminded: true },
-  { id: "r7", tenant: "Diallo Aïssatou", property: "Studio Angré", amount: 120000, daysLate: 5, lastReminderAt: "Il y a 3j", lastReminderChannel: "sms", status: "En retard", autoReminded: false },
-  { id: "r8", tenant: "Aka Eric", property: "Appt Marcory Rés.", amount: 180000, daysLate: 6, lastReminderAt: "Il y a 1j", lastReminderChannel: "email", status: "En retard", autoReminded: false },
-];
+// Les relances sont chargées dynamiquement depuis rent_payments (impayés/partiels en retard).
 
 interface Sequence {
   id: string;
@@ -180,7 +171,8 @@ export default function Relances() {
 
   const [globalActive, setGlobalActive] = useState(true);
   const [confirmOff, setConfirmOff] = useState(false);
-  const [reminders, setReminders] = useState(initialReminders);
+  const [reminders, setReminders] = useState<UrgentReminder[]>([]);
+  const [remindersLoading, setRemindersLoading] = useState(true);
   const [sequences, setSequences] = useState(initialSequences);
   const [previousSeqStates, setPreviousSeqStates] = useState<Record<string, boolean> | null>(null);
   const [filter, setFilter] = useState<"all" | "auto" | "manual">("all");
@@ -297,6 +289,80 @@ export default function Relances() {
     };
   }, [orgId]);
 
+  // Charger les vraies relances : paiements impayés/partiels en retard pour l'org
+  const loadReminders = async () => {
+    if (!orgId) return;
+    setRemindersLoading(true);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const { data, error } = await supabase
+      .from("rent_payments")
+      .select(`
+        id, amount, paid_amount, due_date, status,
+        tenants:tenant_id (
+          id, full_name,
+          units:unit_id (
+            name,
+            properties:property_id ( name, organization_id )
+          )
+        )
+      `)
+      .in("status", ["late", "partial", "pending"])
+      .lte("due_date", today.toISOString().slice(0, 10))
+      .order("due_date", { ascending: true })
+      .limit(500);
+
+    if (error) {
+      console.error("Erreur chargement relances:", error);
+      setReminders([]);
+      setRemindersLoading(false);
+      return;
+    }
+
+    const items: UrgentReminder[] = [];
+    for (const p of (data as any[]) || []) {
+      const t = p.tenants;
+      if (!t || !t.units || !t.units.properties) continue;
+      // Filtrer côté client par organisation
+      if (t.units.properties.organization_id !== orgId) continue;
+
+      const remaining = Number(p.amount || 0) - Number(p.paid_amount || 0);
+      if (remaining <= 0) continue;
+
+      const due = new Date(p.due_date);
+      due.setHours(0, 0, 0, 0);
+      const daysLate = Math.max(0, Math.floor((today.getTime() - due.getTime()) / 86400000));
+
+      const propLabel = t.units.properties?.name
+        ? `${t.units.properties.name}${t.units.name ? " · " + t.units.name : ""}`
+        : t.units.name || "—";
+
+      const status: ReminderStatus =
+        p.status === "partial" ? "En retard" : daysLate >= 8 ? "Impayé" : "En retard";
+
+      items.push({
+        id: p.id,
+        tenant: t.full_name,
+        property: propLabel,
+        amount: remaining,
+        daysLate,
+        lastReminderAt: null,
+        lastReminderChannel: null,
+        status,
+        autoReminded: false,
+      });
+    }
+
+    setReminders(items);
+    setRemindersLoading(false);
+  };
+
+  useEffect(() => {
+    loadReminders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orgId]);
+
   const manualRemaining = Math.max(monthlyManualQuota - manualSentThisMonth, 0);
   const quotaReached = isPro && manualSentThisMonth >= monthlyManualQuota;
   const quotaRatio = monthlyManualQuota > 0 ? manualSentThisMonth / monthlyManualQuota : 0;
@@ -327,11 +393,9 @@ export default function Relances() {
   // KPIs
   const kpiToRemind = reminders.length;
   const kpiAmount = reminders.reduce((s, r) => s + r.amount, 0);
-  const kpiSentEmails = 18; // mock count for the month
-  const kpiSentSms = 11;
+  const kpiSentEmails = history.filter(h => h.channel === "email").length;
+  const kpiSentSms = history.filter(h => h.channel === "sms").length;
   const kpiSentTotal = kpiSentEmails + kpiSentSms;
-  const kpiResponseRate = 64; // mock %
-  const kpiAvgDays = 3;
 
   // Détermine la prochaine séquence auto applicable selon le retard et les séquences actives
   const getPlannedSequence = (daysLate: number): Sequence | null => {
@@ -408,10 +472,11 @@ export default function Relances() {
   };
 
   const markAsPaid = (r: UrgentReminder) => {
-    const firstName = r.tenant.split(" ")[0];
-    setReminders(prev => prev.filter(x => x.id !== r.id));
     setDetailReminder(null);
-    toast.success(`Paiement enregistré pour ${firstName} ✓`);
+    navigate(`/rents?paymentId=${r.id}`);
+    toast.message("Enregistrer le paiement", {
+      description: `Vous allez être redirigé vers la fiche de paiement de ${r.tenant.split(" ")[0]}.`,
+    });
   };
 
   const handleToggleGlobal = (next: boolean) => {
@@ -636,14 +701,19 @@ export default function Relances() {
           </Card>
           <Card>
             <CardContent className="p-4 space-y-1">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Taux de réponse</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Manuel ce mois</p>
               <p className={cn(
                 "text-3xl font-bold",
-                kpiResponseRate > 60 ? "text-success" : kpiResponseRate >= 30 ? "text-warning" : "text-destructive"
+                quotaReached ? "text-destructive" : quotaWarning ? "text-warning" : "text-foreground"
               )}>
-                {kpiResponseRate}%
+                {manualSentThisMonth}
+                {monthlyManualQuota > 0 && (
+                  <span className="text-base font-normal text-muted-foreground"> / {monthlyManualQuota}</span>
+                )}
               </p>
-              <p className="text-xs text-muted-foreground">paiement dans {kpiAvgDays}j en moyenne</p>
+              <p className="text-xs text-muted-foreground">
+                {monthlyManualQuota > 0 ? `${manualRemaining} envois restants` : "Réservé aux offres Pro"}
+              </p>
             </CardContent>
           </Card>
           <Card>
@@ -722,10 +792,17 @@ export default function Relances() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.length === 0 && (
+                  {remindersLoading && (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        Aucune relance planifiée.
+                        Chargement des relances…
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!remindersLoading && filtered.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        Aucune relance planifiée — aucun loyer en retard pour le moment.
                       </TableCell>
                     </TableRow>
                   )}
