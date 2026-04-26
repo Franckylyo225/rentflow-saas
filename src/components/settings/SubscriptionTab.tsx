@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Check, ArrowRight, Loader2, Crown, Clock, AlertTriangle, History, Download } from "lucide-react";
+import { Check, ArrowRight, Loader2, Crown, Clock, AlertTriangle, History, Download, CreditCard, Tag, Sparkles, Gift } from "lucide-react";
 import { downloadInvoice, generateInvoiceNumber, type InvoiceData } from "@/lib/generateInvoice";
 import { PromoCodeInput } from "@/components/promo/PromoCodeInput";
 import { PaymentHistoryCard } from "@/components/settings/PaymentHistoryCard";
@@ -86,6 +86,7 @@ export function SubscriptionTab() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [promoApplied, setPromoApplied] = useState<{ discount: number; final_price: number } | null>(null);
 
   const fetchData = async () => {
     if (!organizationId) return;
@@ -114,6 +115,7 @@ export function SubscriptionTab() {
   const handleSelectPlan = (slug: string) => {
     if (slug === currentSlug && !expired) return;
     setSelectedPlan(slug);
+    setPromoApplied(null);
   };
 
   const handleConfirmUpgrade = async () => {
@@ -157,10 +159,11 @@ export function SubscriptionTab() {
     // Paid plan → redirect to GeniusPay checkout
     setUpgrading(true);
     try {
+      const amount = promoApplied ? promoApplied.final_price : plan.price_monthly;
       const { data, error } = await supabase.functions.invoke("geniuspay-create-payment", {
         body: {
           plan_slug: selectedPlan,
-          amount: plan.price_monthly,
+          amount,
         },
       });
 
@@ -309,128 +312,246 @@ export function SubscriptionTab() {
           Sélectionnez le plan adapté à votre activité.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {plans.map((plan) => {
             const isCurrent = plan.slug === currentSlug && !expired;
             const isSelected = plan.slug === selectedPlan;
             const isCustom = plan.price_monthly === 0 && plan.max_properties === null;
-            const isMiddle = plans.length >= 2 && plan.slug === plans[Math.floor(plans.length / 2)]?.slug;
+            const isPopular = plans.length >= 2 && plan.slug === plans[Math.floor(plans.length / 2)]?.slug;
+
+            const features: string[] = [];
+            if (plan.max_properties !== null) {
+              features.push(`Jusqu'à ${plan.max_properties} unités`);
+            } else {
+              features.push("Unités illimitées");
+            }
+            if (plan.max_users !== null) {
+              features.push(`${plan.max_users} utilisateur${plan.max_users > 1 ? "s" : ""}`);
+            } else {
+              features.push("Utilisateurs illimités");
+            }
+            plan.feature_flags.forEach((flag) => {
+              features.push(FEATURE_LABELS[flag] || flag);
+            });
 
             return (
-              <Card
+              <div
                 key={plan.slug}
-                className={`relative cursor-pointer transition-all duration-200 ${
-                  isSelected
-                    ? "ring-2 ring-primary border-primary shadow-md"
-                    : isCurrent
-                      ? "border-primary/40 bg-primary/5"
-                      : "hover:shadow-md"
-                }`}
                 onClick={() => !isCurrent && handleSelectPlan(plan.slug)}
+                className={`relative flex flex-col rounded-2xl border-2 p-6 transition-all ${
+                  isCurrent
+                    ? "border-primary/40 bg-primary/5 cursor-default"
+                    : isSelected
+                      ? "border-primary bg-primary/5 shadow-md cursor-pointer"
+                      : isPopular
+                        ? "border-primary/30 bg-card hover:shadow-md cursor-pointer"
+                        : "border-border bg-card hover:border-primary/30 hover:shadow-sm cursor-pointer"
+                }`}
               >
-                {isMiddle && !isCurrent && (
-                  <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-0.5 rounded-full text-xs">
+                {isPopular && !isCurrent && (
+                  <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-0.5 text-xs rounded-full">
                     Recommandé
                   </Badge>
                 )}
                 {isCurrent && (
-                  <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-muted text-muted-foreground px-4 py-0.5 rounded-full text-xs border">
+                  <Badge variant="outline" className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-background px-4 py-0.5 text-xs rounded-full">
                     Plan actuel
                   </Badge>
                 )}
 
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">{plan.name}</CardTitle>
+                <div className="mb-4">
+                  <h3 className="text-lg font-bold text-foreground">{plan.name}</h3>
                   {plan.description && (
-                    <CardDescription className="text-xs">{plan.description}</CardDescription>
+                    <p className="text-xs text-muted-foreground mt-1">{plan.description}</p>
                   )}
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    {isCustom ? (
-                      <span className="text-2xl font-extrabold text-foreground">Sur mesure</span>
-                    ) : (
-                      <>
-                        <span className="text-2xl font-extrabold text-foreground">{formatPrice(plan.price_monthly)}</span>
-                        <span className="text-muted-foreground text-xs ml-1">FCFA/mois</span>
-                      </>
-                    )}
-                  </div>
+                </div>
 
-                  <ul className="space-y-2">
-                    <li className="flex items-center gap-2 text-xs">
-                      <Check className="h-3 w-3 text-primary shrink-0" />
-                      <span>{plan.max_properties !== null ? `${plan.max_properties} unités` : "Unités illimitées"}</span>
+                <div className="mb-5">
+                  {isCustom ? (
+                    <span className="text-2xl font-extrabold text-foreground">Sur mesure</span>
+                  ) : (
+                    <>
+                      <span className="text-2xl font-extrabold text-foreground">
+                        {formatPrice(plan.price_monthly)}
+                      </span>
+                      <span className="text-muted-foreground ml-1 text-xs">FCFA/mois</span>
+                    </>
+                  )}
+                </div>
+
+                <ul className="space-y-2 flex-1">
+                  {features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-xs">
+                      <div className="mt-0.5 p-0.5 rounded-full bg-primary/10">
+                        <Check className="h-3 w-3 text-primary" />
+                      </div>
+                      <span className="text-foreground">{f}</span>
                     </li>
-                    <li className="flex items-center gap-2 text-xs">
-                      <Check className="h-3 w-3 text-primary shrink-0" />
-                      <span>{plan.max_users !== null ? `${plan.max_users} utilisateur${plan.max_users > 1 ? "s" : ""}` : "Utilisateurs illimités"}</span>
-                    </li>
-                    {plan.feature_flags.slice(0, 4).map(flag => (
-                      <li key={flag} className="flex items-center gap-2 text-xs">
-                        <Check className="h-3 w-3 text-primary shrink-0" />
-                        <span>{FEATURE_LABELS[flag] || flag}</span>
-                      </li>
-                    ))}
-                    {plan.feature_flags.length > 4 && (
-                      <li className="text-xs text-muted-foreground pl-5">
-                        + {plan.feature_flags.length - 4} autres fonctionnalités
-                      </li>
-                    )}
-                  </ul>
-                </CardContent>
-              </Card>
+                  ))}
+                </ul>
+
+                <div className="mt-4">
+                  {isCurrent ? (
+                    <Button variant="outline" size="sm" className="w-full rounded-full" disabled>
+                      Plan actuel
+                    </Button>
+                  ) : isCustom ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full rounded-full"
+                      onClick={(e) => { e.stopPropagation(); window.open("/contact", "_blank"); }}
+                    >
+                      Contactez-nous
+                    </Button>
+                  ) : (
+                    <Button
+                      variant={isSelected ? "default" : "outline"}
+                      size="sm"
+                      className="w-full rounded-full"
+                      onClick={(e) => { e.stopPropagation(); handleSelectPlan(plan.slug); }}
+                    >
+                      {isSelected ? "✓ Sélectionné" : "Choisir cette offre"}
+                    </Button>
+                  )}
+                </div>
+              </div>
             );
           })}
         </div>
       </div>
 
-      {/* Confirmation panel */}
-      {selectedPlan && (
-        <Card className="border-primary/40 bg-primary/5">
-          <CardContent className="pt-6 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h4 className="font-semibold text-foreground">
-                  {expired ? "Souscrire au plan" : "Passer au plan"} {plans.find(p => p.slug === selectedPlan)?.name}
-                </h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {(() => {
-                    const sp = plans.find(p => p.slug === selectedPlan);
-                    if (!sp) return "";
-                    if (sp.price_monthly === 0 && sp.max_properties === null) return "Notre équipe vous contactera pour un devis personnalisé.";
-                    return `${formatPrice(sp.price_monthly)} FCFA/mois — ${sp.max_properties !== null ? sp.max_properties + " unités" : "illimité"}, ${sp.max_users !== null ? sp.max_users + " utilisateurs" : "illimité"}`;
-                  })()}
-                </p>
+      {/* Confirmation panel — harmonised with Onboarding billing recap */}
+      {selectedPlan && (() => {
+        const sp = plans.find(p => p.slug === selectedPlan);
+        if (!sp) return null;
+        const isCustom = sp.price_monthly === 0 && sp.max_properties === null;
+        const isPaid = sp.price_monthly > 0;
+        const finalAmount = promoApplied ? promoApplied.final_price : sp.price_monthly;
+
+        return (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="pt-6 space-y-5">
+              {/* Recap */}
+              <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-4">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                      {expired ? "Souscrire au plan" : "Passer au plan"}
+                    </p>
+                    <p className="text-lg font-bold text-foreground truncate">{sp.name}</p>
+                  </div>
+                  {isPaid ? (
+                    <Badge variant="default" className="gap-1 shrink-0">
+                      <CreditCard className="h-3 w-3" /> Paiement requis
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="gap-1 shrink-0">
+                      <Sparkles className="h-3 w-3" /> {isCustom ? "Sur mesure" : "Sans paiement"}
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="h-px bg-border" />
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center gap-3 text-sm">
+                    <span className="text-muted-foreground shrink-0">Prix mensuel</span>
+                    <span className="font-semibold text-foreground text-right break-all">
+                      {isCustom ? "Sur mesure" : isPaid ? `${formatPrice(sp.price_monthly)} FCFA` : "Gratuit"}
+                    </span>
+                  </div>
+
+                  {promoApplied && isPaid && (
+                    <div className="flex justify-between items-center gap-3 text-sm">
+                      <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
+                        <Tag className="h-3.5 w-3.5" /> Remise promo
+                      </span>
+                      <span className="font-semibold text-primary text-right break-all">
+                        −{formatPrice(promoApplied.discount)} FCFA
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="h-px bg-border" />
+
+                  <div className="flex justify-between items-baseline gap-3 pt-1">
+                    <span className="font-semibold text-foreground text-sm shrink-0">
+                      {isPaid ? "Total à payer" : "Total"}
+                    </span>
+                    <span className="font-extrabold text-lg sm:text-xl text-foreground text-right break-all">
+                      {isCustom ? "Sur mesure" : isPaid ? `${formatPrice(finalAmount)} FCFA` : "Gratuit"}
+                      {isPaid && (
+                        <span className="text-muted-foreground font-normal text-xs ml-1">/mois</span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                {isPaid && promoApplied && (
+                  <div className="flex items-start gap-2 text-xs text-primary bg-primary/5 rounded-lg px-3 py-2">
+                    <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                    <span className="break-words">
+                      Économie de {formatPrice(promoApplied.discount)} FCFA appliquée
+                    </span>
+                  </div>
+                )}
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setSelectedPlan(null)} disabled={upgrading}>
+
+              {/* Promo code input */}
+              {organizationId && isPaid && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <Gift className="h-4 w-4 text-primary" /> Code promo
+                  </div>
+                  <PromoCodeInput
+                    organizationId={organizationId}
+                    planSlug={selectedPlan}
+                    planPrice={sp.price_monthly}
+                    onApplied={(r) => setPromoApplied({ discount: r.discount!, final_price: r.final_price! })}
+                    onRemoved={() => setPromoApplied(null)}
+                  />
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto rounded-full"
+                  onClick={() => { setSelectedPlan(null); setPromoApplied(null); }}
+                  disabled={upgrading}
+                >
                   Annuler
                 </Button>
-                <Button size="sm" className="gap-1.5" onClick={handleConfirmUpgrade} disabled={upgrading}>
-                  {upgrading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowRight className="h-3.5 w-3.5" />}
-                  {upgrading ? "En cours..." : "Confirmer"}
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto rounded-full gap-2 font-semibold h-12 px-6 whitespace-normal"
+                  onClick={handleConfirmUpgrade}
+                  disabled={upgrading}
+                >
+                  {upgrading ? (
+                    <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                  ) : isPaid ? (
+                    <CreditCard className="h-4 w-4 shrink-0" />
+                  ) : (
+                    <ArrowRight className="h-4 w-4 shrink-0" />
+                  )}
+                  <span className="truncate">
+                    {upgrading
+                      ? "En cours…"
+                      : isPaid
+                        ? `Payer ${formatPrice(finalAmount)} FCFA`
+                        : isCustom
+                          ? "Demander un devis"
+                          : "Activer ce plan"}
+                  </span>
                 </Button>
               </div>
-            </div>
-
-            {/* Promo code input */}
-            {organizationId && (() => {
-              const sp = plans.find(p => p.slug === selectedPlan);
-              if (!sp || (sp.price_monthly === 0 && sp.max_properties === null)) return null;
-              return (
-                <PromoCodeInput
-                  organizationId={organizationId}
-                  planSlug={selectedPlan}
-                  planPrice={sp.price_monthly}
-                  onApplied={() => {}}
-                  onRemoved={() => {}}
-                />
-              );
-            })()}
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Payment transactions history */}
       <PaymentHistoryCard />
