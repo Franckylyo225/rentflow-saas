@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
@@ -183,6 +184,7 @@ export default function Relances() {
   const [sequences, setSequences] = useState(initialSequences);
   const [previousSeqStates, setPreviousSeqStates] = useState<Record<string, boolean> | null>(null);
   const [filter, setFilter] = useState<"all" | "auto" | "manual">("all");
+  const [delayFilter, setDelayFilter] = useState<"all" | "today" | "light" | "important" | "critical">("all");
   const [sortKey, setSortKey] = useState<"daysLate" | "amount">("daysLate");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [manualTarget, setManualTarget] = useState<UrgentReminder | null>(null);
@@ -347,13 +349,17 @@ export default function Relances() {
     let list = reminders;
     if (filter === "auto") list = list.filter(r => r.daysLate < 7);
     else if (filter === "manual") list = list.filter(r => r.daysLate >= 7);
+    if (delayFilter === "today") list = list.filter(r => r.daysLate === 0);
+    else if (delayFilter === "light") list = list.filter(r => r.daysLate >= 1 && r.daysLate <= 7);
+    else if (delayFilter === "important") list = list.filter(r => r.daysLate >= 8 && r.daysLate <= 30);
+    else if (delayFilter === "critical") list = list.filter(r => r.daysLate > 30);
     const sorted = [...list].sort((a, b) => {
       const av = sortKey === "daysLate" ? a.daysLate : a.amount;
       const bv = sortKey === "daysLate" ? b.daysLate : b.amount;
       return sortDir === "asc" ? av - bv : bv - av;
     });
     return sorted;
-  }, [reminders, filter, sortKey, sortDir]);
+  }, [reminders, filter, delayFilter, sortKey, sortDir]);
 
   const counts = {
     all: reminders.length,
@@ -361,10 +367,18 @@ export default function Relances() {
     manual: reminders.filter(r => r.daysLate >= 7).length,
   };
 
+  const delayCounts = {
+    all: reminders.length,
+    today: reminders.filter(r => r.daysLate === 0).length,
+    light: reminders.filter(r => r.daysLate >= 1 && r.daysLate <= 7).length,
+    important: reminders.filter(r => r.daysLate >= 8 && r.daysLate <= 30).length,
+    critical: reminders.filter(r => r.daysLate > 30).length,
+  };
+
   // Pagination — Calendrier des relances
   const REMINDERS_PAGE_SIZE = 8;
   const [remindersPage, setRemindersPage] = useState(1);
-  useEffect(() => { setRemindersPage(1); }, [filter, sortKey, sortDir]);
+  useEffect(() => { setRemindersPage(1); }, [filter, delayFilter, sortKey, sortDir]);
   const remindersTotalPages = Math.max(1, Math.ceil(filtered.length / REMINDERS_PAGE_SIZE));
   const pagedReminders = useMemo(
     () => filtered.slice((remindersPage - 1) * REMINDERS_PAGE_SIZE, remindersPage * REMINDERS_PAGE_SIZE),
@@ -655,13 +669,27 @@ export default function Relances() {
                 Relances automatiques planifiées. À partir de 7 jours de retard, vous pouvez relancer manuellement.
               </p>
             </div>
-            <Tabs value={filter} onValueChange={(v) => setFilter(v as any)}>
-              <TabsList>
-                <TabsTrigger value="all">Tous ({counts.all})</TabsTrigger>
-                <TabsTrigger value="auto">Auto ({counts.auto})</TabsTrigger>
-                <TabsTrigger value="manual">Manuel possible ({counts.manual})</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={delayFilter} onValueChange={(v) => setDelayFilter(v as any)}>
+                <SelectTrigger className="h-9 w-[200px]">
+                  <SelectValue placeholder="Type de retard" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les retards ({delayCounts.all})</SelectItem>
+                  <SelectItem value="today">Aujourd'hui ({delayCounts.today})</SelectItem>
+                  <SelectItem value="light">Léger · 1–7j ({delayCounts.light})</SelectItem>
+                  <SelectItem value="important">Important · 8–30j ({delayCounts.important})</SelectItem>
+                  <SelectItem value="critical">Critique · 30j+ ({delayCounts.critical})</SelectItem>
+                </SelectContent>
+              </Select>
+              <Tabs value={filter} onValueChange={(v) => setFilter(v as any)}>
+                <TabsList>
+                  <TabsTrigger value="all">Tous ({counts.all})</TabsTrigger>
+                  <TabsTrigger value="auto">Auto ({counts.auto})</TabsTrigger>
+                  <TabsTrigger value="manual">Manuel possible ({counts.manual})</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             {/* Desktop table */}
