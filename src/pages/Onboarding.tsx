@@ -64,11 +64,30 @@ export default function Onboarding() {
   const { user } = useAuth();
   const { profile, organization, role, loading: profileLoading, refetch } = useProfile();
 
-  // Read ?payment= synchronously so we never flash step 0 on return from GeniusPay
+  // Read ?payment= from the URL OR from sessionStorage so we survive:
+  //  - React StrictMode double-mount (which re-runs useState initialisers after the URL has been cleaned)
+  //  - User refreshing the page after we have cleaned the URL
   const initialPaymentReturn = (() => {
     if (typeof window === "undefined") return null;
-    const p = new URLSearchParams(window.location.search).get("payment");
-    return p === "success" || p === "error" ? (p as "success" | "error") : null;
+    const fromUrl = new URLSearchParams(window.location.search).get("payment");
+    if (fromUrl === "success" || fromUrl === "error") {
+      // Persist immediately so a re-mount or refresh keeps the screen
+      try {
+        sessionStorage.setItem("rentflow.onboarding.paymentReturn", fromUrl);
+      } catch {
+        /* ignore */
+      }
+      return fromUrl as "success" | "error";
+    }
+    try {
+      const stored = sessionStorage.getItem("rentflow.onboarding.paymentReturn");
+      if (stored === "success" || stored === "error") {
+        return stored as "success" | "error";
+      }
+    } catch {
+      /* ignore */
+    }
+    return null;
   })();
 
   const [step, setStep] = useState(initialPaymentReturn === "error" ? 2 : 0);
@@ -85,6 +104,16 @@ export default function Onboarding() {
   const [orgCity, setOrgCity] = useState("");
   const [activityType, setActivityType] = useState("");
 
+  // Clear the persisted paymentReturn flag — wrap setters used to leave the return screens
+  const clearPaymentReturn = () => {
+    try {
+      sessionStorage.removeItem("rentflow.onboarding.paymentReturn");
+    } catch {
+      /* ignore */
+    }
+    setPaymentReturn(null);
+  };
+
   // Redirect if already onboarded — but NOT while we're handling a payment return,
   // otherwise the user is sent to /dashboard before seeing the success/error screen.
   useEffect(() => {
@@ -94,11 +123,17 @@ export default function Onboarding() {
     }
   }, [profileLoading, organization, navigate, paymentReturn]);
 
-  // Clean ?payment= from the URL once we've captured it in state
+  // Clean ?payment= (and the GeniusPay reference/status) from the URL once captured
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (!params.has("payment")) return;
-    params.delete("payment");
+    let changed = false;
+    for (const k of ["payment", "reference", "status"]) {
+      if (params.has(k)) {
+        params.delete(k);
+        changed = true;
+      }
+    }
+    if (!changed) return;
     const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
     window.history.replaceState({}, "", newUrl);
   }, []);
@@ -115,12 +150,13 @@ export default function Onboarding() {
       setFinalizing(false);
       return;
     }
+    try { sessionStorage.removeItem("rentflow.onboarding.paymentReturn"); } catch { /* ignore */ }
     await refetch();
     navigate("/dashboard", { replace: true });
   };
 
   const handleRetryPayment = () => {
-    setPaymentReturn(null);
+    clearPaymentReturn();
     setStep(2);
   };
 
@@ -366,7 +402,7 @@ export default function Onboarding() {
               variant="ghost"
               size="lg"
               className="w-full rounded-full gap-2 font-semibold"
-              onClick={() => { setPaymentReturn(null); setStep(1); }}
+              onClick={() => { clearPaymentReturn(); setStep(1); }}
             >
               <ArrowLeft className="h-4 w-4 shrink-0" />
               <span className="truncate">Choisir un autre plan</span>
