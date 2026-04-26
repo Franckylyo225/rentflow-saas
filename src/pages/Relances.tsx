@@ -17,7 +17,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
@@ -187,8 +186,6 @@ export default function Relances() {
   const [sortKey, setSortKey] = useState<"daysLate" | "amount">("daysLate");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [manualTarget, setManualTarget] = useState<UrgentReminder | null>(null);
-  const [bulkTargets, setBulkTargets] = useState<UrgentReminder[] | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [detailReminder, setDetailReminder] = useState<UrgentReminder | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingSeq, setEditingSeq] = useState<Sequence | null>(null);
@@ -392,55 +389,6 @@ export default function Relances() {
     setDetailReminder(null);
     toast.success(`Paiement enregistré pour ${firstName} ✓`);
   };
-
-  // ----- Sélection multiple pour relance groupée -----
-  const toggleSelected = (id: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-  const clearSelection = () => setSelectedIds(new Set());
-  const eligibleVisible = useMemo(
-    () => filtered.filter(r => r.daysLate >= 7),
-    // filtered is defined later via useMemo – TS hoisting is fine at runtime
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [reminders, filter, sortKey, sortDir]
-  );
-  const allEligibleSelected = eligibleVisible.length > 0 && eligibleVisible.every(r => selectedIds.has(r.id));
-  const someEligibleSelected = eligibleVisible.some(r => selectedIds.has(r.id));
-  const toggleSelectAllEligible = () => {
-    if (allEligibleSelected) {
-      // déselectionner uniquement ceux visibles
-      setSelectedIds(prev => {
-        const next = new Set(prev);
-        eligibleVisible.forEach(r => next.delete(r.id));
-        return next;
-      });
-    } else {
-      setSelectedIds(prev => {
-        const next = new Set(prev);
-        eligibleVisible.forEach(r => next.add(r.id));
-        return next;
-      });
-    }
-  };
-  const selectedReminders = useMemo(
-    () => reminders.filter(r => selectedIds.has(r.id) && r.daysLate >= 7),
-    [reminders, selectedIds]
-  );
-
-  const openBulkDialog = () => {
-    if (selectedReminders.length === 0) return;
-    if (quotaReached) {
-      setQuotaReachedOpen(true);
-      return;
-    }
-    setBulkTargets(selectedReminders);
-  };
-
 
   const handleToggleGlobal = (next: boolean) => {
     if (!next) {
@@ -706,45 +654,11 @@ export default function Relances() {
             </Tabs>
           </CardHeader>
           <CardContent className="p-0">
-            {/* Bulk action bar */}
-            {selectedReminders.length > 0 && (
-              <div className="flex flex-col gap-2 border-b border-border bg-primary/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-sm">
-                  <span className="font-semibold text-foreground">{selectedReminders.length}</span>{" "}
-                  <span className="text-muted-foreground">
-                    locataire{selectedReminders.length > 1 ? "s" : ""} sélectionné{selectedReminders.length > 1 ? "s" : ""} pour relance manuelle
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button size="sm" variant="ghost" onClick={clearSelection}>
-                    Annuler
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    disabled={!canManualSend || quotaReached}
-                    onClick={openBulkDialog}
-                  >
-                    <Send className="h-3.5 w-3.5" /> Relancer ({selectedReminders.length})
-                  </Button>
-                </div>
-              </div>
-            )}
             {/* Desktop table */}
             <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-10">
-                      {eligibleVisible.length > 0 && (
-                        <Checkbox
-                          checked={allEligibleSelected}
-                          onCheckedChange={toggleSelectAllEligible}
-                          aria-label="Sélectionner tous les locataires éligibles"
-                          {...(someEligibleSelected && !allEligibleSelected ? { "data-state": "indeterminate" as const } : {})}
-                        />
-                      )}
-                    </TableHead>
                     <TableHead>Locataire</TableHead>
                     <TableHead>Bien</TableHead>
                     <TableHead>
@@ -772,7 +686,7 @@ export default function Relances() {
                 <TableBody>
                   {filtered.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                         Aucune relance planifiée.
                       </TableCell>
                     </TableRow>
@@ -789,17 +703,6 @@ export default function Relances() {
                         )}
                         onClick={() => setDetailReminder(r)}
                       >
-                        <TableCell onClick={(e) => e.stopPropagation()} className="w-10">
-                          {r.daysLate >= 7 ? (
-                            <Checkbox
-                              checked={selectedIds.has(r.id)}
-                              onCheckedChange={() => toggleSelected(r.id)}
-                              aria-label={`Sélectionner ${r.tenant}`}
-                            />
-                          ) : (
-                            <span className="block h-4 w-4" aria-hidden="true" />
-                          )}
-                        </TableCell>
                         <TableCell className="font-medium">{r.tenant}</TableCell>
                         <TableCell className="text-muted-foreground">{r.property}</TableCell>
                         <TableCell className="font-semibold">{fmtFCFA(r.amount)}</TableCell>
@@ -863,20 +766,9 @@ export default function Relances() {
                     )}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-start gap-2">
-                        {manualEligible && (
-                          <span onClick={(e) => e.stopPropagation()} className="pt-0.5">
-                            <Checkbox
-                              checked={selectedIds.has(r.id)}
-                              onCheckedChange={() => toggleSelected(r.id)}
-                              aria-label={`Sélectionner ${r.tenant}`}
-                            />
-                          </span>
-                        )}
-                        <div>
-                          <p className="font-semibold text-foreground">{r.tenant}</p>
-                          <p className="text-xs text-muted-foreground">{r.property}</p>
-                        </div>
+                      <div>
+                        <p className="font-semibold text-foreground">{r.tenant}</p>
+                        <p className="text-xs text-muted-foreground">{r.property}</p>
                       </div>
                       <DelayBadge days={r.daysLate} />
                     </div>
@@ -1355,9 +1247,9 @@ export default function Relances() {
 
       <TestSendDialog open={testOpen} onOpenChange={setTestOpen} />
 
-      {/* Manual reminder dialog (single) */}
+      {/* Manual reminder dialog */}
       <ManualReminderDialog
-        targets={manualTarget ? [manualTarget] : null}
+        target={manualTarget}
         sequences={sequences}
         canEmail={canEmail}
         canSms={canSms}
@@ -1372,32 +1264,6 @@ export default function Relances() {
             description: seq ? `Modèle : ${seq.name}` : undefined,
           });
           setManualTarget(null);
-        }}
-      />
-
-      {/* Manual reminder dialog (bulk) */}
-      <ManualReminderDialog
-        targets={bulkTargets}
-        sequences={sequences}
-        canEmail={canEmail}
-        canSms={canSms}
-        quotaReached={quotaReached}
-        onClose={() => setBulkTargets(null)}
-        onSend={(channels, sequenceId) => {
-          if (!bulkTargets || bulkTargets.length === 0) return;
-          const seq = sequences.find(s => s.id === sequenceId);
-          const channelLabel = channels.map(c => c === "email" ? "Email" : "SMS").join(" + ");
-          let sentCount = 0;
-          for (const t of bulkTargets) {
-            if (manualSentThisMonth + sentCount >= monthlyManualQuota) break;
-            channels.forEach(c => sendReminder(t, c));
-            sentCount += 1;
-          }
-          toast.success(`Relances groupées envoyées à ${sentCount} locataire${sentCount > 1 ? "s" : ""} (${channelLabel}) ✓`, {
-            description: seq ? `Modèle : ${seq.name}` : undefined,
-          });
-          setBulkTargets(null);
-          clearSelection();
         }}
       />
     </AppLayout>
@@ -1493,7 +1359,7 @@ function NewSequenceForm({ onCancel, onCreate }: { onCancel: () => void; onCreat
 // ----------------- Manual reminder dialog -----------------
 
 function ManualReminderDialog({
-  targets,
+  target,
   sequences,
   canEmail,
   canSms,
@@ -1501,7 +1367,7 @@ function ManualReminderDialog({
   onClose,
   onSend,
 }: {
-  targets: UrgentReminder[] | null;
+  target: UrgentReminder | null;
   sequences: Sequence[];
   canEmail: boolean;
   canSms: boolean;
@@ -1512,29 +1378,19 @@ function ManualReminderDialog({
   const [sequenceId, setSequenceId] = useState<string>("");
   const [channels, setChannels] = useState<Channel[]>(["email", "sms"]);
 
-  const open = !!targets && targets.length > 0;
-  const isBulk = !!targets && targets.length > 1;
-  // Locataire utilisé pour l'aperçu (le premier de la sélection)
-  const previewTarget = targets && targets.length > 0 ? targets[0] : null;
-  // Pour la pré-sélection on prend le retard maximum
-  const maxDays = targets && targets.length > 0
-    ? Math.max(...targets.map(t => t.daysLate))
-    : 0;
-
   // Réinit à l'ouverture
   useEffect(() => {
-    if (open && targets) {
-      // pré-sélectionne la séquence la plus pertinente (selon le retard max sélectionné)
+    if (target) {
+      // pré-sélectionne la séquence la plus pertinente (≥ 7j → "Relance urgente" ou la plus tardive disponible)
       const sorted = [...sequences].sort((a, b) => b.delayDays - a.delayDays);
-      const best = sorted.find(s => s.delayDays <= maxDays) || sorted[0];
+      const best = sorted.find(s => s.delayDays <= target.daysLate) || sorted[0];
       setSequenceId(best?.id || "");
       const next: Channel[] = [];
       if (canEmail && best?.channels.includes("email")) next.push("email");
       if (canSms && best?.channels.includes("sms")) next.push("sms");
       setChannels(next.length > 0 ? next : (canEmail ? ["email"] : canSms ? ["sms"] : []));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, targets?.length, sequences, canEmail, canSms]);
+  }, [target, sequences, canEmail, canSms]);
 
   const seq = sequences.find(s => s.id === sequenceId);
 
@@ -1552,13 +1408,13 @@ function ManualReminderDialog({
   };
 
   const renderPreview = (text: string) => {
-    if (!previewTarget) return text;
-    const firstName = previewTarget.tenant.split(" ")[0];
+    if (!target) return text;
+    const firstName = target.tenant.split(" ")[0];
     return text
       .split("[Prénom]").join(firstName)
-      .split("[Nom]").join(previewTarget.tenant)
-      .split("[Montant]").join(fmtFCFA(previewTarget.amount))
-      .split("[Bien]").join(previewTarget.property)
+      .split("[Nom]").join(target.tenant)
+      .split("[Montant]").join(fmtFCFA(target.amount))
+      .split("[Bien]").join(target.property)
       .split("[Date échéance]").join("la date prévue")
       .split("[Lien paiement]").join("https://…")
       .split("[Nom agence]").join("Votre agence");
@@ -1570,48 +1426,24 @@ function ManualReminderDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={!!target} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Send className="h-5 w-5 text-primary" />
-            {isBulk ? "Relance manuelle groupée" : "Relance manuelle"}
+            Relance manuelle
           </DialogTitle>
           <DialogDescription>
-            {isBulk && targets ? (
+            {target && (
               <>
-                Envoyer une relance à <strong>{targets.length} locataires</strong> sélectionnés.
-                Chacun recevra un message personnalisé avec ses propres données.
+                Envoyer une relance à <strong>{target.tenant}</strong> — {target.property} ({fmtFCFA(target.amount)} · {target.daysLate}j de retard)
               </>
-            ) : previewTarget ? (
-              <>
-                Envoyer une relance à <strong>{previewTarget.tenant}</strong> — {previewTarget.property} ({fmtFCFA(previewTarget.amount)} · {previewTarget.daysLate}j de retard)
-              </>
-            ) : null}
+            )}
           </DialogDescription>
         </DialogHeader>
 
-        {open && (
+        {target && (
           <div className="space-y-5">
-            {/* Liste des destinataires en mode groupé */}
-            {isBulk && targets && (
-              <div className="rounded-lg border border-border bg-muted/30 p-3">
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                  Destinataires ({targets.length})
-                </p>
-                <div className="max-h-32 overflow-y-auto space-y-1 text-sm">
-                  {targets.map(t => (
-                    <div key={t.id} className="flex items-center justify-between gap-2">
-                      <span className="font-medium truncate">{t.tenant}</span>
-                      <span className="text-xs text-muted-foreground shrink-0">
-                        {fmtFCFA(t.amount)} · {t.daysLate}j
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Choix du modèle */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Modèle de message</Label>
@@ -1676,11 +1508,6 @@ function ManualReminderDialog({
             {/* Aperçus */}
             {seq && (
               <div className="space-y-3">
-                {isBulk && (
-                  <p className="text-xs text-muted-foreground">
-                    Aperçu basé sur <strong>{previewTarget?.tenant}</strong>. Les variables seront personnalisées pour chaque destinataire.
-                  </p>
-                )}
                 {channels.includes("email") && (
                   <div className="rounded-lg border border-border bg-muted/30 p-3">
                     <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1.5">
@@ -1709,10 +1536,7 @@ function ManualReminderDialog({
             onClick={handleSend}
             disabled={!seq || channels.length === 0 || quotaReached}
           >
-            <Send className="h-4 w-4" />
-            {isBulk && targets
-              ? `Envoyer à ${targets.length} locataires`
-              : "Envoyer la relance"}
+            <Send className="h-4 w-4" /> Envoyer la relance
           </Button>
         </DialogFooter>
       </DialogContent>
