@@ -1664,6 +1664,77 @@ export type Database = {
           },
         ]
       }
+      payment_transactions: {
+        Row: {
+          amount: number
+          checkout_url: string | null
+          completed_at: string | null
+          created_at: string
+          currency: string
+          environment: string
+          id: string
+          metadata: Json
+          organization_id: string
+          plan_slug: string | null
+          provider: string
+          provider_transaction_id: string | null
+          purpose: string
+          reference: string
+          status: string
+          updated_at: string
+          user_id: string | null
+          webhook_payload: Json | null
+        }
+        Insert: {
+          amount: number
+          checkout_url?: string | null
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          environment?: string
+          id?: string
+          metadata?: Json
+          organization_id: string
+          plan_slug?: string | null
+          provider?: string
+          provider_transaction_id?: string | null
+          purpose?: string
+          reference: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          webhook_payload?: Json | null
+        }
+        Update: {
+          amount?: number
+          checkout_url?: string | null
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          environment?: string
+          id?: string
+          metadata?: Json
+          organization_id?: string
+          plan_slug?: string | null
+          provider?: string
+          provider_transaction_id?: string | null
+          purpose?: string
+          reference?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          webhook_payload?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plans: {
         Row: {
           created_at: string
