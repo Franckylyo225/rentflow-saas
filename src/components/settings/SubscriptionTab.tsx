@@ -421,52 +421,137 @@ export function SubscriptionTab() {
         </div>
       </div>
 
-      {/* Confirmation panel */}
-      {selectedPlan && (
-        <Card className="border-primary/40 bg-primary/5">
-          <CardContent className="pt-6 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h4 className="font-semibold text-foreground">
-                  {expired ? "Souscrire au plan" : "Passer au plan"} {plans.find(p => p.slug === selectedPlan)?.name}
-                </h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {(() => {
-                    const sp = plans.find(p => p.slug === selectedPlan);
-                    if (!sp) return "";
-                    if (sp.price_monthly === 0 && sp.max_properties === null) return "Notre équipe vous contactera pour un devis personnalisé.";
-                    return `${formatPrice(sp.price_monthly)} FCFA/mois — ${sp.max_properties !== null ? sp.max_properties + " unités" : "illimité"}, ${sp.max_users !== null ? sp.max_users + " utilisateurs" : "illimité"}`;
-                  })()}
-                </p>
+      {/* Confirmation panel — harmonised with Onboarding billing recap */}
+      {selectedPlan && (() => {
+        const sp = plans.find(p => p.slug === selectedPlan);
+        if (!sp) return null;
+        const isCustom = sp.price_monthly === 0 && sp.max_properties === null;
+        const isPaid = sp.price_monthly > 0;
+        const finalAmount = promoApplied ? promoApplied.final_price : sp.price_monthly;
+
+        return (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="pt-6 space-y-5">
+              {/* Recap */}
+              <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-4">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                      {expired ? "Souscrire au plan" : "Passer au plan"}
+                    </p>
+                    <p className="text-lg font-bold text-foreground truncate">{sp.name}</p>
+                  </div>
+                  {isPaid ? (
+                    <Badge variant="default" className="gap-1 shrink-0">
+                      <CreditCard className="h-3 w-3" /> Paiement requis
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="gap-1 shrink-0">
+                      <Sparkles className="h-3 w-3" /> {isCustom ? "Sur mesure" : "Sans paiement"}
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="h-px bg-border" />
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center gap-3 text-sm">
+                    <span className="text-muted-foreground shrink-0">Prix mensuel</span>
+                    <span className="font-semibold text-foreground text-right break-all">
+                      {isCustom ? "Sur mesure" : isPaid ? `${formatPrice(sp.price_monthly)} FCFA` : "Gratuit"}
+                    </span>
+                  </div>
+
+                  {promoApplied && isPaid && (
+                    <div className="flex justify-between items-center gap-3 text-sm">
+                      <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
+                        <Tag className="h-3.5 w-3.5" /> Remise promo
+                      </span>
+                      <span className="font-semibold text-primary text-right break-all">
+                        −{formatPrice(promoApplied.discount)} FCFA
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="h-px bg-border" />
+
+                  <div className="flex justify-between items-baseline gap-3 pt-1">
+                    <span className="font-semibold text-foreground text-sm shrink-0">
+                      {isPaid ? "Total à payer" : "Total"}
+                    </span>
+                    <span className="font-extrabold text-lg sm:text-xl text-foreground text-right break-all">
+                      {isCustom ? "Sur mesure" : isPaid ? `${formatPrice(finalAmount)} FCFA` : "Gratuit"}
+                      {isPaid && (
+                        <span className="text-muted-foreground font-normal text-xs ml-1">/mois</span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                {isPaid && promoApplied && (
+                  <div className="flex items-start gap-2 text-xs text-primary bg-primary/5 rounded-lg px-3 py-2">
+                    <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                    <span className="break-words">
+                      Économie de {formatPrice(promoApplied.discount)} FCFA appliquée
+                    </span>
+                  </div>
+                )}
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setSelectedPlan(null)} disabled={upgrading}>
+
+              {/* Promo code input */}
+              {organizationId && isPaid && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <Gift className="h-4 w-4 text-primary" /> Code promo
+                  </div>
+                  <PromoCodeInput
+                    organizationId={organizationId}
+                    planSlug={selectedPlan}
+                    planPrice={sp.price_monthly}
+                    onApplied={(r) => setPromoApplied({ discount: r.discount!, final_price: r.final_price! })}
+                    onRemoved={() => setPromoApplied(null)}
+                  />
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto rounded-full"
+                  onClick={() => { setSelectedPlan(null); setPromoApplied(null); }}
+                  disabled={upgrading}
+                >
                   Annuler
                 </Button>
-                <Button size="sm" className="gap-1.5" onClick={handleConfirmUpgrade} disabled={upgrading}>
-                  {upgrading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowRight className="h-3.5 w-3.5" />}
-                  {upgrading ? "En cours..." : "Confirmer"}
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto rounded-full gap-2 font-semibold h-12 px-6 whitespace-normal"
+                  onClick={handleConfirmUpgrade}
+                  disabled={upgrading}
+                >
+                  {upgrading ? (
+                    <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                  ) : isPaid ? (
+                    <CreditCard className="h-4 w-4 shrink-0" />
+                  ) : (
+                    <ArrowRight className="h-4 w-4 shrink-0" />
+                  )}
+                  <span className="truncate">
+                    {upgrading
+                      ? "En cours…"
+                      : isPaid
+                        ? `Payer ${formatPrice(finalAmount)} FCFA`
+                        : isCustom
+                          ? "Demander un devis"
+                          : "Activer ce plan"}
+                  </span>
                 </Button>
               </div>
-            </div>
-
-            {/* Promo code input */}
-            {organizationId && (() => {
-              const sp = plans.find(p => p.slug === selectedPlan);
-              if (!sp || (sp.price_monthly === 0 && sp.max_properties === null)) return null;
-              return (
-                <PromoCodeInput
-                  organizationId={organizationId}
-                  planSlug={selectedPlan}
-                  planPrice={sp.price_monthly}
-                  onApplied={() => {}}
-                  onRemoved={() => {}}
-                />
-              );
-            })()}
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Payment transactions history */}
       <PaymentHistoryCard />
