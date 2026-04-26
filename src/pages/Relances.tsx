@@ -393,11 +393,9 @@ export default function Relances() {
   // KPIs
   const kpiToRemind = reminders.length;
   const kpiAmount = reminders.reduce((s, r) => s + r.amount, 0);
-  const kpiSentEmails = 18; // mock count for the month
-  const kpiSentSms = 11;
+  const kpiSentEmails = history.filter(h => h.channel === "email").length;
+  const kpiSentSms = history.filter(h => h.channel === "sms").length;
   const kpiSentTotal = kpiSentEmails + kpiSentSms;
-  const kpiResponseRate = 64; // mock %
-  const kpiAvgDays = 3;
 
   // Détermine la prochaine séquence auto applicable selon le retard et les séquences actives
   const getPlannedSequence = (daysLate: number): Sequence | null => {
