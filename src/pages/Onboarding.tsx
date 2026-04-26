@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
   Check, ArrowRight, ArrowLeft, Building2, Sparkles, Rocket, Loader2,
-  MapPin, Home, Users, Briefcase, Tag, Gift, CreditCard,
+  MapPin, Home, Users, Briefcase, Tag, Gift, CreditCard, XCircle, CheckCircle2, RefreshCw,
 } from "lucide-react";
 import { PromoCodeInput } from "@/components/promo/PromoCodeInput";
 import { toast } from "sonner";
@@ -70,6 +70,8 @@ export default function Onboarding() {
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [saving, setSaving] = useState(false);
   const [promoApplied, setPromoApplied] = useState<{ discount: number; final_price: number } | null>(null);
+  const [paymentReturn, setPaymentReturn] = useState<"success" | "error" | null>(null);
+  const [finalizing, setFinalizing] = useState(false);
 
   // Company form
   const [orgName, setOrgName] = useState("");
@@ -89,32 +91,35 @@ export default function Onboarding() {
     const payment = params.get("payment");
     if (!payment) return;
 
-    if (payment === "success") {
-      toast.success("Paiement reçu", {
-        description: "Votre abonnement sera activé dès confirmation. Finalisons votre compte.",
-      });
-      // Auto-finalize onboarding after successful payment
-      (async () => {
-        if (organization && !organization.onboarding_completed) {
-          await supabase
-            .from("organizations")
-            .update({ onboarding_completed: true })
-            .eq("id", organization.id);
-          await refetch();
-          navigate("/dashboard", { replace: true });
-        }
-      })();
-    } else if (payment === "error") {
-      toast.error("Paiement échoué ou annulé", {
-        description: "Vous pouvez réessayer ou commencer par l'essai gratuit.",
-      });
-      setStep(2);
+    if (payment === "success" || payment === "error") {
+      setPaymentReturn(payment);
     }
+
     params.delete("payment");
     const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
     window.history.replaceState({}, "", newUrl);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [organization]);
+  }, []);
+
+  const handleFinalizeAfterPayment = async () => {
+    if (!organization) return;
+    setFinalizing(true);
+    const { error } = await supabase
+      .from("organizations")
+      .update({ onboarding_completed: true })
+      .eq("id", organization.id);
+    if (error) {
+      toast.error("Erreur lors de la finalisation", { description: error.message });
+      setFinalizing(false);
+      return;
+    }
+    await refetch();
+    navigate("/dashboard", { replace: true });
+  };
+
+  const handleRetryPayment = () => {
+    setPaymentReturn(null);
+    setStep(2);
+  };
 
   // Pre-fill
   useEffect(() => {
@@ -257,6 +262,111 @@ export default function Onboarding() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  // Dedicated screen when returning from GeniusPay
+  if (paymentReturn === "success") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md w-full text-center space-y-8"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+            className="mx-auto h-20 w-20 rounded-3xl bg-primary/10 flex items-center justify-center"
+          >
+            <CheckCircle2 className="h-12 w-12 text-primary" strokeWidth={2.5} />
+          </motion.div>
+
+          <div className="space-y-3">
+            <h2 className="text-3xl font-extrabold text-foreground tracking-tight">
+              Paiement reçu 🎉
+            </h2>
+            <p className="text-muted-foreground">
+              Votre paiement a été enregistré. Votre abonnement sera activé automatiquement
+              dès la confirmation par GeniusPay (sous quelques instants).
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-muted/50 p-4 text-sm text-muted-foreground">
+            Vous pouvez dès maintenant accéder à votre espace et commencer à configurer votre activité.
+          </div>
+
+          <Button
+            size="lg"
+            className="w-full rounded-full gap-2 font-semibold h-12 shadow-lg shadow-primary/25"
+            onClick={handleFinalizeAfterPayment}
+            disabled={finalizing}
+          >
+            {finalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            Accéder à mon espace <ArrowRight className="h-4 w-4" />
+          </Button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (paymentReturn === "error") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md w-full text-center space-y-8"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+            className="mx-auto h-20 w-20 rounded-3xl bg-destructive/10 flex items-center justify-center"
+          >
+            <XCircle className="h-12 w-12 text-destructive" strokeWidth={2.5} />
+          </motion.div>
+
+          <div className="space-y-3">
+            <h2 className="text-3xl font-extrabold text-foreground tracking-tight">
+              Paiement non finalisé
+            </h2>
+            <p className="text-muted-foreground">
+              Le paiement a été annulé ou n'a pas abouti. Aucun montant n'a été débité.
+              Vous pouvez réessayer maintenant ou revenir à l'étape précédente.
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-muted/50 p-4 text-sm text-muted-foreground text-left space-y-2">
+            <p className="font-medium text-foreground">Causes possibles :</p>
+            <ul className="space-y-1 text-xs list-disc list-inside">
+              <li>Paiement annulé sur la page GeniusPay</li>
+              <li>Solde Mobile Money insuffisant</li>
+              <li>Carte bancaire refusée</li>
+              <li>Session expirée</li>
+            </ul>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Button
+              size="lg"
+              className="w-full rounded-full gap-2 font-semibold h-12"
+              onClick={handleRetryPayment}
+            >
+              <RefreshCw className="h-4 w-4" /> Réessayer le paiement
+            </Button>
+            <Button
+              variant="ghost"
+              size="lg"
+              className="w-full rounded-full gap-2 font-semibold"
+              onClick={() => { setPaymentReturn(null); setStep(1); }}
+            >
+              <ArrowLeft className="h-4 w-4" /> Choisir un autre plan
+            </Button>
+          </div>
+        </motion.div>
       </div>
     );
   }
