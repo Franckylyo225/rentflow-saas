@@ -657,22 +657,63 @@ export default function Onboarding() {
                 </div>
               )}
 
-              {/* Payment note */}
-              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-4 py-3">
-                <CreditCard className="h-3.5 w-3.5 shrink-0" />
-                <span>Aucun paiement requis pour démarrer. Le paiement en ligne sera disponible très bientôt.</span>
-              </div>
+              {/* Payment options */}
+              {selectedPlanData && selectedPlanData.price_monthly > 0 ? (
+                <div className="space-y-3">
+                  <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+                        <CreditCard className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-foreground">Payer maintenant</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Activez votre abonnement immédiatement via paiement sécurisé GeniusPay (Mobile Money, carte).
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      size="lg"
+                      className="w-full rounded-full gap-2 font-semibold"
+                      onClick={handlePayNow}
+                      disabled={saving}
+                    >
+                      {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                      Payer {formatPrice(promoApplied ? promoApplied.final_price : selectedPlanData.price_monthly)} FCFA
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-xs text-muted-foreground uppercase tracking-wide">ou</span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+
+                  <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-4 py-3">
+                    <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                    <span>Démarrez avec l'essai gratuit, vous pourrez payer à tout moment depuis vos paramètres.</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-4 py-3">
+                  <CreditCard className="h-3.5 w-3.5 shrink-0" />
+                  <span>Aucun paiement requis pour ce plan.</span>
+                </div>
+              )}
 
               <div className="flex justify-between">
-                <Button variant="ghost" onClick={() => setStep(1)} className="gap-2">
+                <Button variant="ghost" onClick={() => setStep(1)} className="gap-2" disabled={saving}>
                   <ArrowLeft className="h-4 w-4" /> Retour
                 </Button>
                 <Button
                   size="lg"
+                  variant={selectedPlanData && selectedPlanData.price_monthly > 0 ? "outline" : "default"}
                   className="rounded-full gap-2 font-semibold"
                   onClick={handlePromoStep}
+                  disabled={saving}
                 >
-                  Continuer <ArrowRight className="h-4 w-4" />
+                  {selectedPlanData && selectedPlanData.price_monthly > 0 ? "Commencer l'essai gratuit" : "Continuer"}
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
             </motion.div>
