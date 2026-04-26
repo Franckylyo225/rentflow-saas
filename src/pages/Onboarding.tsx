@@ -70,6 +70,8 @@ export default function Onboarding() {
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [saving, setSaving] = useState(false);
   const [promoApplied, setPromoApplied] = useState<{ discount: number; final_price: number } | null>(null);
+  const [paymentReturn, setPaymentReturn] = useState<"success" | "error" | null>(null);
+  const [finalizing, setFinalizing] = useState(false);
 
   // Company form
   const [orgName, setOrgName] = useState("");
