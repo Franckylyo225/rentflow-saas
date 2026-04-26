@@ -393,6 +393,55 @@ export default function Relances() {
     toast.success(`Paiement enregistré pour ${firstName} ✓`);
   };
 
+  // ----- Sélection multiple pour relance groupée -----
+  const toggleSelected = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const clearSelection = () => setSelectedIds(new Set());
+  const eligibleVisible = useMemo(
+    () => filtered.filter(r => r.daysLate >= 7),
+    // filtered is defined later via useMemo – TS hoisting is fine at runtime
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [reminders, filter, sortKey, sortDir]
+  );
+  const allEligibleSelected = eligibleVisible.length > 0 && eligibleVisible.every(r => selectedIds.has(r.id));
+  const someEligibleSelected = eligibleVisible.some(r => selectedIds.has(r.id));
+  const toggleSelectAllEligible = () => {
+    if (allEligibleSelected) {
+      // déselectionner uniquement ceux visibles
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        eligibleVisible.forEach(r => next.delete(r.id));
+        return next;
+      });
+    } else {
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        eligibleVisible.forEach(r => next.add(r.id));
+        return next;
+      });
+    }
+  };
+  const selectedReminders = useMemo(
+    () => reminders.filter(r => selectedIds.has(r.id) && r.daysLate >= 7),
+    [reminders, selectedIds]
+  );
+
+  const openBulkDialog = () => {
+    if (selectedReminders.length === 0) return;
+    if (quotaReached) {
+      setQuotaReachedOpen(true);
+      return;
+    }
+    setBulkTargets(selectedReminders);
+  };
+
+
   const handleToggleGlobal = (next: boolean) => {
     if (!next) {
       setConfirmOff(true);
