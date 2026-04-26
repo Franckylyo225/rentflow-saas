@@ -64,13 +64,20 @@ export default function Onboarding() {
   const { user } = useAuth();
   const { profile, organization, role, loading: profileLoading, refetch } = useProfile();
 
-  const [step, setStep] = useState(0);
+  // Read ?payment= synchronously so we never flash step 0 on return from GeniusPay
+  const initialPaymentReturn = (() => {
+    if (typeof window === "undefined") return null;
+    const p = new URLSearchParams(window.location.search).get("payment");
+    return p === "success" || p === "error" ? (p as "success" | "error") : null;
+  })();
+
+  const [step, setStep] = useState(initialPaymentReturn === "error" ? 2 : 0);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<string>("starter");
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [saving, setSaving] = useState(false);
   const [promoApplied, setPromoApplied] = useState<{ discount: number; final_price: number } | null>(null);
-  const [paymentReturn, setPaymentReturn] = useState<"success" | "error" | null>(null);
+  const [paymentReturn, setPaymentReturn] = useState<"success" | "error" | null>(initialPaymentReturn);
   const [finalizing, setFinalizing] = useState(false);
 
   // Company form
@@ -78,23 +85,19 @@ export default function Onboarding() {
   const [orgCity, setOrgCity] = useState("");
   const [activityType, setActivityType] = useState("");
 
-  // Redirect if already onboarded
+  // Redirect if already onboarded — but NOT while we're handling a payment return,
+  // otherwise the user is sent to /dashboard before seeing the success/error screen.
   useEffect(() => {
+    if (paymentReturn) return;
     if (!profileLoading && organization?.onboarding_completed) {
       navigate("/dashboard", { replace: true });
     }
-  }, [profileLoading, organization, navigate]);
+  }, [profileLoading, organization, navigate, paymentReturn]);
 
-  // Handle return from GeniusPay checkout (?payment=success|error)
+  // Clean ?payment= from the URL once we've captured it in state
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const payment = params.get("payment");
-    if (!payment) return;
-
-    if (payment === "success" || payment === "error") {
-      setPaymentReturn(payment);
-    }
-
+    if (!params.has("payment")) return;
     params.delete("payment");
     const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : "");
     window.history.replaceState({}, "", newUrl);
