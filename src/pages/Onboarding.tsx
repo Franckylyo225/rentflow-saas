@@ -150,12 +150,13 @@ export default function Onboarding() {
       setFinalizing(false);
       return;
     }
+    try { sessionStorage.removeItem("rentflow.onboarding.paymentReturn"); } catch { /* ignore */ }
     await refetch();
     navigate("/dashboard", { replace: true });
   };
 
   const handleRetryPayment = () => {
-    setPaymentReturn(null);
+    clearPaymentReturn();
     setStep(2);
   };
 
