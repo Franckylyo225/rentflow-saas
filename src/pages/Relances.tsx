@@ -177,7 +177,7 @@ export default function Relances() {
   const [sequences, setSequences] = useState(initialSequences);
   const [previousSeqStates, setPreviousSeqStates] = useState<Record<string, boolean> | null>(null);
   const [filter, setFilter] = useState<"all" | "auto" | "manual">("all");
-  const [delayFilter, setDelayFilter] = useState<"all" | "today" | "light" | "important" | "critical">("all");
+  const [delayFilter, setDelayFilter] = useState<"today" | "light" | "important" | "critical">("today");
   const [sortKey, setSortKey] = useState<"daysLate" | "amount">("daysLate");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [manualTarget, setManualTarget] = useState<UrgentReminder | null>(null);
@@ -433,7 +433,6 @@ export default function Relances() {
   };
 
   const delayCounts = {
-    all: reminders.length,
     today: reminders.filter(r => r.daysLate === 0).length,
     light: reminders.filter(r => r.daysLate >= 1 && r.daysLate <= 7).length,
     important: reminders.filter(r => r.daysLate >= 8 && r.daysLate <= 30).length,
@@ -746,7 +745,6 @@ export default function Relances() {
                   <SelectValue placeholder="Type de retard" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous les retards ({delayCounts.all})</SelectItem>
                   <SelectItem value="today">Aujourd'hui ({delayCounts.today})</SelectItem>
                   <SelectItem value="light">Léger · 1–7j ({delayCounts.light})</SelectItem>
                   <SelectItem value="important">Important · 8–30j ({delayCounts.important})</SelectItem>
