@@ -289,6 +289,80 @@ export default function Relances() {
     };
   }, [orgId]);
 
+  // Charger les vraies relances : paiements impayés/partiels en retard pour l'org
+  const loadReminders = async () => {
+    if (!orgId) return;
+    setRemindersLoading(true);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const { data, error } = await supabase
+      .from("rent_payments")
+      .select(`
+        id, amount, paid_amount, due_date, status,
+        tenants:tenant_id (
+          id, full_name,
+          units:unit_id (
+            name,
+            properties:property_id ( name, organization_id )
+          )
+        )
+      `)
+      .in("status", ["late", "partial", "pending"])
+      .lte("due_date", today.toISOString().slice(0, 10))
+      .order("due_date", { ascending: true })
+      .limit(500);
+
+    if (error) {
+      console.error("Erreur chargement relances:", error);
+      setReminders([]);
+      setRemindersLoading(false);
+      return;
+    }
+
+    const items: UrgentReminder[] = [];
+    for (const p of (data as any[]) || []) {
+      const t = p.tenants;
+      if (!t || !t.units || !t.units.properties) continue;
+      // Filtrer côté client par organisation
+      if (t.units.properties.organization_id !== orgId) continue;
+
+      const remaining = Number(p.amount || 0) - Number(p.paid_amount || 0);
+      if (remaining <= 0) continue;
+
+      const due = new Date(p.due_date);
+      due.setHours(0, 0, 0, 0);
+      const daysLate = Math.max(0, Math.floor((today.getTime() - due.getTime()) / 86400000));
+
+      const propLabel = t.units.properties?.name
+        ? `${t.units.properties.name}${t.units.name ? " · " + t.units.name : ""}`
+        : t.units.name || "—";
+
+      const status: ReminderStatus =
+        p.status === "partial" ? "En retard" : daysLate >= 8 ? "Impayé" : "En retard";
+
+      items.push({
+        id: p.id,
+        tenant: t.full_name,
+        property: propLabel,
+        amount: remaining,
+        daysLate,
+        lastReminderAt: null,
+        lastReminderChannel: null,
+        status,
+        autoReminded: false,
+      });
+    }
+
+    setReminders(items);
+    setRemindersLoading(false);
+  };
+
+  useEffect(() => {
+    loadReminders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orgId]);
+
   const manualRemaining = Math.max(monthlyManualQuota - manualSentThisMonth, 0);
   const quotaReached = isPro && manualSentThisMonth >= monthlyManualQuota;
   const quotaRatio = monthlyManualQuota > 0 ? manualSentThisMonth / monthlyManualQuota : 0;
