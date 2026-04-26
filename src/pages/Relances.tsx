@@ -701,7 +701,7 @@ export default function Relances() {
                       </TableCell>
                     </TableRow>
                   )}
-                  {filtered.map((r) => {
+                  {pagedReminders.map((r) => {
                     const planned = getPlannedSequence(r.daysLate);
                     const manualEligible = r.daysLate >= 7;
                     return (
@@ -763,7 +763,7 @@ export default function Relances() {
 
             {/* Mobile card list */}
             <div className="md:hidden divide-y divide-border">
-              {filtered.map(r => {
+              {pagedReminders.map(r => {
                 const planned = getPlannedSequence(r.daysLate);
                 const manualEligible = r.daysLate >= 7;
                 return (
