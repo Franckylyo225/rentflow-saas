@@ -24,6 +24,7 @@ interface Transaction {
   amount: number | null;
   notes: string | null;
   created_at: string;
+  billing_cycle: string | null;
 }
 
 const EVENT_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: typeof ArrowUpRight }> = {
