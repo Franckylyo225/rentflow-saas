@@ -43,15 +43,42 @@ const AdminTransactions = () => {
 
   useEffect(() => {
     async function fetchData() {
-      const [histRes, orgsRes] = await Promise.all([
+      const [histRes, orgsRes, paysRes] = await Promise.all([
         supabase.from("subscription_history").select("*").order("created_at", { ascending: false }),
         supabase.from("organizations").select("id, name"),
+        supabase
+          .from("payment_transactions")
+          .select("organization_id, billing_cycle, created_at, completed_at, status")
+          .in("status", ["completed", "success"])
+          .order("created_at", { ascending: false })
+          .limit(1000),
       ]);
 
       const orgs = orgsRes.data || [];
+      const pays = (paysRes.data || []) as any[];
+
+      const findCycle = (orgId: string, ts: string): string | null => {
+        const t = new Date(ts).getTime();
+        let best: { diff: number; cycle: string | null } | null = null;
+        for (const p of pays) {
+          if (p.organization_id !== orgId || !p.billing_cycle) continue;
+          const pt = new Date(p.completed_at || p.created_at).getTime();
+          const diff = Math.abs(pt - t);
+          // Within a 30-min window, take the closest match
+          if (diff <= 30 * 60 * 1000 && (!best || diff < best.diff)) {
+            best = { diff, cycle: p.billing_cycle };
+          }
+        }
+        return best?.cycle ?? null;
+      };
+
       const enriched: Transaction[] = (histRes.data || []).map((t: any) => ({
         ...t,
         org_name: orgs.find((o: any) => o.id === t.organization_id)?.name || "—",
+        billing_cycle:
+          t.event_type === "payment" || t.event_type === "renewal" || t.event_type === "plan_change"
+            ? findCycle(t.organization_id, t.created_at)
+            : null,
       }));
 
       setTransactions(enriched);
