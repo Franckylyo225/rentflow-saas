@@ -40,6 +40,7 @@ const AdminTransactions = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
+  const [filterCycle, setFilterCycle] = useState("all");
 
   useEffect(() => {
     async function fetchData() {
