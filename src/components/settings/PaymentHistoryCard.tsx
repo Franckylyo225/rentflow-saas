@@ -61,7 +61,7 @@ export function PaymentHistoryCard() {
       setLoading(true);
       const { data, error } = await supabase
         .from("payment_transactions")
-        .select("id, reference, amount, currency, status, environment, purpose, plan_slug, provider, checkout_url, created_at, completed_at")
+        .select("id, reference, amount, currency, status, environment, purpose, plan_slug, provider, checkout_url, created_at, completed_at, billing_cycle")
         .eq("organization_id", organizationId)
         .order("created_at", { ascending: false })
         .limit(100);
