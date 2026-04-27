@@ -24,6 +24,7 @@ interface Transaction {
   amount: number | null;
   notes: string | null;
   created_at: string;
+  billing_cycle: string | null;
 }
 
 const EVENT_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: typeof ArrowUpRight }> = {
@@ -39,18 +40,46 @@ const AdminTransactions = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
+  const [filterCycle, setFilterCycle] = useState("all");
 
   useEffect(() => {
     async function fetchData() {
-      const [histRes, orgsRes] = await Promise.all([
+      const [histRes, orgsRes, paysRes] = await Promise.all([
         supabase.from("subscription_history").select("*").order("created_at", { ascending: false }),
         supabase.from("organizations").select("id, name"),
+        supabase
+          .from("payment_transactions")
+          .select("organization_id, billing_cycle, created_at, completed_at, status")
+          .in("status", ["completed", "success"])
+          .order("created_at", { ascending: false })
+          .limit(1000),
       ]);
 
       const orgs = orgsRes.data || [];
+      const pays = (paysRes.data || []) as any[];
+
+      const findCycle = (orgId: string, ts: string): string | null => {
+        const t = new Date(ts).getTime();
+        let best: { diff: number; cycle: string | null } | null = null;
+        for (const p of pays) {
+          if (p.organization_id !== orgId || !p.billing_cycle) continue;
+          const pt = new Date(p.completed_at || p.created_at).getTime();
+          const diff = Math.abs(pt - t);
+          // Within a 30-min window, take the closest match
+          if (diff <= 30 * 60 * 1000 && (!best || diff < best.diff)) {
+            best = { diff, cycle: p.billing_cycle };
+          }
+        }
+        return best?.cycle ?? null;
+      };
+
       const enriched: Transaction[] = (histRes.data || []).map((t: any) => ({
         ...t,
         org_name: orgs.find((o: any) => o.id === t.organization_id)?.name || "—",
+        billing_cycle:
+          t.event_type === "payment" || t.event_type === "renewal" || t.event_type === "plan_change"
+            ? findCycle(t.organization_id, t.created_at)
+            : null,
       }));
 
       setTransactions(enriched);
@@ -63,7 +92,10 @@ const AdminTransactions = () => {
     const matchSearch = t.org_name.toLowerCase().includes(search.toLowerCase()) ||
       (t.notes || "").toLowerCase().includes(search.toLowerCase());
     const matchType = filterType === "all" || t.event_type === filterType;
-    return matchSearch && matchType;
+    const matchCycle =
+      filterCycle === "all" ||
+      (filterCycle === "none" ? !t.billing_cycle : t.billing_cycle === filterCycle);
+    return matchSearch && matchType && matchCycle;
   });
 
   const totalPayments = transactions
@@ -158,6 +190,17 @@ const AdminTransactions = () => {
               <SelectItem value="renewal">Renouvellement</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={filterCycle} onValueChange={setFilterCycle}>
+            <SelectTrigger className="w-full sm:w-44">
+              <SelectValue placeholder="Cycle" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les cycles</SelectItem>
+              <SelectItem value="monthly">Mensuel</SelectItem>
+              <SelectItem value="yearly">Annuel</SelectItem>
+              <SelectItem value="none">Sans cycle</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Table */}
@@ -171,6 +214,7 @@ const AdminTransactions = () => {
                     <TableHead>Organisation</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Détails</TableHead>
+                    <TableHead>Cycle</TableHead>
                     <TableHead className="text-right">Montant</TableHead>
                     <TableHead>Notes</TableHead>
                   </TableRow>
@@ -178,7 +222,7 @@ const AdminTransactions = () => {
                 <TableBody>
                   {filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         Aucune transaction trouvée
                       </TableCell>
                     </TableRow>
@@ -209,6 +253,18 @@ const AdminTransactions = () => {
                               <span className="font-medium">{t.new_plan}</span>
                             ) : (
                               "—"
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {t.billing_cycle ? (
+                              <Badge
+                                variant={t.billing_cycle === "yearly" ? "default" : "secondary"}
+                                className="text-xs"
+                              >
+                                {t.billing_cycle === "yearly" ? "Annuel" : "Mensuel"}
+                              </Badge>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
                             )}
                           </TableCell>
                           <TableCell className="text-right font-medium">
