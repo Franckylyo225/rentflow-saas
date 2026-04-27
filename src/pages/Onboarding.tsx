@@ -25,6 +25,7 @@ interface Plan {
   max_users: number | null;
   feature_flags: string[];
   sort_order: number;
+  yearly_discount_percent: number;
 }
 
 const FEATURE_LABELS: Record<string, string> = {
@@ -98,6 +99,7 @@ export default function Onboarding() {
   const [promoApplied, setPromoApplied] = useState<{ discount: number; final_price: number } | null>(null);
   const [paymentReturn, setPaymentReturn] = useState<"success" | "error" | null>(initialPaymentReturn);
   const [finalizing, setFinalizing] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
 
   // Company form
   const [orgName, setOrgName] = useState("");
@@ -172,7 +174,7 @@ export default function Onboarding() {
     async function fetchPlans() {
       const { data } = await supabase
         .from("plans")
-        .select("slug, name, description, price_monthly, max_properties, max_users, feature_flags, sort_order")
+        .select("slug, name, description, price_monthly, max_properties, max_users, feature_flags, sort_order, yearly_discount_percent")
         .eq("is_visible", true)
         .order("sort_order");
       setPlans((data as Plan[]) || []);
@@ -237,7 +239,11 @@ export default function Onboarding() {
       toast.error("Ce plan ne nécessite pas de paiement");
       return;
     }
-    const amount = promoApplied ? promoApplied.final_price : selectedPlanData.price_monthly;
+    const isYearly = billingCycle === "yearly" && (selectedPlanData.yearly_discount_percent ?? 0) > 0;
+    const monthlyBase = promoApplied ? promoApplied.final_price : selectedPlanData.price_monthly;
+    const amount = isYearly
+      ? Math.round(selectedPlanData.price_monthly * 12 * (1 - (selectedPlanData.yearly_discount_percent ?? 0) / 100))
+      : monthlyBase;
     if (amount < 200) {
       toast.error("Montant trop faible pour le paiement en ligne");
       return;
@@ -249,6 +255,7 @@ export default function Onboarding() {
         body: {
           plan_slug: selectedPlan,
           amount,
+          billing_cycle: isYearly ? "yearly" : "monthly",
           success_url: `${origin}/onboarding?payment=success`,
           error_url: `${origin}/onboarding?payment=error`,
         },
@@ -734,7 +741,16 @@ export default function Onboarding() {
               </div>
 
               {/* Plan recap card */}
-              {selectedPlanData && (
+              {selectedPlanData && (() => {
+                const yearlyDiscount = selectedPlanData.yearly_discount_percent ?? 0;
+                const hasYearlyOption = selectedPlanData.price_monthly > 0 && yearlyDiscount > 0;
+                const isYearly = billingCycle === "yearly" && hasYearlyOption;
+                const monthlyPrice = promoApplied ? promoApplied.final_price : selectedPlanData.price_monthly;
+                const yearlyTotal = Math.round(selectedPlanData.price_monthly * 12 * (1 - yearlyDiscount / 100));
+                const yearlyEquivMonthly = Math.round(yearlyTotal / 12);
+                const yearlySavings = selectedPlanData.price_monthly * 12 - yearlyTotal;
+                const totalDue = isYearly ? yearlyTotal : monthlyPrice;
+                return (
                 <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-4">
                   <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div className="min-w-0 flex-1">
@@ -755,19 +771,66 @@ export default function Onboarding() {
                     )}
                   </div>
 
+                  {/* Billing cycle toggle */}
+                  {hasYearlyOption && (
+                    <div className="flex items-center gap-2 rounded-full bg-muted p-1">
+                      <button
+                        type="button"
+                        onClick={() => setBillingCycle("monthly")}
+                        className={`flex-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                          billingCycle === "monthly"
+                            ? "bg-card text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        Mensuel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBillingCycle("yearly")}
+                        className={`flex-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+                          billingCycle === "yearly"
+                            ? "bg-card text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        Annuel
+                        <Badge variant="default" className="h-4 px-1.5 text-[10px] leading-none">
+                          −{yearlyDiscount}%
+                        </Badge>
+                      </button>
+                    </div>
+                  )}
+
                   <div className="h-px bg-border" />
 
                   <div className="space-y-2">
                     <div className="flex justify-between items-center gap-3 text-sm">
-                      <span className="text-muted-foreground shrink-0">Prix mensuel</span>
+                      <span className="text-muted-foreground shrink-0">
+                        {isYearly ? "Prix annuel (12 mois)" : "Prix mensuel"}
+                      </span>
                       <span className="font-semibold text-foreground text-right break-all">
                         {selectedPlanData.price_monthly > 0
-                          ? `${formatPrice(selectedPlanData.price_monthly)} FCFA`
+                          ? isYearly
+                            ? `${formatPrice(selectedPlanData.price_monthly * 12)} FCFA`
+                            : `${formatPrice(selectedPlanData.price_monthly)} FCFA`
                           : "Sur mesure"}
                       </span>
                     </div>
 
-                    {promoApplied && (
+                    {isYearly && (
+                      <div className="flex justify-between items-center gap-3 text-sm">
+                        <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
+                          <Tag className="h-3.5 w-3.5" />
+                          Remise annuelle ({yearlyDiscount}%)
+                        </span>
+                        <span className="font-semibold text-primary text-right break-all">
+                          −{formatPrice(yearlySavings)} FCFA
+                        </span>
+                      </div>
+                    )}
+
+                    {!isYearly && promoApplied && (
                       <div className="flex justify-between items-center gap-3 text-sm">
                         <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
                           <Tag className="h-3.5 w-3.5" />
@@ -786,19 +849,34 @@ export default function Onboarding() {
                         {selectedPlanData.price_monthly > 0 ? "Total à payer" : "Total"}
                       </span>
                       <span className="font-extrabold text-lg sm:text-xl text-foreground text-right break-all">
-                        {promoApplied
-                          ? `${formatPrice(promoApplied.final_price)} FCFA`
-                          : selectedPlanData.price_monthly > 0
-                          ? `${formatPrice(selectedPlanData.price_monthly)} FCFA`
+                        {selectedPlanData.price_monthly > 0
+                          ? `${formatPrice(totalDue)} FCFA`
                           : "Sur mesure"}
                         {selectedPlanData.price_monthly > 0 && (
-                          <span className="text-muted-foreground font-normal text-xs ml-1">/mois</span>
+                          <span className="text-muted-foreground font-normal text-xs ml-1">
+                            {isYearly ? "/an" : "/mois"}
+                          </span>
                         )}
                       </span>
                     </div>
+
+                    {isYearly && (
+                      <p className="text-xs text-muted-foreground text-right">
+                        Soit {formatPrice(yearlyEquivMonthly)} FCFA/mois facturé annuellement
+                      </p>
+                    )}
                   </div>
 
-                  {selectedPlanData.price_monthly > 0 && promoApplied && (
+                  {selectedPlanData.price_monthly > 0 && isYearly && (
+                    <div className="flex items-start gap-2 text-xs text-primary bg-primary/5 rounded-lg px-3 py-2">
+                      <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                      <span className="break-words">
+                        Vous économisez {formatPrice(yearlySavings)} FCFA sur l'année
+                      </span>
+                    </div>
+                  )}
+
+                  {selectedPlanData.price_monthly > 0 && !isYearly && promoApplied && (
                     <div className="flex items-start gap-2 text-xs text-primary bg-primary/5 rounded-lg px-3 py-2">
                       <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5" />
                       <span className="break-words">
@@ -807,10 +885,11 @@ export default function Onboarding() {
                     </div>
                   )}
                 </div>
-              )}
+                );
+              })()}
 
-              {/* Promo code section */}
-              {organization && selectedPlanData && (
+              {/* Promo code section — masqué en mode annuel */}
+              {organization && selectedPlanData && billingCycle === "monthly" && (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <Gift className="h-4 w-4 text-primary" />
@@ -827,14 +906,22 @@ export default function Onboarding() {
               )}
 
               {/* Payment options */}
-              {selectedPlanData && selectedPlanData.price_monthly > 0 ? (
+              {selectedPlanData && selectedPlanData.price_monthly > 0 ? (() => {
+                const yearlyDiscount = selectedPlanData.yearly_discount_percent ?? 0;
+                const isYearly = billingCycle === "yearly" && yearlyDiscount > 0;
+                const yearlyTotal = Math.round(selectedPlanData.price_monthly * 12 * (1 - yearlyDiscount / 100));
+                const monthlyDue = promoApplied ? promoApplied.final_price : selectedPlanData.price_monthly;
+                const totalDue = isYearly ? yearlyTotal : monthlyDue;
+                return (
                 <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-primary/10 shrink-0">
                       <CreditCard className="h-4 w-4 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground">Payer maintenant</p>
+                      <p className="text-sm font-semibold text-foreground">
+                        Payer maintenant {isYearly ? "(annuel)" : "(mensuel)"}
+                      </p>
                       <p className="text-xs text-muted-foreground mt-0.5 break-words">
                         Activez votre abonnement immédiatement via paiement sécurisé GeniusPay (Mobile Money, carte).
                       </p>
@@ -848,11 +935,12 @@ export default function Onboarding() {
                   >
                     {saving ? <Loader2 className="h-4 w-4 animate-spin shrink-0" /> : <CreditCard className="h-4 w-4 shrink-0" />}
                     <span className="truncate">
-                      Payer {formatPrice(promoApplied ? promoApplied.final_price : selectedPlanData.price_monthly)} FCFA
+                      Payer {formatPrice(totalDue)} FCFA{isYearly ? " /an" : " /mois"}
                     </span>
                   </Button>
                 </div>
-              ) : (
+                );
+              })() : (
                 <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-4 py-3 text-center">
                   <CreditCard className="h-3.5 w-3.5 shrink-0" />
                   <span>Aucun paiement requis pour ce plan.</span>
