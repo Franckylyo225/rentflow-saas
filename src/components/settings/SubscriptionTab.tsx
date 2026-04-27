@@ -124,6 +124,7 @@ export function SubscriptionTab() {
   const handleSelectPlan = (slug: string) => {
     if (slug === currentSlug && !expired) return;
     setSelectedPlan(slug);
+    setBillingCycle("monthly");
     setPromoApplied(null);
   };
 
