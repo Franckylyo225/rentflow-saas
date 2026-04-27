@@ -75,6 +75,11 @@ function formatPrice(price: number) {
   return price.toLocaleString("fr-FR");
 }
 
+function computeYearlyPrice(monthly: number, discountPct: number) {
+  const total = monthly * 12;
+  return Math.round(total * (1 - Math.max(0, Math.min(100, discountPct)) / 100));
+}
+
 export function SubscriptionTab() {
   const { profile, organization } = useProfile();
   const organizationId = profile?.organization_id;
