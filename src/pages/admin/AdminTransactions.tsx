@@ -190,6 +190,17 @@ const AdminTransactions = () => {
               <SelectItem value="renewal">Renouvellement</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={filterCycle} onValueChange={setFilterCycle}>
+            <SelectTrigger className="w-full sm:w-44">
+              <SelectValue placeholder="Cycle" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les cycles</SelectItem>
+              <SelectItem value="monthly">Mensuel</SelectItem>
+              <SelectItem value="yearly">Annuel</SelectItem>
+              <SelectItem value="none">Sans cycle</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Table */}
