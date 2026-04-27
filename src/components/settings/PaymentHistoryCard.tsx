@@ -185,6 +185,18 @@ export function PaymentHistoryCard() {
                       <TableCell className="py-2.5 text-sm capitalize">
                         {t.plan_slug || t.purpose || "—"}
                       </TableCell>
+                      <TableCell className="py-2.5">
+                        {t.billing_cycle ? (
+                          <Badge
+                            variant={t.billing_cycle === "yearly" ? "default" : "secondary"}
+                            className="text-xs"
+                          >
+                            {t.billing_cycle === "yearly" ? "Annuel" : "Mensuel"}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell className="py-2.5 text-sm font-medium text-right whitespace-nowrap">
                         {formatAmount(t.amount, t.currency)}
                       </TableCell>
