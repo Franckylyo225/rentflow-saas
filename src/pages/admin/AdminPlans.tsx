@@ -426,6 +426,37 @@ const AdminPlans = () => {
               </div>
             </div>
 
+            {/* Yearly billing */}
+            <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <Label className="text-sm font-semibold">Remise annuelle</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Pourcentage de remise appliqué automatiquement quand le client paye 12 mois d'avance. Mettre à 0 pour désactiver l'option annuelle.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={1}
+                    className="w-24 text-right"
+                    value={form.yearly_discount_percent}
+                    onChange={e => setForm({ ...form, yearly_discount_percent: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })}
+                  />
+                  <span className="text-sm text-muted-foreground">%</span>
+                </div>
+              </div>
+              {form.price_monthly > 0 && form.yearly_discount_percent > 0 && (
+                <p className="text-xs text-primary">
+                  Aperçu : {new Intl.NumberFormat("fr-FR").format(Math.round(form.price_monthly * 12 * (1 - form.yearly_discount_percent / 100)))} FCFA / an
+                  {" "}au lieu de {new Intl.NumberFormat("fr-FR").format(form.price_monthly * 12)} FCFA
+                  {" "}(économie {new Intl.NumberFormat("fr-FR").format(Math.round(form.price_monthly * 12 * form.yearly_discount_percent / 100))} FCFA).
+                </p>
+              )}
+            </div>
+
             {/* Status, CTA, trial */}
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-1.5">
