@@ -1667,6 +1667,7 @@ export type Database = {
       payment_transactions: {
         Row: {
           amount: number
+          billing_cycle: string
           checkout_url: string | null
           completed_at: string | null
           created_at: string
@@ -1687,6 +1688,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          billing_cycle?: string
           checkout_url?: string | null
           completed_at?: string | null
           created_at?: string
@@ -1707,6 +1709,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          billing_cycle?: string
           checkout_url?: string | null
           completed_at?: string | null
           created_at?: string
@@ -1753,6 +1756,7 @@ export type Database = {
           status: string
           trial_eligible: boolean
           updated_at: string
+          yearly_discount_percent: number
         }
         Insert: {
           created_at?: string
@@ -1771,6 +1775,7 @@ export type Database = {
           status?: string
           trial_eligible?: boolean
           updated_at?: string
+          yearly_discount_percent?: number
         }
         Update: {
           created_at?: string
@@ -1789,6 +1794,7 @@ export type Database = {
           status?: string
           trial_eligible?: boolean
           updated_at?: string
+          yearly_discount_percent?: number
         }
         Relationships: []
       }
@@ -2484,6 +2490,7 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          billing_cycle: string
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
@@ -2495,6 +2502,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          billing_cycle?: string
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
@@ -2506,6 +2514,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          billing_cycle?: string
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
