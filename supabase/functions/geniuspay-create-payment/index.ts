@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         amount: body.amount,
         currency: "XOF",
-        description: `Abonnement RentFlow - ${plan.name}`,
+        description: `Abonnement RentFlow - ${plan.name} (${billingCycle === "yearly" ? "annuel" : "mensuel"})`,
         customer: {
           name: profile.full_name || user.email,
           email: profile.email || user.email,
@@ -130,6 +130,7 @@ Deno.serve(async (req) => {
           organization_id: profile.organization_id,
           user_id: user.id,
           plan_slug: plan.slug,
+          billing_cycle: billingCycle,
           purpose: "subscription",
         },
       }),
