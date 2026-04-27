@@ -149,6 +149,7 @@ export function PaymentHistoryCard() {
                   <TableHead className="h-9 text-xs">Date</TableHead>
                   <TableHead className="h-9 text-xs">Référence</TableHead>
                   <TableHead className="h-9 text-xs">Plan</TableHead>
+                  <TableHead className="h-9 text-xs">Cycle</TableHead>
                   <TableHead className="h-9 text-xs text-right">Montant</TableHead>
                   <TableHead className="h-9 text-xs">Statut</TableHead>
                   <TableHead className="h-9 text-xs w-12"></TableHead>
