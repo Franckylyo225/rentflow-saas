@@ -124,6 +124,7 @@ const AdminPlans = () => {
     const payload = {
       slug: form.slug.toLowerCase().replace(/[^a-z0-9_-]/g, ""),
       name: form.name, description: form.description, price_monthly: form.price_monthly,
+      yearly_discount_percent: Math.max(0, Math.min(100, Number(form.yearly_discount_percent) || 0)),
       max_properties: form.max_properties, max_users: form.max_users,
       feature_flags: form.feature_flags, display_features: form.display_features,
       is_visible: form.status !== "hidden", status: form.status,
