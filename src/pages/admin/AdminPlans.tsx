@@ -266,7 +266,14 @@ const AdminPlans = () => {
                                 {si.label}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-right font-medium">{formatPrice(plan.price_monthly)}</TableCell>
+                            <TableCell className="text-right font-medium">
+                              {formatPrice(plan.price_monthly)}
+                              {plan.yearly_discount_percent > 0 && (
+                                <div className="text-[10px] text-primary font-normal">
+                                  −{plan.yearly_discount_percent}% / an
+                                </div>
+                              )}
+                            </TableCell>
                             <TableCell className="text-center text-sm">
                               {plan.max_properties ?? "∞"} biens / {plan.max_users ?? "∞"} users
                             </TableCell>
