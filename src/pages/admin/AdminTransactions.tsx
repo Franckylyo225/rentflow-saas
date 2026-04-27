@@ -214,6 +214,7 @@ const AdminTransactions = () => {
                     <TableHead>Organisation</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Détails</TableHead>
+                    <TableHead>Cycle</TableHead>
                     <TableHead className="text-right">Montant</TableHead>
                     <TableHead>Notes</TableHead>
                   </TableRow>
@@ -221,7 +222,7 @@ const AdminTransactions = () => {
                 <TableBody>
                   {filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         Aucune transaction trouvée
                       </TableCell>
                     </TableRow>
