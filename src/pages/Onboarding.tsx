@@ -174,7 +174,7 @@ export default function Onboarding() {
     async function fetchPlans() {
       const { data } = await supabase
         .from("plans")
-        .select("slug, name, description, price_monthly, max_properties, max_users, feature_flags, sort_order")
+        .select("slug, name, description, price_monthly, max_properties, max_users, feature_flags, sort_order, yearly_discount_percent")
         .eq("is_visible", true)
         .order("sort_order");
       setPlans((data as Plan[]) || []);
