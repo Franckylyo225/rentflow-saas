@@ -25,6 +25,7 @@ interface Plan {
   max_users: number | null;
   feature_flags: string[];
   sort_order: number;
+  yearly_discount_percent: number;
 }
 
 const FEATURE_LABELS: Record<string, string> = {
