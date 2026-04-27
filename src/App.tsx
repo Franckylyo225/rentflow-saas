@@ -55,6 +55,7 @@ import LegalNotice from "./pages/legal/LegalNotice";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
 import Help from "./pages/Help";
+import { TawkChat } from "./components/TawkChat";
 
 const queryClient = new QueryClient();
 
