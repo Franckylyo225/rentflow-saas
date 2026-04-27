@@ -106,7 +106,9 @@ const AdminPlans = () => {
     setEditingPlan(plan);
     setForm({
       slug: plan.slug, name: plan.name, description: plan.description,
-      price_monthly: plan.price_monthly, max_properties: plan.max_properties,
+      price_monthly: plan.price_monthly,
+      yearly_discount_percent: plan.yearly_discount_percent ?? 0,
+      max_properties: plan.max_properties,
       max_users: plan.max_users, feature_flags: plan.feature_flags,
       display_features: plan.display_features || [],
       is_visible: plan.is_visible, status: plan.status || "active",
