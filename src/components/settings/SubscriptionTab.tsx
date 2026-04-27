@@ -19,6 +19,7 @@ interface Plan {
   name: string;
   description: string | null;
   price_monthly: number;
+  yearly_discount_percent: number;
   max_properties: number | null;
   max_users: number | null;
   feature_flags: string[];
@@ -27,6 +28,8 @@ interface Plan {
   cta_label: string;
   sort_order: number;
 }
+
+type BillingCycle = "monthly" | "yearly";
 
 interface Subscription {
   plan: string;
@@ -72,6 +75,11 @@ function formatPrice(price: number) {
   return price.toLocaleString("fr-FR");
 }
 
+function computeYearlyPrice(monthly: number, discountPct: number) {
+  const total = monthly * 12;
+  return Math.round(total * (1 - Math.max(0, Math.min(100, discountPct)) / 100));
+}
+
 export function SubscriptionTab() {
   const { profile, organization } = useProfile();
   const organizationId = profile?.organization_id;
@@ -86,13 +94,14 @@ export function SubscriptionTab() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [promoApplied, setPromoApplied] = useState<{ discount: number; final_price: number } | null>(null);
 
   const fetchData = async () => {
     if (!organizationId) return;
     setLoading(true);
     const [plansRes, subRes, historyRes] = await Promise.all([
-      supabase.from("plans").select("slug, name, description, price_monthly, max_properties, max_users, feature_flags, display_features, status, cta_label, sort_order").in("status", ["active"]).order("sort_order"),
+      supabase.from("plans").select("slug, name, description, price_monthly, yearly_discount_percent, max_properties, max_users, feature_flags, display_features, status, cta_label, sort_order").in("status", ["active"]).order("sort_order"),
       supabase.from("subscriptions").select("plan, status, trial_ends_at, current_period_start, current_period_end").eq("organization_id", organizationId).maybeSingle(),
       supabase.from("subscription_history").select("*").eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(20),
     ]);
@@ -115,6 +124,7 @@ export function SubscriptionTab() {
   const handleSelectPlan = (slug: string) => {
     if (slug === currentSlug && !expired) return;
     setSelectedPlan(slug);
+    setBillingCycle("monthly");
     setPromoApplied(null);
   };
 
@@ -159,11 +169,15 @@ export function SubscriptionTab() {
     // Paid plan → redirect to GeniusPay checkout
     setUpgrading(true);
     try {
-      const amount = promoApplied ? promoApplied.final_price : plan.price_monthly;
+      const isYearly = billingCycle === "yearly" && (plan.yearly_discount_percent ?? 0) > 0;
+      const amount = isYearly
+        ? computeYearlyPrice(plan.price_monthly, plan.yearly_discount_percent)
+        : promoApplied ? promoApplied.final_price : plan.price_monthly;
       const { data, error } = await supabase.functions.invoke("geniuspay-create-payment", {
         body: {
           plan_slug: selectedPlan,
           amount,
+          billing_cycle: isYearly ? "yearly" : "monthly",
         },
       });
 
@@ -427,33 +441,47 @@ export function SubscriptionTab() {
         if (!sp) return null;
         const isCustom = sp.price_monthly === 0 && sp.max_properties === null;
         const isPaid = sp.price_monthly > 0;
-        const finalAmount = promoApplied ? promoApplied.final_price : sp.price_monthly;
+        const yearlyPct = sp.yearly_discount_percent ?? 0;
+        const yearlyAvailable = isPaid && yearlyPct > 0;
+        const isYearly = billingCycle === "yearly" && yearlyAvailable;
+        const yearlyPrice = computeYearlyPrice(sp.price_monthly, yearlyPct);
+        const yearlySavings = sp.price_monthly * 12 - yearlyPrice;
+        const monthlyFinal = promoApplied ? promoApplied.final_price : sp.price_monthly;
+        const finalAmount = isYearly ? yearlyPrice : monthlyFinal;
 
         return (
           <Card className="border-primary/30 bg-primary/5">
             <CardContent className="pt-6 space-y-5">
-              {/* Recap */}
+              {yearlyAvailable && (
+                <div className="inline-flex items-center rounded-full border border-border bg-card p-1 gap-1">
+                  <button type="button" onClick={() => setBillingCycle("monthly")}
+                    className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-colors ${!isYearly ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                    Mensuel
+                  </button>
+                  <button type="button" onClick={() => { setBillingCycle("yearly"); setPromoApplied(null); }}
+                    className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-colors flex items-center gap-1.5 ${isYearly ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                    Annuel
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">−{yearlyPct}%</Badge>
+                  </button>
+                </div>
+              )}
               <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-4">
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <div className="min-w-0 flex-1">
                     <p className="text-xs text-muted-foreground uppercase tracking-wide">
                       {expired ? "Souscrire au plan" : "Passer au plan"}
                     </p>
-                    <p className="text-lg font-bold text-foreground truncate">{sp.name}</p>
+                    <p className="text-lg font-bold text-foreground truncate">
+                      {sp.name} <span className="text-xs font-normal text-muted-foreground">({isYearly ? "annuel" : "mensuel"})</span>
+                    </p>
                   </div>
                   {isPaid ? (
-                    <Badge variant="default" className="gap-1 shrink-0">
-                      <CreditCard className="h-3 w-3" /> Paiement requis
-                    </Badge>
+                    <Badge variant="default" className="gap-1 shrink-0"><CreditCard className="h-3 w-3" /> Paiement requis</Badge>
                   ) : (
-                    <Badge variant="secondary" className="gap-1 shrink-0">
-                      <Sparkles className="h-3 w-3" /> {isCustom ? "Sur mesure" : "Sans paiement"}
-                    </Badge>
+                    <Badge variant="secondary" className="gap-1 shrink-0"><Sparkles className="h-3 w-3" /> {isCustom ? "Sur mesure" : "Sans paiement"}</Badge>
                   )}
                 </div>
-
                 <div className="h-px bg-border" />
-
                 <div className="space-y-2">
                   <div className="flex justify-between items-center gap-3 text-sm">
                     <span className="text-muted-foreground shrink-0">Prix mensuel</span>
@@ -461,39 +489,47 @@ export function SubscriptionTab() {
                       {isCustom ? "Sur mesure" : isPaid ? `${formatPrice(sp.price_monthly)} FCFA` : "Gratuit"}
                     </span>
                   </div>
-
-                  {promoApplied && isPaid && (
+                  {isYearly && (
+                    <>
+                      <div className="flex justify-between items-center gap-3 text-sm">
+                        <span className="text-muted-foreground shrink-0">Total 12 mois</span>
+                        <span className="text-muted-foreground line-through text-right">{formatPrice(sp.price_monthly * 12)} FCFA</span>
+                      </div>
+                      <div className="flex justify-between items-center gap-3 text-sm">
+                        <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
+                          <Tag className="h-3.5 w-3.5" /> Remise annuelle ({yearlyPct}%)
+                        </span>
+                        <span className="font-semibold text-primary text-right break-all">−{formatPrice(yearlySavings)} FCFA</span>
+                      </div>
+                    </>
+                  )}
+                  {!isYearly && promoApplied && isPaid && (
                     <div className="flex justify-between items-center gap-3 text-sm">
                       <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
                         <Tag className="h-3.5 w-3.5" /> Remise promo
                       </span>
-                      <span className="font-semibold text-primary text-right break-all">
-                        −{formatPrice(promoApplied.discount)} FCFA
-                      </span>
+                      <span className="font-semibold text-primary text-right break-all">−{formatPrice(promoApplied.discount)} FCFA</span>
                     </div>
                   )}
-
                   <div className="h-px bg-border" />
-
                   <div className="flex justify-between items-baseline gap-3 pt-1">
-                    <span className="font-semibold text-foreground text-sm shrink-0">
-                      {isPaid ? "Total à payer" : "Total"}
-                    </span>
+                    <span className="font-semibold text-foreground text-sm shrink-0">{isPaid ? "Total à payer" : "Total"}</span>
                     <span className="font-extrabold text-lg sm:text-xl text-foreground text-right break-all">
                       {isCustom ? "Sur mesure" : isPaid ? `${formatPrice(finalAmount)} FCFA` : "Gratuit"}
-                      {isPaid && (
-                        <span className="text-muted-foreground font-normal text-xs ml-1">/mois</span>
-                      )}
+                      {isPaid && <span className="text-muted-foreground font-normal text-xs ml-1">{isYearly ? "/an" : "/mois"}</span>}
                     </span>
                   </div>
                 </div>
-
-                {isPaid && promoApplied && (
+                {isPaid && !isYearly && promoApplied && (
                   <div className="flex items-start gap-2 text-xs text-primary bg-primary/5 rounded-lg px-3 py-2">
                     <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                    <span className="break-words">
-                      Économie de {formatPrice(promoApplied.discount)} FCFA appliquée
-                    </span>
+                    <span className="break-words">Économie de {formatPrice(promoApplied.discount)} FCFA appliquée</span>
+                  </div>
+                )}
+                {isPaid && isYearly && (
+                  <div className="flex items-start gap-2 text-xs text-primary bg-primary/5 rounded-lg px-3 py-2">
+                    <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                    <span className="break-words">Économie de {formatPrice(yearlySavings)} FCFA sur l'année.</span>
                   </div>
                 )}
               </div>

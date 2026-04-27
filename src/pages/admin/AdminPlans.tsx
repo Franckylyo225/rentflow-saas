@@ -33,6 +33,7 @@ interface Plan {
   name: string;
   description: string;
   price_monthly: number;
+  yearly_discount_percent: number;
   max_properties: number | null;
   max_users: number | null;
   feature_flags: string[];
@@ -52,7 +53,7 @@ interface WaitlistEntry {
 }
 
 const emptyPlan: Omit<Plan, "id"> = {
-  slug: "", name: "", description: "", price_monthly: 0,
+  slug: "", name: "", description: "", price_monthly: 0, yearly_discount_percent: 0,
   max_properties: null, max_users: null, feature_flags: [], display_features: [],
   is_visible: true, status: "active", cta_label: "Commencer l'essai",
   trial_eligible: true, sort_order: 0,
@@ -105,7 +106,9 @@ const AdminPlans = () => {
     setEditingPlan(plan);
     setForm({
       slug: plan.slug, name: plan.name, description: plan.description,
-      price_monthly: plan.price_monthly, max_properties: plan.max_properties,
+      price_monthly: plan.price_monthly,
+      yearly_discount_percent: plan.yearly_discount_percent ?? 0,
+      max_properties: plan.max_properties,
       max_users: plan.max_users, feature_flags: plan.feature_flags,
       display_features: plan.display_features || [],
       is_visible: plan.is_visible, status: plan.status || "active",
@@ -121,6 +124,7 @@ const AdminPlans = () => {
     const payload = {
       slug: form.slug.toLowerCase().replace(/[^a-z0-9_-]/g, ""),
       name: form.name, description: form.description, price_monthly: form.price_monthly,
+      yearly_discount_percent: Math.max(0, Math.min(100, Number(form.yearly_discount_percent) || 0)),
       max_properties: form.max_properties, max_users: form.max_users,
       feature_flags: form.feature_flags, display_features: form.display_features,
       is_visible: form.status !== "hidden", status: form.status,
@@ -262,7 +266,14 @@ const AdminPlans = () => {
                                 {si.label}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-right font-medium">{formatPrice(plan.price_monthly)}</TableCell>
+                            <TableCell className="text-right font-medium">
+                              {formatPrice(plan.price_monthly)}
+                              {plan.yearly_discount_percent > 0 && (
+                                <div className="text-[10px] text-primary font-normal">
+                                  −{plan.yearly_discount_percent}% / an
+                                </div>
+                              )}
+                            </TableCell>
                             <TableCell className="text-center text-sm">
                               {plan.max_properties ?? "∞"} biens / {plan.max_users ?? "∞"} users
                             </TableCell>
@@ -420,6 +431,37 @@ const AdminPlans = () => {
                 <Label>Max utilisateurs</Label>
                 <Input type="number" placeholder="∞" value={form.max_users ?? ""} onChange={e => setForm({ ...form, max_users: e.target.value ? Number(e.target.value) : null })} />
               </div>
+            </div>
+
+            {/* Yearly billing */}
+            <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <Label className="text-sm font-semibold">Remise annuelle</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Pourcentage de remise appliqué automatiquement quand le client paye 12 mois d'avance. Mettre à 0 pour désactiver l'option annuelle.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={1}
+                    className="w-24 text-right"
+                    value={form.yearly_discount_percent}
+                    onChange={e => setForm({ ...form, yearly_discount_percent: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })}
+                  />
+                  <span className="text-sm text-muted-foreground">%</span>
+                </div>
+              </div>
+              {form.price_monthly > 0 && form.yearly_discount_percent > 0 && (
+                <p className="text-xs text-primary">
+                  Aperçu : {new Intl.NumberFormat("fr-FR").format(Math.round(form.price_monthly * 12 * (1 - form.yearly_discount_percent / 100)))} FCFA / an
+                  {" "}au lieu de {new Intl.NumberFormat("fr-FR").format(form.price_monthly * 12)} FCFA
+                  {" "}(économie {new Intl.NumberFormat("fr-FR").format(Math.round(form.price_monthly * 12 * form.yearly_discount_percent / 100))} FCFA).
+                </p>
+              )}
             </div>
 
             {/* Status, CTA, trial */}

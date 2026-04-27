@@ -15,6 +15,7 @@ const GENIUSPAY_BASE_URL = "https://pay.genius.ci/api/v1/merchant";
 interface CreatePaymentBody {
   plan_slug: string;
   amount: number;
+  billing_cycle?: "monthly" | "yearly";
   success_url?: string;
   error_url?: string;
 }
@@ -77,6 +78,8 @@ Deno.serve(async (req) => {
     }
 
     const body: CreatePaymentBody = await req.json();
+    const billingCycle: "monthly" | "yearly" =
+      body.billing_cycle === "yearly" ? "yearly" : "monthly";
 
     if (!body.plan_slug || !body.amount || body.amount < 200) {
       return new Response(
@@ -88,7 +91,7 @@ Deno.serve(async (req) => {
     // Verify plan exists
     const { data: plan } = await supabase
       .from("plans")
-      .select("slug, name, price_monthly")
+      .select("slug, name, price_monthly, yearly_discount_percent")
       .eq("slug", body.plan_slug)
       .maybeSingle();
 
@@ -114,7 +117,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         amount: body.amount,
         currency: "XOF",
-        description: `Abonnement RentFlow - ${plan.name}`,
+        description: `Abonnement RentFlow - ${plan.name} (${billingCycle === "yearly" ? "annuel" : "mensuel"})`,
         customer: {
           name: profile.full_name || user.email,
           email: profile.email || user.email,
@@ -127,6 +130,7 @@ Deno.serve(async (req) => {
           organization_id: profile.organization_id,
           user_id: user.id,
           plan_slug: plan.slug,
+          billing_cycle: billingCycle,
           purpose: "subscription",
         },
       }),
@@ -160,8 +164,13 @@ Deno.serve(async (req) => {
       environment: tx.environment || "sandbox",
       purpose: "subscription",
       plan_slug: plan.slug,
+      billing_cycle: billingCycle,
       checkout_url: tx.checkout_url || tx.payment_url,
-      metadata: { plan_name: plan.name },
+      metadata: {
+        plan_name: plan.name,
+        billing_cycle: billingCycle,
+        yearly_discount_percent: plan.yearly_discount_percent ?? 0,
+      },
     });
 
     if (insertErr) {
