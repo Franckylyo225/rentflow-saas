@@ -164,8 +164,13 @@ Deno.serve(async (req) => {
       environment: tx.environment || "sandbox",
       purpose: "subscription",
       plan_slug: plan.slug,
+      billing_cycle: billingCycle,
       checkout_url: tx.checkout_url || tx.payment_url,
-      metadata: { plan_name: plan.name },
+      metadata: {
+        plan_name: plan.name,
+        billing_cycle: billingCycle,
+        yearly_discount_percent: plan.yearly_discount_percent ?? 0,
+      },
     });
 
     if (insertErr) {
