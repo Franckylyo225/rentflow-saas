@@ -741,7 +741,16 @@ export default function Onboarding() {
               </div>
 
               {/* Plan recap card */}
-              {selectedPlanData && (
+              {selectedPlanData && (() => {
+                const yearlyDiscount = selectedPlanData.yearly_discount_percent ?? 0;
+                const hasYearlyOption = selectedPlanData.price_monthly > 0 && yearlyDiscount > 0;
+                const isYearly = billingCycle === "yearly" && hasYearlyOption;
+                const monthlyPrice = promoApplied ? promoApplied.final_price : selectedPlanData.price_monthly;
+                const yearlyTotal = Math.round(selectedPlanData.price_monthly * 12 * (1 - yearlyDiscount / 100));
+                const yearlyEquivMonthly = Math.round(yearlyTotal / 12);
+                const yearlySavings = selectedPlanData.price_monthly * 12 - yearlyTotal;
+                const totalDue = isYearly ? yearlyTotal : monthlyPrice;
+                return (
                 <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-4">
                   <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div className="min-w-0 flex-1">
@@ -762,19 +771,66 @@ export default function Onboarding() {
                     )}
                   </div>
 
+                  {/* Billing cycle toggle */}
+                  {hasYearlyOption && (
+                    <div className="flex items-center gap-2 rounded-full bg-muted p-1">
+                      <button
+                        type="button"
+                        onClick={() => setBillingCycle("monthly")}
+                        className={`flex-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                          billingCycle === "monthly"
+                            ? "bg-card text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        Mensuel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBillingCycle("yearly")}
+                        className={`flex-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+                          billingCycle === "yearly"
+                            ? "bg-card text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        Annuel
+                        <Badge variant="default" className="h-4 px-1.5 text-[10px] leading-none">
+                          −{yearlyDiscount}%
+                        </Badge>
+                      </button>
+                    </div>
+                  )}
+
                   <div className="h-px bg-border" />
 
                   <div className="space-y-2">
                     <div className="flex justify-between items-center gap-3 text-sm">
-                      <span className="text-muted-foreground shrink-0">Prix mensuel</span>
+                      <span className="text-muted-foreground shrink-0">
+                        {isYearly ? "Prix annuel (12 mois)" : "Prix mensuel"}
+                      </span>
                       <span className="font-semibold text-foreground text-right break-all">
                         {selectedPlanData.price_monthly > 0
-                          ? `${formatPrice(selectedPlanData.price_monthly)} FCFA`
+                          ? isYearly
+                            ? `${formatPrice(selectedPlanData.price_monthly * 12)} FCFA`
+                            : `${formatPrice(selectedPlanData.price_monthly)} FCFA`
                           : "Sur mesure"}
                       </span>
                     </div>
 
-                    {promoApplied && (
+                    {isYearly && (
+                      <div className="flex justify-between items-center gap-3 text-sm">
+                        <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
+                          <Tag className="h-3.5 w-3.5" />
+                          Remise annuelle ({yearlyDiscount}%)
+                        </span>
+                        <span className="font-semibold text-primary text-right break-all">
+                          −{formatPrice(yearlySavings)} FCFA
+                        </span>
+                      </div>
+                    )}
+
+                    {!isYearly && promoApplied && (
                       <div className="flex justify-between items-center gap-3 text-sm">
                         <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
                           <Tag className="h-3.5 w-3.5" />
@@ -793,19 +849,34 @@ export default function Onboarding() {
                         {selectedPlanData.price_monthly > 0 ? "Total à payer" : "Total"}
                       </span>
                       <span className="font-extrabold text-lg sm:text-xl text-foreground text-right break-all">
-                        {promoApplied
-                          ? `${formatPrice(promoApplied.final_price)} FCFA`
-                          : selectedPlanData.price_monthly > 0
-                          ? `${formatPrice(selectedPlanData.price_monthly)} FCFA`
+                        {selectedPlanData.price_monthly > 0
+                          ? `${formatPrice(totalDue)} FCFA`
                           : "Sur mesure"}
                         {selectedPlanData.price_monthly > 0 && (
-                          <span className="text-muted-foreground font-normal text-xs ml-1">/mois</span>
+                          <span className="text-muted-foreground font-normal text-xs ml-1">
+                            {isYearly ? "/an" : "/mois"}
+                          </span>
                         )}
                       </span>
                     </div>
+
+                    {isYearly && (
+                      <p className="text-xs text-muted-foreground text-right">
+                        Soit {formatPrice(yearlyEquivMonthly)} FCFA/mois facturé annuellement
+                      </p>
+                    )}
                   </div>
 
-                  {selectedPlanData.price_monthly > 0 && promoApplied && (
+                  {selectedPlanData.price_monthly > 0 && isYearly && (
+                    <div className="flex items-start gap-2 text-xs text-primary bg-primary/5 rounded-lg px-3 py-2">
+                      <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                      <span className="break-words">
+                        Vous économisez {formatPrice(yearlySavings)} FCFA sur l'année
+                      </span>
+                    </div>
+                  )}
+
+                  {selectedPlanData.price_monthly > 0 && !isYearly && promoApplied && (
                     <div className="flex items-start gap-2 text-xs text-primary bg-primary/5 rounded-lg px-3 py-2">
                       <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5" />
                       <span className="break-words">
@@ -814,7 +885,8 @@ export default function Onboarding() {
                     </div>
                   )}
                 </div>
-              )}
+                );
+              })()}
 
               {/* Promo code section */}
               {organization && selectedPlanData && (
