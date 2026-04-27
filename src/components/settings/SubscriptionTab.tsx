@@ -169,11 +169,15 @@ export function SubscriptionTab() {
     // Paid plan → redirect to GeniusPay checkout
     setUpgrading(true);
     try {
-      const amount = promoApplied ? promoApplied.final_price : plan.price_monthly;
+      const isYearly = billingCycle === "yearly" && (plan.yearly_discount_percent ?? 0) > 0;
+      const amount = isYearly
+        ? computeYearlyPrice(plan.price_monthly, plan.yearly_discount_percent)
+        : promoApplied ? promoApplied.final_price : plan.price_monthly;
       const { data, error } = await supabase.functions.invoke("geniuspay-create-payment", {
         body: {
           plan_slug: selectedPlan,
           amount,
+          billing_cycle: isYearly ? "yearly" : "monthly",
         },
       });
 
