@@ -239,7 +239,11 @@ export default function Onboarding() {
       toast.error("Ce plan ne nécessite pas de paiement");
       return;
     }
-    const amount = promoApplied ? promoApplied.final_price : selectedPlanData.price_monthly;
+    const isYearly = billingCycle === "yearly" && (selectedPlanData.yearly_discount_percent ?? 0) > 0;
+    const monthlyBase = promoApplied ? promoApplied.final_price : selectedPlanData.price_monthly;
+    const amount = isYearly
+      ? Math.round(selectedPlanData.price_monthly * 12 * (1 - (selectedPlanData.yearly_discount_percent ?? 0) / 100))
+      : monthlyBase;
     if (amount < 200) {
       toast.error("Montant trop faible pour le paiement en ligne");
       return;
@@ -251,6 +255,7 @@ export default function Onboarding() {
         body: {
           plan_slug: selectedPlan,
           amount,
+          billing_cycle: isYearly ? "yearly" : "monthly",
           success_url: `${origin}/onboarding?payment=success`,
           error_url: `${origin}/onboarding?payment=error`,
         },
