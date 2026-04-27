@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
     // Verify plan exists
     const { data: plan } = await supabase
       .from("plans")
-      .select("slug, name, price_monthly")
+      .select("slug, name, price_monthly, yearly_discount_percent")
       .eq("slug", body.plan_slug)
       .maybeSingle();
 
