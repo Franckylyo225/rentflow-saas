@@ -92,7 +92,10 @@ const AdminTransactions = () => {
     const matchSearch = t.org_name.toLowerCase().includes(search.toLowerCase()) ||
       (t.notes || "").toLowerCase().includes(search.toLowerCase());
     const matchType = filterType === "all" || t.event_type === filterType;
-    return matchSearch && matchType;
+    const matchCycle =
+      filterCycle === "all" ||
+      (filterCycle === "none" ? !t.billing_cycle : t.billing_cycle === filterCycle);
+    return matchSearch && matchType && matchCycle;
   });
 
   const totalPayments = transactions
