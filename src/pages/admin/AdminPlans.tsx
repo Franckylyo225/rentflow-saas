@@ -33,6 +33,7 @@ interface Plan {
   name: string;
   description: string;
   price_monthly: number;
+  yearly_discount_percent: number;
   max_properties: number | null;
   max_users: number | null;
   feature_flags: string[];
@@ -52,7 +53,7 @@ interface WaitlistEntry {
 }
 
 const emptyPlan: Omit<Plan, "id"> = {
-  slug: "", name: "", description: "", price_monthly: 0,
+  slug: "", name: "", description: "", price_monthly: 0, yearly_discount_percent: 0,
   max_properties: null, max_users: null, feature_flags: [], display_features: [],
   is_visible: true, status: "active", cta_label: "Commencer l'essai",
   trial_eligible: true, sort_order: 0,
