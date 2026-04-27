@@ -29,6 +29,7 @@ interface PaymentTransaction {
   checkout_url: string | null;
   created_at: string;
   completed_at: string | null;
+  billing_cycle: string | null;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
