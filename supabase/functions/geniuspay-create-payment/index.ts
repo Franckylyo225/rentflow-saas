@@ -78,6 +78,8 @@ Deno.serve(async (req) => {
     }
 
     const body: CreatePaymentBody = await req.json();
+    const billingCycle: "monthly" | "yearly" =
+      body.billing_cycle === "yearly" ? "yearly" : "monthly";
 
     if (!body.plan_slug || !body.amount || body.amount < 200) {
       return new Response(
