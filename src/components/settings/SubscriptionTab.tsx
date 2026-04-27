@@ -19,6 +19,7 @@ interface Plan {
   name: string;
   description: string | null;
   price_monthly: number;
+  yearly_discount_percent: number;
   max_properties: number | null;
   max_users: number | null;
   feature_flags: string[];
@@ -27,6 +28,8 @@ interface Plan {
   cta_label: string;
   sort_order: number;
 }
+
+type BillingCycle = "monthly" | "yearly";
 
 interface Subscription {
   plan: string;
