@@ -255,6 +255,18 @@ const AdminTransactions = () => {
                               "—"
                             )}
                           </TableCell>
+                          <TableCell>
+                            {t.billing_cycle ? (
+                              <Badge
+                                variant={t.billing_cycle === "yearly" ? "default" : "secondary"}
+                                className="text-xs"
+                              >
+                                {t.billing_cycle === "yearly" ? "Annuel" : "Mensuel"}
+                              </Badge>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right font-medium">
                             {t.amount ? `${t.amount.toLocaleString("fr-FR")} FCFA` : "—"}
                           </TableCell>
