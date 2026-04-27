@@ -89,13 +89,14 @@ export function SubscriptionTab() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [promoApplied, setPromoApplied] = useState<{ discount: number; final_price: number } | null>(null);
 
   const fetchData = async () => {
     if (!organizationId) return;
     setLoading(true);
     const [plansRes, subRes, historyRes] = await Promise.all([
-      supabase.from("plans").select("slug, name, description, price_monthly, max_properties, max_users, feature_flags, display_features, status, cta_label, sort_order").in("status", ["active"]).order("sort_order"),
+      supabase.from("plans").select("slug, name, description, price_monthly, yearly_discount_percent, max_properties, max_users, feature_flags, display_features, status, cta_label, sort_order").in("status", ["active"]).order("sort_order"),
       supabase.from("subscriptions").select("plan, status, trial_ends_at, current_period_start, current_period_end").eq("organization_id", organizationId).maybeSingle(),
       supabase.from("subscription_history").select("*").eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(20),
     ]);
