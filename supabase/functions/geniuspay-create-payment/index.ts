@@ -15,6 +15,7 @@ const GENIUSPAY_BASE_URL = "https://pay.genius.ci/api/v1/merchant";
 interface CreatePaymentBody {
   plan_slug: string;
   amount: number;
+  billing_cycle?: "monthly" | "yearly";
   success_url?: string;
   error_url?: string;
 }
