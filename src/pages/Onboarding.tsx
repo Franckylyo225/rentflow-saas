@@ -888,8 +888,8 @@ export default function Onboarding() {
                 );
               })()}
 
-              {/* Promo code section */}
-              {organization && selectedPlanData && (
+              {/* Promo code section — masqué en mode annuel */}
+              {organization && selectedPlanData && billingCycle === "monthly" && (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <Gift className="h-4 w-4 text-primary" />
@@ -906,14 +906,22 @@ export default function Onboarding() {
               )}
 
               {/* Payment options */}
-              {selectedPlanData && selectedPlanData.price_monthly > 0 ? (
+              {selectedPlanData && selectedPlanData.price_monthly > 0 ? (() => {
+                const yearlyDiscount = selectedPlanData.yearly_discount_percent ?? 0;
+                const isYearly = billingCycle === "yearly" && yearlyDiscount > 0;
+                const yearlyTotal = Math.round(selectedPlanData.price_monthly * 12 * (1 - yearlyDiscount / 100));
+                const monthlyDue = promoApplied ? promoApplied.final_price : selectedPlanData.price_monthly;
+                const totalDue = isYearly ? yearlyTotal : monthlyDue;
+                return (
                 <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-primary/10 shrink-0">
                       <CreditCard className="h-4 w-4 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground">Payer maintenant</p>
+                      <p className="text-sm font-semibold text-foreground">
+                        Payer maintenant {isYearly ? "(annuel)" : "(mensuel)"}
+                      </p>
                       <p className="text-xs text-muted-foreground mt-0.5 break-words">
                         Activez votre abonnement immédiatement via paiement sécurisé GeniusPay (Mobile Money, carte).
                       </p>
@@ -927,11 +935,12 @@ export default function Onboarding() {
                   >
                     {saving ? <Loader2 className="h-4 w-4 animate-spin shrink-0" /> : <CreditCard className="h-4 w-4 shrink-0" />}
                     <span className="truncate">
-                      Payer {formatPrice(promoApplied ? promoApplied.final_price : selectedPlanData.price_monthly)} FCFA
+                      Payer {formatPrice(totalDue)} FCFA{isYearly ? " /an" : " /mois"}
                     </span>
                   </Button>
                 </div>
-              ) : (
+                );
+              })() : (
                 <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-4 py-3 text-center">
                   <CreditCard className="h-3.5 w-3.5 shrink-0" />
                   <span>Aucun paiement requis pour ce plan.</span>
