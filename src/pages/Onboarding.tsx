@@ -99,6 +99,7 @@ export default function Onboarding() {
   const [promoApplied, setPromoApplied] = useState<{ discount: number; final_price: number } | null>(null);
   const [paymentReturn, setPaymentReturn] = useState<"success" | "error" | null>(initialPaymentReturn);
   const [finalizing, setFinalizing] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
 
   // Company form
   const [orgName, setOrgName] = useState("");
