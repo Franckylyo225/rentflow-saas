@@ -215,7 +215,7 @@ export default function AdminGrowth() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-sm py-1.5 px-3">{realUsers} / 1 000 utilisateurs</Badge>
+            <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-sm py-1.5 px-3">{realUsers} / 1 000 agences</Badge>
             <Button onClick={() => setClaudeOpen(true)} className="bg-emerald-500 hover:bg-emerald-600 gap-2">
               <Sparkles className="h-4 w-4" /> Demander à Claude
             </Button>
