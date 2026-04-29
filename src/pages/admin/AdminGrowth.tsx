@@ -64,6 +64,7 @@ export default function AdminGrowth() {
   const [addOpen, setAddOpen] = useState(false);
   const [newTask, setNewTask] = useState({ title: "", description: "", type: "Email", priority: "Normal", due_date: todayISO() });
   const [dayDrawer, setDayDrawer] = useState<{ open: boolean; date?: string }>({ open: false });
+  const [weekOffset, setWeekOffset] = useState(0);
 
   const today = todayISO();
 
