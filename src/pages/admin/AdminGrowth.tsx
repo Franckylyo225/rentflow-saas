@@ -234,7 +234,7 @@ export default function AdminGrowth() {
         {/* SECTION 2 — Progression */}
         <Card className="p-3.5">
           <div className="flex justify-between items-baseline mb-3">
-            <h3 className="font-semibold text-sm">Progression vers 1 000 utilisateurs</h3>
+            <h3 className="font-semibold text-sm">Progression vers 1 000 agences</h3>
             <span className="text-sm font-bold text-emerald-600">{progressPct.toFixed(1)}%</span>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
