@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
-  Sparkles, ShieldCheck, Plus, ArrowUpRight, Rocket, Loader2,
+  Sparkles, ShieldCheck, Plus, ArrowUpRight, Rocket, Loader2, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { LineChart, Line, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, Area, AreaChart, CartesianGrid, Legend } from "recharts";
