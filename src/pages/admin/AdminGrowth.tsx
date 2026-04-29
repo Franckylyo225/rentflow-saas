@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
-  Sparkles, ShieldCheck, Plus, ArrowUpRight, Rocket, Loader2,
+  Sparkles, ShieldCheck, Plus, ArrowUpRight, Rocket, Loader2, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { LineChart, Line, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, Area, AreaChart, CartesianGrid, Legend } from "recharts";
@@ -64,6 +64,7 @@ export default function AdminGrowth() {
   const [addOpen, setAddOpen] = useState(false);
   const [newTask, setNewTask] = useState({ title: "", description: "", type: "Email", priority: "Normal", due_date: todayISO() });
   const [dayDrawer, setDayDrawer] = useState<{ open: boolean; date?: string }>({ open: false });
+  const [weekOffset, setWeekOffset] = useState(0);
 
   const today = todayISO();
 
@@ -126,10 +127,12 @@ export default function AdminGrowth() {
     return m;
   }, [tasks]);
 
-  // Semaine
+  // Semaine (avec navigation)
   const monday = startOfWeek(now);
+  const displayedMonday = new Date(monday);
+  displayedMonday.setDate(monday.getDate() + weekOffset * 7);
   const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday); d.setDate(monday.getDate() + i); return d;
+    const d = new Date(displayedMonday); d.setDate(displayedMonday.getDate() + i); return d;
   });
 
   // Graph 12 mois
@@ -365,7 +368,29 @@ export default function AdminGrowth() {
 
         {/* SECTION 5 — Vue semaine */}
         <Card className="p-4">
-          <h3 className="font-semibold mb-3">Semaine du {weekDays[0].toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} au {weekDays[6].toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</h3>
+          <div className="flex items-center justify-between mb-3 gap-2">
+            <h3 className="font-semibold">
+              Semaine du {weekDays[0].toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} au {weekDays[6].toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+              {weekOffset !== 0 && (
+                <span className="ml-2 text-xs text-muted-foreground font-normal">
+                  ({weekOffset > 0 ? `+${weekOffset}` : weekOffset} sem.)
+                </span>
+              )}
+            </h3>
+            <div className="flex items-center gap-1">
+              <Button size="sm" variant="outline" onClick={() => setWeekOffset(o => o - 1)} className="h-7 w-7 p-0" title="Semaine précédente">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              {weekOffset !== 0 && (
+                <Button size="sm" variant="ghost" onClick={() => setWeekOffset(0)} className="h-7 text-xs px-2">
+                  Aujourd'hui
+                </Button>
+              )}
+              <Button size="sm" variant="outline" onClick={() => setWeekOffset(o => o + 1)} className="h-7 w-7 p-0" title="Semaine suivante">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
           <div className="grid grid-cols-7 gap-2">
             {weekDays.map((d, i) => {
               const iso = fmt(d);
