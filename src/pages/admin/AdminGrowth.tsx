@@ -211,7 +211,7 @@ export default function AdminGrowth() {
               <Rocket className="h-6 w-6 text-primary" /> Pilote de croissance
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Objectif 1 000 utilisateurs · {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+              Objectif 1 000 agences · {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
             </p>
           </div>
           <div className="flex items-center gap-3">
