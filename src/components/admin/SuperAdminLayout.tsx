@@ -17,6 +17,7 @@ import {
   Contact as ContactIcon,
   BarChart3,
   Workflow,
+  Rocket,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -45,6 +46,7 @@ const NAV_ITEMS = [
   { label: "Codes Promo", href: "/admin/promo-codes", icon: Settings },
   { label: "Super Admins", href: "/admin/admins", icon: Users },
   { label: "Utilisateurs", href: "/admin/users", icon: UserCheck },
+  { label: "Pilote de croissance", href: "/admin/growth", icon: Rocket },
   { label: "Paramètres", href: "/admin/settings", icon: Settings },
 ];
 
