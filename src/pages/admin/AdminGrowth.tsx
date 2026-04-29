@@ -86,7 +86,7 @@ export default function AdminGrowth() {
   const target = parseInt(settings.target_users ?? "1000");
   const targetMonths = parseInt(settings.target_months ?? "24");
   const startDate = settings.start_date ? new Date(settings.start_date) : new Date();
-  const realUsers = Math.max(usersCount, metrics[metrics.length - 1]?.users_count ?? 0);
+  const realUsers = usersCount;
   const lastMetric = metrics[metrics.length - 1];
   const prevMetric = metrics[metrics.length - 2];
   const weeklyDelta = lastMetric && prevMetric ? lastMetric.users_count - prevMetric.users_count : 0;
