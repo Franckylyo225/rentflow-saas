@@ -43,6 +43,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminTransactions from "./pages/admin/AdminTransactions";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminLogin from "./pages/admin/AdminLogin";
+import AdminGrowth from "./pages/admin/AdminGrowth";
 import { SuperAdminRoute } from "./components/admin/SuperAdminRoute";
 import NotFound from "./pages/NotFound";
 import TermsOfService from "./pages/legal/TermsOfService";
@@ -110,6 +111,7 @@ const App = () => (
               <Route path="/admin/users" element={<SuperAdminRoute><AdminUsers /></SuperAdminRoute>} />
               <Route path="/admin/transactions" element={<SuperAdminRoute><AdminTransactions /></SuperAdminRoute>} />
               <Route path="/admin/settings" element={<SuperAdminRoute><AdminSettings /></SuperAdminRoute>} />
+              <Route path="/admin/growth" element={<SuperAdminRoute><AdminGrowth /></SuperAdminRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
