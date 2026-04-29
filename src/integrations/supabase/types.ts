@@ -978,6 +978,108 @@ export type Database = {
         }
         Relationships: []
       }
+      growth_metrics: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          new_users: number
+          notes: string | null
+          tasks_done: number
+          tasks_total: number
+          users_count: number
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          new_users?: number
+          notes?: string | null
+          tasks_done?: number
+          tasks_total?: number
+          users_count?: number
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          new_users?: number
+          notes?: string | null
+          tasks_done?: number
+          tasks_total?: number
+          users_count?: number
+        }
+        Relationships: []
+      }
+      growth_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      growth_tasks: {
+        Row: {
+          ai_content: string | null
+          created_at: string
+          description: string | null
+          done: boolean
+          done_at: string | null
+          due_date: string
+          due_time: string | null
+          id: string
+          priority: string
+          recurrence_rule: string | null
+          recurring: boolean
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          ai_content?: string | null
+          created_at?: string
+          description?: string | null
+          done?: boolean
+          done_at?: string | null
+          due_date?: string
+          due_time?: string | null
+          id?: string
+          priority?: string
+          recurrence_rule?: string | null
+          recurring?: boolean
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          ai_content?: string | null
+          created_at?: string
+          description?: string | null
+          done?: boolean
+          done_at?: string | null
+          due_date?: string
+          due_time?: string | null
+          id?: string
+          priority?: string
+          recurrence_rule?: string | null
+          recurring?: boolean
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lease_documents: {
         Row: {
           created_at: string
