@@ -224,7 +224,7 @@ export default function AdminGrowth() {
 
         {/* SECTION 1 — KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-          <Kpi title="Utilisateurs actifs" value={realUsers} sub={`+${weeklyDelta} cette semaine`} subColor="text-emerald-600" />
+          <Kpi title="Agences actives" value={realUsers} sub={`+${weeklyDelta} cette semaine`} subColor="text-emerald-600" />
           <Kpi title="Objectif mensuel" value={monthlyTarget} sub={`sur ${monthsRemaining} mois restants`} />
           <Kpi title="Tâches aujourd'hui" value={todayPending} sub={todayPending === 0 ? "Tout est fait !" : "à finir"} valueColor={todayPending > 0 ? "text-orange-600" : "text-emerald-600"} />
           <Kpi title="Semaines restantes" value={weeksRemaining} sub="avant la deadline" />
