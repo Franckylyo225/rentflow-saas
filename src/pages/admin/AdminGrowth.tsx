@@ -211,11 +211,11 @@ export default function AdminGrowth() {
               <Rocket className="h-6 w-6 text-primary" /> Pilote de croissance
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Objectif 1 000 utilisateurs · {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+              Objectif 1 000 agences · {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-sm py-1.5 px-3">{realUsers} / 1 000 utilisateurs</Badge>
+            <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-sm py-1.5 px-3">{realUsers} / 1 000 agences</Badge>
             <Button onClick={() => setClaudeOpen(true)} className="bg-emerald-500 hover:bg-emerald-600 gap-2">
               <Sparkles className="h-4 w-4" /> Demander à Claude
             </Button>
@@ -224,7 +224,7 @@ export default function AdminGrowth() {
 
         {/* SECTION 1 — KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-          <Kpi title="Utilisateurs actifs" value={realUsers} sub={`+${weeklyDelta} cette semaine`} subColor="text-emerald-600" />
+          <Kpi title="Agences actives" value={realUsers} sub={`+${weeklyDelta} cette semaine`} subColor="text-emerald-600" />
           <Kpi title="Objectif mensuel" value={monthlyTarget} sub={`sur ${monthsRemaining} mois restants`} />
           <Kpi title="Tâches aujourd'hui" value={todayPending} sub={todayPending === 0 ? "Tout est fait !" : "à finir"} valueColor={todayPending > 0 ? "text-orange-600" : "text-emerald-600"} />
           <Kpi title="Semaines restantes" value={weeksRemaining} sub="avant la deadline" />
@@ -234,7 +234,7 @@ export default function AdminGrowth() {
         {/* SECTION 2 — Progression */}
         <Card className="p-3.5">
           <div className="flex justify-between items-baseline mb-3">
-            <h3 className="font-semibold text-sm">Progression vers 1 000 utilisateurs</h3>
+            <h3 className="font-semibold text-sm">Progression vers 1 000 agences</h3>
             <span className="text-sm font-bold text-emerald-600">{progressPct.toFixed(1)}%</span>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
