@@ -127,10 +127,12 @@ export default function AdminGrowth() {
     return m;
   }, [tasks]);
 
-  // Semaine
+  // Semaine (avec navigation)
   const monday = startOfWeek(now);
+  const displayedMonday = new Date(monday);
+  displayedMonday.setDate(monday.getDate() + weekOffset * 7);
   const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday); d.setDate(monday.getDate() + i); return d;
+    const d = new Date(displayedMonday); d.setDate(displayedMonday.getDate() + i); return d;
   });
 
   // Graph 12 mois
