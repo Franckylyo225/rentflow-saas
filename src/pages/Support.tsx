@@ -350,6 +350,11 @@ export function TicketDetailSheet({
   const [files, setFiles] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [admins, setAdmins] = useState<{ user_id: string; full_name: string | null; email: string | null }[]>([]);
+  const [unpaidPayments, setUnpaidPayments] = useState<{ id: string; label: string }[]>([]);
+  const [localTicket, setLocalTicket] = useState<Ticket | null>(null);
+
+  useEffect(() => { setLocalTicket(ticket); }, [ticket?.id]);
 
   useEffect(() => {
     if (!ticket) return;
