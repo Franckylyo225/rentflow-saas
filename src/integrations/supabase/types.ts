@@ -1458,6 +1458,45 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          rent_late: boolean
+          rent_paid: boolean
+          rent_partial: boolean
+          ticket_internal_note: boolean
+          ticket_new_reply: boolean
+          ticket_status_change: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          rent_late?: boolean
+          rent_paid?: boolean
+          rent_partial?: boolean
+          ticket_internal_note?: boolean
+          ticket_new_reply?: boolean
+          ticket_status_change?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          rent_late?: boolean
+          rent_paid?: boolean
+          rent_partial?: boolean
+          ticket_internal_note?: boolean
+          ticket_new_reply?: boolean
+          ticket_status_change?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -3009,6 +3048,10 @@ export type Database = {
       }
       can_manage_payments: { Args: { _user_id: string }; Returns: boolean }
       ensure_user_profile: { Args: never; Returns: Json }
+      get_notification_pref: {
+        Args: { _pref: string; _user_id: string }
+        Returns: boolean
+      }
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {

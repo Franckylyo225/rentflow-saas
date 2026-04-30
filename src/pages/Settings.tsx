@@ -1,7 +1,8 @@
 import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Building2, Banknote, Users, Shield, Loader2, CreditCard, FileText, History } from "lucide-react";
+import { Building2, Banknote, Users, Shield, Loader2, CreditCard, FileText, History, Bell } from "lucide-react";
+import { NotificationPreferencesTab } from "@/components/settings/NotificationPreferencesTab";
 import { ReminderHistoryTable } from "@/components/settings/ReminderHistoryTable";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { GeneralTab } from "@/components/settings/GeneralTab";
@@ -37,6 +38,7 @@ export default function SettingsPage() {
               <TabsTrigger value="security" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Sécurité</TabsTrigger>
               <TabsTrigger value="subscription" className="gap-1.5"><CreditCard className="h-3.5 w-3.5" /> Abonnement</TabsTrigger>
               <TabsTrigger value="contracts" className="gap-1.5"><FileText className="h-3.5 w-3.5" /> Modèles de contrats</TabsTrigger>
+              <TabsTrigger value="notifications" className="gap-1.5"><Bell className="h-3.5 w-3.5" /> Notifications</TabsTrigger>
             </TabsList>
 
             <TabsContent value="general">
@@ -65,6 +67,10 @@ export default function SettingsPage() {
 
             <TabsContent value="contracts">
               <ContractTemplatesTab />
+            </TabsContent>
+
+            <TabsContent value="notifications">
+              <NotificationPreferencesTab />
             </TabsContent>
           </Tabs>
         )}
