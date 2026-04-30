@@ -47,6 +47,9 @@ export default function Tenants() {
   const [formerLoading, setFormerLoading] = useState(false);
   const [terminations, setTerminations] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("active");
+  const [activePage, setActivePage] = useState(1);
+  const [formerPage, setFormerPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -158,6 +161,18 @@ export default function Tenants() {
       t.full_name.toLowerCase().includes(formerSearch.toLowerCase()) || t.phone.includes(formerSearch)
     );
   }, [formerTenants, formerSearch]);
+
+  // Reset pagination when filters change
+  useEffect(() => { setActivePage(1); }, [search, cityFilter, propertyFilter, riskFilter, sortByRisk, pageSize]);
+  useEffect(() => { setFormerPage(1); }, [formerSearch, pageSize]);
+
+  const activeTotalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const activeSafePage = Math.min(activePage, activeTotalPages);
+  const paginatedActive = filtered.slice((activeSafePage - 1) * pageSize, activeSafePage * pageSize);
+
+  const formerTotalPages = Math.max(1, Math.ceil(filteredFormer.length / pageSize));
+  const formerSafePage = Math.min(formerPage, formerTotalPages);
+  const paginatedFormer = filteredFormer.slice((formerSafePage - 1) * pageSize, formerSafePage * pageSize);
 
   const terminationMap = useMemo(() => {
     const map = new Map<string, any>();
@@ -303,7 +318,7 @@ export default function Tenants() {
                           </tr>
                         </thead>
                         <tbody>
-                          {filtered.map(tenant => (
+                          {paginatedActive.map(tenant => (
                             <tr key={tenant.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/tenants/${tenant.id}`)}>
                               <td className="py-3 px-4">
                                   <div className="flex items-center gap-3">
@@ -354,6 +369,32 @@ export default function Tenants() {
                   </CardContent>
                 </Card>
               )}
+
+              {!loading && filtered.length > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-1">
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <span>
+                      {(activeSafePage - 1) * pageSize + 1}–{Math.min(activeSafePage * pageSize, filtered.length)} sur {filtered.length}
+                    </span>
+                    <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+                      <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10 / page</SelectItem>
+                        <SelectItem value="20">20 / page</SelectItem>
+                        <SelectItem value="50">50 / page</SelectItem>
+                        <SelectItem value="100">100 / page</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" disabled={activeSafePage <= 1} onClick={() => setActivePage(1)}>«</Button>
+                    <Button variant="outline" size="sm" disabled={activeSafePage <= 1} onClick={() => setActivePage(p => Math.max(1, p - 1))}>Précédent</Button>
+                    <span className="text-sm text-muted-foreground px-2">Page {activeSafePage} / {activeTotalPages}</span>
+                    <Button variant="outline" size="sm" disabled={activeSafePage >= activeTotalPages} onClick={() => setActivePage(p => Math.min(activeTotalPages, p + 1))}>Suivant</Button>
+                    <Button variant="outline" size="sm" disabled={activeSafePage >= activeTotalPages} onClick={() => setActivePage(activeTotalPages)}>»</Button>
+                  </div>
+                </div>
+              )}
             </div>
           </TabsContent>
 
@@ -384,7 +425,7 @@ export default function Tenants() {
                           </tr>
                         </thead>
                         <tbody>
-                          {filteredFormer.map(tenant => {
+                          {paginatedFormer.map(tenant => {
                             const term = terminationMap.get(tenant.id);
                             return (
                               <tr key={tenant.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/tenants/${tenant.id}`)}>
@@ -429,6 +470,32 @@ export default function Tenants() {
                     </div>
                   </CardContent>
                 </Card>
+              )}
+
+              {!formerLoading && filteredFormer.length > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-1">
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <span>
+                      {(formerSafePage - 1) * pageSize + 1}–{Math.min(formerSafePage * pageSize, filteredFormer.length)} sur {filteredFormer.length}
+                    </span>
+                    <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+                      <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10 / page</SelectItem>
+                        <SelectItem value="20">20 / page</SelectItem>
+                        <SelectItem value="50">50 / page</SelectItem>
+                        <SelectItem value="100">100 / page</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" disabled={formerSafePage <= 1} onClick={() => setFormerPage(1)}>«</Button>
+                    <Button variant="outline" size="sm" disabled={formerSafePage <= 1} onClick={() => setFormerPage(p => Math.max(1, p - 1))}>Précédent</Button>
+                    <span className="text-sm text-muted-foreground px-2">Page {formerSafePage} / {formerTotalPages}</span>
+                    <Button variant="outline" size="sm" disabled={formerSafePage >= formerTotalPages} onClick={() => setFormerPage(p => Math.min(formerTotalPages, p + 1))}>Suivant</Button>
+                    <Button variant="outline" size="sm" disabled={formerSafePage >= formerTotalPages} onClick={() => setFormerPage(formerTotalPages)}>»</Button>
+                  </div>
+                </div>
               )}
             </div>
           </TabsContent>
