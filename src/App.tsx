@@ -54,7 +54,7 @@ import About from "./pages/About";
 import Help from "./pages/Help";
 import Support from "./pages/Support";
 import AdminTickets from "./pages/admin/AdminTickets";
-import { TawkChat } from "./components/TawkChat";
+
 
 const queryClient = new QueryClient();
 
