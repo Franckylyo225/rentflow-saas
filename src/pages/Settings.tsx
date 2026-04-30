@@ -38,6 +38,7 @@ export default function SettingsPage() {
               <TabsTrigger value="security" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Sécurité</TabsTrigger>
               <TabsTrigger value="subscription" className="gap-1.5"><CreditCard className="h-3.5 w-3.5" /> Abonnement</TabsTrigger>
               <TabsTrigger value="contracts" className="gap-1.5"><FileText className="h-3.5 w-3.5" /> Modèles de contrats</TabsTrigger>
+              <TabsTrigger value="notifications" className="gap-1.5"><Bell className="h-3.5 w-3.5" /> Notifications</TabsTrigger>
             </TabsList>
 
             <TabsContent value="general">
