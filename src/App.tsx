@@ -68,7 +68,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <TawkChat />
+            
             <Routes>
               {/* Public */}
               <Route path="/" element={<Home />} />
