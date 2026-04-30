@@ -68,6 +68,10 @@ export default function SettingsPage() {
             <TabsContent value="contracts">
               <ContractTemplatesTab />
             </TabsContent>
+
+            <TabsContent value="notifications">
+              <NotificationPreferencesTab />
+            </TabsContent>
           </Tabs>
         )}
       </div>
