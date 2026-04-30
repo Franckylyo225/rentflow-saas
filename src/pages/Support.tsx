@@ -380,7 +380,34 @@ export function TicketDetailSheet({
     return () => { supabase.removeChannel(channel); };
   }, [ticket?.id]);
 
-  if (!ticket) return null;
+  // Admin: load assignable admins + unpaid rents for this org
+  useEffect(() => {
+    if (!ticket || viewerRole !== "admin") return;
+    (async () => {
+      const { data: sa } = await supabase.from("super_admins").select("user_id");
+      const ids = (sa || []).map((r: any) => r.user_id);
+      if (ids.length) {
+        const { data: profs } = await supabase
+          .from("profiles").select("user_id, full_name, email").in("user_id", ids);
+        setAdmins((profs as any[]) || []);
+      }
+      if (ticket.organization_id) {
+        const { data: rps } = await supabase
+          .from("rent_payments")
+          .select("id, amount, paid_amount, due_date, status, tenants!inner(full_name, units!inner(name, properties!inner(organization_id)))")
+          .in("status", ["late", "partial", "pending"])
+          .eq("tenants.units.properties.organization_id", ticket.organization_id)
+          .order("due_date", { ascending: false })
+          .limit(50);
+        setUnpaidPayments(((rps as any[]) || []).map(r => ({
+          id: r.id,
+          label: `${r.tenants?.full_name || "—"} · ${r.tenants?.units?.name || ""} · ${new Date(r.due_date).toLocaleDateString("fr-FR")} · ${(r.amount - (r.paid_amount || 0)).toLocaleString()} FCFA`,
+        })));
+      }
+    })();
+  }, [ticket?.id, viewerRole]);
+
+  if (!ticket || !localTicket) return null;
 
   const handleSend = async () => {
     if (!reply.trim() || !user) return;
