@@ -498,29 +498,90 @@ export function TicketDetailSheet({
 
   const initialAttachments = attachments.filter(a => !a.message_id);
 
+  // SLA computation
+  const slaInfo = (() => {
+    if (!localTicket.sla_due_at) return null;
+    if (localTicket.first_response_at) {
+      const met = new Date(localTicket.first_response_at) <= new Date(localTicket.sla_due_at);
+      return { label: met ? "SLA respecté" : "SLA dépassé", className: met ? "bg-success/10 text-success border-success/20" : "bg-destructive/10 text-destructive border-destructive/20" };
+    }
+    const due = new Date(localTicket.sla_due_at).getTime();
+    const diffH = (due - Date.now()) / 3.6e6;
+    if (diffH < 0) return { label: `SLA dépassé (${Math.round(-diffH)}h)`, className: "bg-destructive/10 text-destructive border-destructive/20" };
+    if (diffH < 4) return { label: `SLA dans ${Math.round(diffH)}h`, className: "bg-orange-500/10 text-orange-600 border-orange-500/20" };
+    return { label: `SLA dans ${Math.round(diffH)}h`, className: "bg-muted text-muted-foreground" };
+  })();
+
+  const assigneeLabel = localTicket.assigned_to
+    ? (admins.find(a => a.user_id === localTicket.assigned_to)?.full_name
+       || admins.find(a => a.user_id === localTicket.assigned_to)?.email
+       || "Assigné")
+    : null;
+
   return (
     <Sheet open={!!ticket} onOpenChange={(o) => !o && onClose()}>
       <SheetContent className="w-full sm:max-w-2xl flex flex-col p-0">
         <SheetHeader className="p-6 pb-3 border-b border-border">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <SheetTitle className="text-base truncate">{ticket.subject}</SheetTitle>
+              <SheetTitle className="text-base truncate">{localTicket.subject}</SheetTitle>
               <div className="flex flex-wrap items-center gap-2 mt-2">
-                <Badge variant="outline" className={`text-[10px] ${STATUSES[ticket.status]?.className}`}>{STATUSES[ticket.status]?.label}</Badge>
-                <Badge variant="outline" className="text-[10px]">{CATEGORIES[ticket.category]}</Badge>
-                <Badge variant="outline" className={`text-[10px] ${PRIORITIES[ticket.priority]?.className}`}>{PRIORITIES[ticket.priority]?.label}</Badge>
+                <Badge variant="outline" className={`text-[10px] ${STATUSES[localTicket.status]?.className}`}>{STATUSES[localTicket.status]?.label}</Badge>
+                <Badge variant="outline" className="text-[10px]">{CATEGORIES[localTicket.category]}</Badge>
+                <Badge variant="outline" className={`text-[10px] ${PRIORITIES[localTicket.priority]?.className}`}>{PRIORITIES[localTicket.priority]?.label}</Badge>
+                {slaInfo && <Badge variant="outline" className={`text-[10px] ${slaInfo.className}`}>{slaInfo.label}</Badge>}
+                {assigneeLabel && <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">→ {assigneeLabel}</Badge>}
               </div>
             </div>
           </div>
         </SheetHeader>
 
+        {viewerRole === "admin" && (
+          <div className="px-6 py-3 border-b border-border bg-muted/30 grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div>
+              <Label className="text-[10px] text-muted-foreground">Assigner à</Label>
+              <Select value={localTicket.assigned_to || "_none"} onValueChange={assignTo}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Non assigné" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">Non assigné</SelectItem>
+                  {user && <SelectItem value={user.id}>Moi</SelectItem>}
+                  {admins.filter(a => a.user_id !== user?.id).map(a => (
+                    <SelectItem key={a.user_id} value={a.user_id}>{a.full_name || a.email}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-[10px] text-muted-foreground">Priorité</Label>
+              <Select value={localTicket.priority} onValueChange={updatePriority}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(PRIORITIES).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-[10px] text-muted-foreground">Lier à un impayé</Label>
+              <Select value={localTicket.linked_rent_payment_id || "_none"} onValueChange={linkPayment}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Aucun" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">Aucun</SelectItem>
+                  {unpaidPayments.map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {/* Initial description */}
           <div className="rounded-lg bg-muted/40 p-4">
             <p className="text-xs text-muted-foreground mb-1">
-              Ouvert le {format(new Date(ticket.created_at), "dd MMM yyyy HH:mm", { locale: fr })}
+              Ouvert le {format(new Date(localTicket.created_at), "dd MMM yyyy HH:mm", { locale: fr })}
             </p>
-            <p className="text-sm whitespace-pre-wrap text-card-foreground">{ticket.description}</p>
+            <p className="text-sm whitespace-pre-wrap text-card-foreground">{localTicket.description}</p>
             {initialAttachments.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-3">
                 {initialAttachments.map(a => (
