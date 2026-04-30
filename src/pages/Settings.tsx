@@ -1,7 +1,8 @@
 import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Building2, Banknote, Users, Shield, Loader2, CreditCard, FileText, History } from "lucide-react";
+import { Building2, Banknote, Users, Shield, Loader2, CreditCard, FileText, History, Bell } from "lucide-react";
+import { NotificationPreferencesTab } from "@/components/settings/NotificationPreferencesTab";
 import { ReminderHistoryTable } from "@/components/settings/ReminderHistoryTable";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { GeneralTab } from "@/components/settings/GeneralTab";
