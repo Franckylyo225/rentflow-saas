@@ -23,6 +23,8 @@ export default function AuthPage() {
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [honeypot, setHoneypot] = useState(""); // anti-bot — must rester vide
+  const formMountedAt = useRef<number>(Date.now());
 
   const firstInputRef = useRef<HTMLInputElement>(null);
 
@@ -30,8 +32,10 @@ export default function AuthPage() {
     if (inviteToken) setIsSignUp(true);
   }, [inviteToken]);
 
-  // Autofocus first input on mode change
+  // Autofocus first input on mode change + reset honeypot timer
   useEffect(() => {
+    formMountedAt.current = Date.now();
+    setHoneypot("");
     setTimeout(() => firstInputRef.current?.focus(), 350);
   }, [isSignUp, isForgotPassword]);
 
@@ -71,6 +75,13 @@ export default function AuthPage() {
     setSubmitting(true);
 
     if (isSignUp) {
+      const elapsed = Date.now() - formMountedAt.current;
+      if (honeypot.trim() !== "" || elapsed < 2000) {
+        await new Promise((r) => setTimeout(r, 800));
+        toast.success("Compte créé avec succès !");
+        setSubmitting(false);
+        return;
+      }
       if (!fullName.trim()) {
         toast.error("Veuillez remplir votre nom complet");
         setSubmitting(false);
@@ -283,6 +294,22 @@ export default function AuthPage() {
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Honeypot anti-bot — invisible pour les humains */}
+                  <div
+                    aria-hidden="true"
+                    style={{ position: "absolute", left: "-10000px", top: "auto", width: 1, height: 1, overflow: "hidden" }}
+                  >
+                    <label htmlFor="website-url">Ne pas remplir</label>
+                    <input
+                      id="website-url"
+                      name="website"
+                      type="text"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={honeypot}
+                      onChange={(e) => setHoneypot(e.target.value)}
+                    />
+                  </div>
                   {isSignUp && (
                     <div className="space-y-4">
                       <div className="space-y-2">
