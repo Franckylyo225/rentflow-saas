@@ -23,6 +23,8 @@ export default function AuthPage() {
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [honeypot, setHoneypot] = useState(""); // anti-bot — must rester vide
+  const formMountedAt = useRef<number>(Date.now());
 
   const firstInputRef = useRef<HTMLInputElement>(null);
 
