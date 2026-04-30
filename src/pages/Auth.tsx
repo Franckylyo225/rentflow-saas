@@ -32,8 +32,10 @@ export default function AuthPage() {
     if (inviteToken) setIsSignUp(true);
   }, [inviteToken]);
 
-  // Autofocus first input on mode change
+  // Autofocus first input on mode change + reset honeypot timer
   useEffect(() => {
+    formMountedAt.current = Date.now();
+    setHoneypot("");
     setTimeout(() => firstInputRef.current?.focus(), 350);
   }, [isSignUp, isForgotPassword]);
 
