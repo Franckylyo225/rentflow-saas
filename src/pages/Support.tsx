@@ -466,15 +466,29 @@ export function TicketDetailSheet({
     }
   };
 
+  const patchTicket = async (updates: Record<string, any>, successMsg: string) => {
+    const { data, error } = await supabase
+      .from("support_tickets").update(updates).eq("id", ticket.id).select("*").single();
+    if (error) { toast.error(error.message); return; }
+    toast.success(successMsg);
+    setLocalTicket(data as any);
+  };
+
   const updateStatus = async (status: string) => {
     const updates: any = { status };
     if (status === "resolved") updates.resolved_at = new Date().toISOString();
     if (status === "closed") updates.closed_at = new Date().toISOString();
-    const { error } = await supabase.from("support_tickets").update(updates).eq("id", ticket.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Statut mis à jour");
-    onClose();
+    await patchTicket(updates, "Statut mis à jour");
   };
+
+  const assignTo = (userId: string) =>
+    patchTicket({ assigned_to: userId === "_none" ? null : userId }, "Assignation mise à jour");
+
+  const updatePriority = (priority: string) =>
+    patchTicket({ priority }, "Priorité mise à jour");
+
+  const linkPayment = (paymentId: string) =>
+    patchTicket({ linked_rent_payment_id: paymentId === "_none" ? null : paymentId }, "Impayé lié");
 
   const downloadAttachment = async (att: Attachment) => {
     const { data, error } = await supabase.storage.from("support-attachments").createSignedUrl(att.file_path, 60);
