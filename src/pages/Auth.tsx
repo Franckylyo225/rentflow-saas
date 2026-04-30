@@ -294,6 +294,22 @@ export default function AuthPage() {
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Honeypot anti-bot — invisible pour les humains */}
+                  <div
+                    aria-hidden="true"
+                    style={{ position: "absolute", left: "-10000px", top: "auto", width: 1, height: 1, overflow: "hidden" }}
+                  >
+                    <label htmlFor="website-url">Ne pas remplir</label>
+                    <input
+                      id="website-url"
+                      name="website"
+                      type="text"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={honeypot}
+                      onChange={(e) => setHoneypot(e.target.value)}
+                    />
+                  </div>
                   {isSignUp && (
                     <div className="space-y-4">
                       <div className="space-y-2">
