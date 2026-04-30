@@ -82,6 +82,15 @@ export default function Support() {
   const [showNew, setShowNew] = useState(false);
   const [openTicket, setOpenTicket] = useState<Ticket | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("action") === "new") {
+      setShowNew(true);
+      searchParams.delete("action");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const [form, setForm] = useState({
     subject: "",
