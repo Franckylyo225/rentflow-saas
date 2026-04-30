@@ -43,6 +43,7 @@ const STATUSES: Record<string, { label: string; className: string }> = {
 
 interface Ticket {
   id: string;
+  organization_id?: string;
   subject: string;
   description: string;
   category: string;
@@ -51,6 +52,10 @@ interface Ticket {
   created_at: string;
   last_message_at: string;
   created_by: string;
+  assigned_to?: string | null;
+  sla_due_at?: string | null;
+  first_response_at?: string | null;
+  linked_rent_payment_id?: string | null;
 }
 
 interface TicketMessage {
