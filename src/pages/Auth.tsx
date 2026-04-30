@@ -73,6 +73,13 @@ export default function AuthPage() {
     setSubmitting(true);
 
     if (isSignUp) {
+      const elapsed = Date.now() - formMountedAt.current;
+      if (honeypot.trim() !== "" || elapsed < 2000) {
+        await new Promise((r) => setTimeout(r, 800));
+        toast.success("Compte créé avec succès !");
+        setSubmitting(false);
+        return;
+      }
       if (!fullName.trim()) {
         toast.error("Veuillez remplir votre nom complet");
         setSubmitting(false);
