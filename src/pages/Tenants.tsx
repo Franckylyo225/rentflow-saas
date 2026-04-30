@@ -471,6 +471,32 @@ export default function Tenants() {
                   </CardContent>
                 </Card>
               )}
+
+              {!formerLoading && filteredFormer.length > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-1">
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <span>
+                      {(formerSafePage - 1) * pageSize + 1}–{Math.min(formerSafePage * pageSize, filteredFormer.length)} sur {filteredFormer.length}
+                    </span>
+                    <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+                      <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10 / page</SelectItem>
+                        <SelectItem value="20">20 / page</SelectItem>
+                        <SelectItem value="50">50 / page</SelectItem>
+                        <SelectItem value="100">100 / page</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" disabled={formerSafePage <= 1} onClick={() => setFormerPage(1)}>«</Button>
+                    <Button variant="outline" size="sm" disabled={formerSafePage <= 1} onClick={() => setFormerPage(p => Math.max(1, p - 1))}>Précédent</Button>
+                    <span className="text-sm text-muted-foreground px-2">Page {formerSafePage} / {formerTotalPages}</span>
+                    <Button variant="outline" size="sm" disabled={formerSafePage >= formerTotalPages} onClick={() => setFormerPage(p => Math.min(formerTotalPages, p + 1))}>Suivant</Button>
+                    <Button variant="outline" size="sm" disabled={formerSafePage >= formerTotalPages} onClick={() => setFormerPage(formerTotalPages)}>»</Button>
+                  </div>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
