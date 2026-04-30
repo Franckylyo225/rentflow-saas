@@ -97,6 +97,15 @@ export default function Rents() {
     return true;
   });
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, cityFilter, escalationFilter, monthFilter, pageSize]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginated = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+
   // Stats are based on the selected month filter
   const statsBase = useMemo(
     () => (monthFilter === "all" ? paymentsWithEscalation : paymentsWithEscalation.filter(p => p.month === monthFilter)),
