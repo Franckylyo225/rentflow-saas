@@ -395,6 +395,8 @@ export default function Tenants() {
                   </div>
                 </div>
               )}
+            </div>
+          </TabsContent>
 
           <TabsContent value="former">
             <div className="space-y-4">
