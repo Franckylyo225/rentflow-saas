@@ -632,7 +632,7 @@ export function TicketDetailSheet({
           })}
         </div>
 
-        {ticket.status !== "closed" && (
+        {localTicket.status !== "closed" && (
           <div className="border-t border-border p-4 space-y-3 bg-card">
             <Textarea
               rows={3}
@@ -664,14 +664,14 @@ export function TicketDetailSheet({
             <div className="flex items-center justify-between gap-2">
               <div className="flex gap-2 flex-wrap">
                 {viewerRole === "admin" && (
-                  <Select value={ticket.status} onValueChange={updateStatus}>
+                  <Select value={localTicket.status} onValueChange={updateStatus}>
                     <SelectTrigger className="h-8 w-40 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {Object.entries(STATUSES).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 )}
-                {viewerRole === "agency" && ticket.status !== "closed" && ticket.created_by === user?.id && (
+                {viewerRole === "agency" && localTicket.status !== "closed" && localTicket.created_by === user?.id && (
                   <Button variant="outline" size="sm" onClick={() => updateStatus("closed")}>
                     Fermer le ticket
                   </Button>
