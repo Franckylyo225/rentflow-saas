@@ -47,6 +47,9 @@ export default function Tenants() {
   const [formerLoading, setFormerLoading] = useState(false);
   const [terminations, setTerminations] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("active");
+  const [activePage, setActivePage] = useState(1);
+  const [formerPage, setFormerPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
