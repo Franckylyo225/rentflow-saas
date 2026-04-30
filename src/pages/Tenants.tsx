@@ -162,6 +162,18 @@ export default function Tenants() {
     );
   }, [formerTenants, formerSearch]);
 
+  // Reset pagination when filters change
+  useEffect(() => { setActivePage(1); }, [search, cityFilter, propertyFilter, riskFilter, sortByRisk, pageSize]);
+  useEffect(() => { setFormerPage(1); }, [formerSearch, pageSize]);
+
+  const activeTotalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const activeSafePage = Math.min(activePage, activeTotalPages);
+  const paginatedActive = filtered.slice((activeSafePage - 1) * pageSize, activeSafePage * pageSize);
+
+  const formerTotalPages = Math.max(1, Math.ceil(filteredFormer.length / pageSize));
+  const formerSafePage = Math.min(formerPage, formerTotalPages);
+  const paginatedFormer = filteredFormer.slice((formerSafePage - 1) * pageSize, formerSafePage * pageSize);
+
   const terminationMap = useMemo(() => {
     const map = new Map<string, any>();
     terminations.forEach(t => map.set(t.tenant_id, t));
