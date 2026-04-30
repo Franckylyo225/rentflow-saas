@@ -1,4 +1,4 @@
-import { ChevronDown, Menu, LogOut, Settings, LayoutGrid, Building2, UserPlus, Banknote, Receipt, Sun, Moon } from "lucide-react";
+import { ChevronDown, Menu, LogOut, Settings, LayoutGrid, Building2, UserPlus, Banknote, Receipt, Sun, Moon, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
@@ -78,6 +78,35 @@ export function AppHeader({ onMenuClick, orgName, userName }: AppHeaderProps) {
             </Button>
           </TooltipTrigger>
           <TooltipContent>Changer le thème</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 rounded-xl gap-1.5 hidden sm:inline-flex"
+              onClick={() => navigate("/support?action=new")}
+            >
+              <LifeBuoy className="h-4 w-4" />
+              <span className="text-xs font-medium">Ouvrir un ticket</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Contacter le support</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 rounded-xl sm:hidden"
+              onClick={() => navigate("/support?action=new")}
+            >
+              <LifeBuoy className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Ouvrir un ticket</TooltipContent>
         </Tooltip>
 
         <NotificationBell />
