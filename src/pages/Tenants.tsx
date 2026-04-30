@@ -318,7 +318,7 @@ export default function Tenants() {
                           </tr>
                         </thead>
                         <tbody>
-                          {filtered.map(tenant => (
+                          {paginatedActive.map(tenant => (
                             <tr key={tenant.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/tenants/${tenant.id}`)}>
                               <td className="py-3 px-4">
                                   <div className="flex items-center gap-3">
@@ -399,7 +399,7 @@ export default function Tenants() {
                           </tr>
                         </thead>
                         <tbody>
-                          {filteredFormer.map(tenant => {
+                          {paginatedFormer.map(tenant => {
                             const term = terminationMap.get(tenant.id);
                             return (
                               <tr key={tenant.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/tenants/${tenant.id}`)}>
