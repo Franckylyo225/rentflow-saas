@@ -369,8 +369,32 @@ export default function Tenants() {
                   </CardContent>
                 </Card>
               )}
-            </div>
-          </TabsContent>
+
+              {!loading && filtered.length > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-1">
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <span>
+                      {(activeSafePage - 1) * pageSize + 1}–{Math.min(activeSafePage * pageSize, filtered.length)} sur {filtered.length}
+                    </span>
+                    <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+                      <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10 / page</SelectItem>
+                        <SelectItem value="20">20 / page</SelectItem>
+                        <SelectItem value="50">50 / page</SelectItem>
+                        <SelectItem value="100">100 / page</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" disabled={activeSafePage <= 1} onClick={() => setActivePage(1)}>«</Button>
+                    <Button variant="outline" size="sm" disabled={activeSafePage <= 1} onClick={() => setActivePage(p => Math.max(1, p - 1))}>Précédent</Button>
+                    <span className="text-sm text-muted-foreground px-2">Page {activeSafePage} / {activeTotalPages}</span>
+                    <Button variant="outline" size="sm" disabled={activeSafePage >= activeTotalPages} onClick={() => setActivePage(p => Math.min(activeTotalPages, p + 1))}>Suivant</Button>
+                    <Button variant="outline" size="sm" disabled={activeSafePage >= activeTotalPages} onClick={() => setActivePage(activeTotalPages)}>»</Button>
+                  </div>
+                </div>
+              )}
 
           <TabsContent value="former">
             <div className="space-y-4">
