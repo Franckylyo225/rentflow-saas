@@ -1,4 +1,4 @@
-import { ChevronDown, Menu, LogOut, Settings, LayoutGrid, Building2, UserPlus, Banknote, Receipt, Sun, Moon } from "lucide-react";
+import { ChevronDown, Menu, LogOut, Settings, LayoutGrid, Building2, UserPlus, Banknote, Receipt, Sun, Moon, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
