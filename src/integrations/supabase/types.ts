@@ -2815,11 +2815,14 @@ export type Database = {
           created_at: string
           created_by: string
           description: string
+          first_response_at: string | null
           id: string
           last_message_at: string
+          linked_rent_payment_id: string | null
           organization_id: string
           priority: string
           resolved_at: string | null
+          sla_due_at: string | null
           status: string
           subject: string
           updated_at: string
@@ -2831,11 +2834,14 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string
+          first_response_at?: string | null
           id?: string
           last_message_at?: string
+          linked_rent_payment_id?: string | null
           organization_id: string
           priority?: string
           resolved_at?: string | null
+          sla_due_at?: string | null
           status?: string
           subject: string
           updated_at?: string
@@ -2847,11 +2853,14 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string
+          first_response_at?: string | null
           id?: string
           last_message_at?: string
+          linked_rent_payment_id?: string | null
           organization_id?: string
           priority?: string
           resolved_at?: string | null
+          sla_due_at?: string | null
           status?: string
           subject?: string
           updated_at?: string
@@ -3047,6 +3056,10 @@ export type Database = {
         Returns: Json
       }
       can_manage_payments: { Args: { _user_id: string }; Returns: boolean }
+      compute_ticket_sla: {
+        Args: { p_created: string; p_priority: string }
+        Returns: string
+      }
       ensure_user_profile: { Args: never; Returns: Json }
       get_notification_pref: {
         Args: { _pref: string; _user_id: string }
