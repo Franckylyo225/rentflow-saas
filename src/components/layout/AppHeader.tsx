@@ -80,6 +80,35 @@ export function AppHeader({ onMenuClick, orgName, userName }: AppHeaderProps) {
           <TooltipContent>Changer le thème</TooltipContent>
         </Tooltip>
 
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 rounded-xl gap-1.5 hidden sm:inline-flex"
+              onClick={() => navigate("/support?action=new")}
+            >
+              <LifeBuoy className="h-4 w-4" />
+              <span className="text-xs font-medium">Ouvrir un ticket</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Contacter le support</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 rounded-xl sm:hidden"
+              onClick={() => navigate("/support?action=new")}
+            >
+              <LifeBuoy className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Ouvrir un ticket</TooltipContent>
+        </Tooltip>
+
         <NotificationBell />
 
         <DropdownMenu>
