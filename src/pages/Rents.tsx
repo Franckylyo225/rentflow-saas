@@ -48,6 +48,8 @@ export default function Rents() {
   const [showAdvance, setShowAdvance] = useState(false);
   const [advanceTenant, setAdvanceTenant] = useState<{ id: string; full_name: string; rent: number } | null>(null);
   const [smsTarget, setSmsTarget] = useState<{ phone: string; name: string; tenantId: string; rentPaymentId: string } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   useEffect(() => {
     if (searchParams.get("action") === "new") {
@@ -94,6 +96,15 @@ export default function Rents() {
     }
     return true;
   });
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, cityFilter, escalationFilter, monthFilter, pageSize]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginated = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   // Stats are based on the selected month filter
   const statsBase = useMemo(
@@ -454,7 +465,7 @@ export default function Rents() {
                         </tr>
                       </thead>
                       <tbody>
-                        {filtered.map(payment => (
+                        {paginated.map(payment => (
                           <tr key={payment.id} className={`border-b border-border/50 hover:bg-muted/30 transition-colors ${payment.escalation.level === "critical" ? "bg-destructive/5" : ""}`}>
                             <td className="py-3 px-4">
                               <p className="font-medium text-card-foreground">{payment.tenants?.full_name}</p>
@@ -526,6 +537,32 @@ export default function Rents() {
                   </div>
                 </CardContent>
               </Card>
+            )}
+
+            {!loading && filtered.length > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-1">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <span>
+                    {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, filtered.length)} sur {filtered.length}
+                  </span>
+                  <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+                    <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10 / page</SelectItem>
+                      <SelectItem value="20">20 / page</SelectItem>
+                      <SelectItem value="50">50 / page</SelectItem>
+                      <SelectItem value="100">100 / page</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" disabled={safePage <= 1} onClick={() => setCurrentPage(1)}>«</Button>
+                  <Button variant="outline" size="sm" disabled={safePage <= 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>Précédent</Button>
+                  <span className="text-sm text-muted-foreground px-2">Page {safePage} / {totalPages}</span>
+                  <Button variant="outline" size="sm" disabled={safePage >= totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>Suivant</Button>
+                  <Button variant="outline" size="sm" disabled={safePage >= totalPages} onClick={() => setCurrentPage(totalPages)}>»</Button>
+                </div>
+              </div>
             )}
           </TabsContent>
 
