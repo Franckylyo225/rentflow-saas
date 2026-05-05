@@ -36,7 +36,10 @@ export default function Rents() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState("all");
   const [escalationFilter, setEscalationFilter] = useState("all");
-  const [monthFilter, setMonthFilter] = useState("all");
+  const [monthFilter, setMonthFilter] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  });
   const [showPayment, setShowPayment] = useState(false);
   const [showTasks, setShowTasks] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
