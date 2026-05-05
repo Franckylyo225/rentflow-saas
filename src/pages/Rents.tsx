@@ -81,9 +81,10 @@ export default function Rents() {
 
   // Extract unique months for the filter
   const availableMonths = useMemo(() => {
-    const months = [...new Set(payments.map(p => p.month))].sort().reverse();
-    return months;
-  }, [payments]);
+    const set = new Set(payments.map(p => p.month));
+    set.add(monthFilter);
+    return [...set].filter(Boolean).sort().reverse();
+  }, [payments, monthFilter]);
 
   const filtered = paymentsWithEscalation.filter(r => {
     if (monthFilter !== "all" && r.month !== monthFilter) return false;
