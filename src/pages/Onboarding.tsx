@@ -751,7 +751,10 @@ export default function Onboarding() {
                 const yearlyTotal = Math.round(selectedPlanData.price_monthly * 12 * (1 - yearlyDiscount / 100));
                 const yearlyEquivMonthly = Math.round(yearlyTotal / 12);
                 const yearlySavings = selectedPlanData.price_monthly * 12 - yearlyTotal;
-                const totalDue = isYearly ? yearlyTotal : monthlyPrice;
+                const beforeEA = isYearly ? yearlyTotal : monthlyPrice;
+                const eaPct = earlyAdopter.isEarlyAdopter ? earlyAdopter.discountPercent : 0;
+                const eaSavings = selectedPlanData.price_monthly > 0 && eaPct > 0 ? Math.round(beforeEA * (eaPct / 100)) : 0;
+                const totalDue = Math.max(selectedPlanData.price_monthly > 0 ? 200 : 0, beforeEA - eaSavings);
                 return (
                 <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-4">
                   <div className="flex items-start justify-between gap-3 flex-wrap">
