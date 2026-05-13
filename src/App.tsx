@@ -54,6 +54,7 @@ import About from "./pages/About";
 import Help from "./pages/Help";
 import Support from "./pages/Support";
 import AdminTickets from "./pages/admin/AdminTickets";
+import AdminEarlyAdopters from "./pages/admin/AdminEarlyAdopters";
 
 
 const queryClient = new QueryClient();
@@ -116,6 +117,7 @@ const App = () => (
               <Route path="/admin/settings" element={<SuperAdminRoute><AdminSettings /></SuperAdminRoute>} />
               <Route path="/admin/growth" element={<SuperAdminRoute><AdminGrowth /></SuperAdminRoute>} />
               <Route path="/admin/tickets" element={<SuperAdminRoute><AdminTickets /></SuperAdminRoute>} />
+              <Route path="/admin/early-adopters" element={<SuperAdminRoute><AdminEarlyAdopters /></SuperAdminRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>

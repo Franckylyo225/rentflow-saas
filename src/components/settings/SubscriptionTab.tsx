@@ -10,6 +10,7 @@ import { PaymentHistoryCard } from "@/components/settings/PaymentHistoryCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
+import { useEarlyAdopterStatus } from "@/hooks/useEarlyAdopterStatus";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -88,6 +89,7 @@ export function SubscriptionTab() {
     maxProperties, maxUsers, propertyRatio, userRatio,
     daysUntilExpiry, expired, subscriptionStatus,
   } = usePlanLimits();
+  const earlyAdopter = useEarlyAdopterStatus();
 
   const [plans, setPlans] = useState<Plan[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -233,6 +235,34 @@ export function SubscriptionTab() {
 
   return (
     <div className="space-y-8">
+      {/* Early Adopter status */}
+      {earlyAdopter.isEarlyAdopter && (
+        <Card className="border-success/40 bg-gradient-to-br from-success/5 via-transparent to-transparent">
+          <CardHeader>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-success" />
+                  Votre statut Early Adopter
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  Vous bénéficiez de −{earlyAdopter.discountPercent}% à vie sur votre abonnement Rentflow.
+                </CardDescription>
+              </div>
+              <Badge className="bg-success text-success-foreground">Early Adopter confirmé</Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground space-y-1">
+            {earlyAdopter.joinedAt && (
+              <p>Inscrit le <strong className="text-foreground">{format(new Date(earlyAdopter.joinedAt), "d MMMM yyyy", { locale: fr })}</strong></p>
+            )}
+            {earlyAdopter.appliedAt && (
+              <p>Réduction appliquée depuis <strong className="text-foreground">{format(new Date(earlyAdopter.appliedAt), "d MMMM yyyy", { locale: fr })}</strong></p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Current plan summary */}
       <Card>
         <CardHeader>

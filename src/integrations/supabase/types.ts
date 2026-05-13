@@ -568,6 +568,66 @@ export type Database = {
           },
         ]
       }
+      early_adopter_config: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string | null
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value?: string | null
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string | null
+        }
+        Relationships: []
+      }
+      early_adopters: {
+        Row: {
+          applied_at: string | null
+          created_at: string
+          discount_percent: number
+          email: string
+          free_months: number
+          id: string
+          is_active: boolean
+          joined_at: string
+          notes: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          applied_at?: string | null
+          created_at?: string
+          discount_percent?: number
+          email: string
+          free_months?: number
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          applied_at?: string | null
+          created_at?: string
+          discount_percent?: number
+          email?: string
+          free_months?: number
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       email_reminder_logs: {
         Row: {
           audit_context: Json | null
@@ -3073,9 +3133,14 @@ export type Database = {
         Returns: string
       }
       ensure_user_profile: { Args: never; Returns: Json }
+      get_early_adopter_public_config: { Args: never; Returns: Json }
       get_notification_pref: {
         Args: { _pref: string; _user_id: string }
         Returns: boolean
+      }
+      get_user_early_adopter_status: {
+        Args: { _user_id: string }
+        Returns: Json
       }
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
