@@ -928,7 +928,11 @@ export default function Onboarding() {
                 const isYearly = billingCycle === "yearly" && yearlyDiscount > 0;
                 const yearlyTotal = Math.round(selectedPlanData.price_monthly * 12 * (1 - yearlyDiscount / 100));
                 const monthlyDue = promoApplied ? promoApplied.final_price : selectedPlanData.price_monthly;
-                const totalDue = isYearly ? yearlyTotal : monthlyDue;
+                const beforeEA = isYearly ? yearlyTotal : monthlyDue;
+                const eaPct = earlyAdopter.isEarlyAdopter ? earlyAdopter.discountPercent : 0;
+                const totalDue = eaPct > 0
+                  ? Math.max(200, Math.round(beforeEA * (1 - eaPct / 100)))
+                  : beforeEA;
                 return (
                 <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
                   <div className="flex items-start gap-3">
