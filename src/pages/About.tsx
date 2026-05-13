@@ -2,6 +2,7 @@ import { LandingNavbar } from "@/components/landing/LandingNavbar";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { Building2, Globe, Users, Target } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Seo } from "@/components/seo/Seo";
 
 const VALUES = [
   {
@@ -29,6 +30,11 @@ const VALUES = [
 export default function About() {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <Seo
+        title="À propos de RentFlow — Notre mission en Afrique"
+        description="RentFlow est édité par New Wave Conception à Abidjan. Découvrez notre mission : simplifier la gestion locative pour les bailleurs en Afrique de l'Ouest."
+        path="/about"
+      />
       <LandingNavbar />
 
       <main className="max-w-4xl mx-auto px-5 sm:px-8 pt-28 pb-20">

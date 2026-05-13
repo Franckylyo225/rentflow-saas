@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { LandingNavbar } from "@/components/landing/LandingNavbar";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { Mail, MapPin, Send } from "lucide-react";
+import { Seo } from "@/components/seo/Seo";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Le nom est requis").max(100),
