@@ -1,10 +1,30 @@
 import { LandingNavbar } from "@/components/landing/LandingNavbar";
 import { LandingFooter } from "@/components/landing/LandingFooter";
+import { Seo } from "@/components/seo/Seo";
 import { ReactNode } from "react";
 
-export function LegalLayout({ title, lastUpdated, children }: { title: string; lastUpdated: string; children: ReactNode }) {
+export function LegalLayout({
+  title,
+  lastUpdated,
+  children,
+  path,
+  seoDescription,
+}: {
+  title: string;
+  lastUpdated: string;
+  children: ReactNode;
+  path?: string;
+  seoDescription?: string;
+}) {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {path && (
+        <Seo
+          title={`${title} — RentFlow`}
+          description={seoDescription ?? `${title} de RentFlow, plateforme de gestion locative en Afrique.`}
+          path={path}
+        />
+      )}
       <LandingNavbar />
       <main className="max-w-3xl mx-auto px-5 sm:px-8 pt-28 pb-20">
         <h1 className="text-3xl font-bold text-foreground mb-2">{title}</h1>

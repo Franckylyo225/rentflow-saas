@@ -1,7 +1,12 @@
 import { LegalLayout } from "./LegalLayout";
 
 const PrivacyPolicy = () => (
-  <LegalLayout title="Politique de Confidentialité" lastUpdated="11 avril 2026">
+  <LegalLayout
+    title="Politique de Confidentialité"
+    lastUpdated="11 avril 2026"
+    path="/privacy"
+    seoDescription="Politique de confidentialité de RentFlow : collecte, stockage et protection des données des utilisateurs et des locataires gérés sur la plateforme."
+  >
     <h2>1. Introduction</h2>
     <p>
       New Wave Conception, éditrice de la plateforme RentFlow, s'engage à protéger la vie privée de ses utilisateurs. La présente politique décrit comment nous collectons, utilisons, stockons et protégeons vos données personnelles.

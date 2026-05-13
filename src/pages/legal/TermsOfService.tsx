@@ -1,7 +1,12 @@
 import { LegalLayout } from "./LegalLayout";
 
 const TermsOfService = () => (
-  <LegalLayout title="Conditions Générales d'Utilisation" lastUpdated="11 avril 2026">
+  <LegalLayout
+    title="Conditions Générales d'Utilisation"
+    lastUpdated="11 avril 2026"
+    path="/terms"
+    seoDescription="Conditions générales d'utilisation de RentFlow, logiciel SaaS de gestion locative pour les bailleurs et agences en Afrique de l'Ouest."
+  >
     <h2>1. Objet</h2>
     <p>
       Les présentes Conditions Générales d'Utilisation (ci-après « CGU ») définissent les modalités d'accès et d'utilisation de la plateforme RentFlow, éditée par New Wave Conception, accessible à l'adresse rentflow.app (ci-après « la Plateforme »).
