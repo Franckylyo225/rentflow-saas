@@ -477,7 +477,10 @@ export function SubscriptionTab() {
         const yearlyPrice = computeYearlyPrice(sp.price_monthly, yearlyPct);
         const yearlySavings = sp.price_monthly * 12 - yearlyPrice;
         const monthlyFinal = promoApplied ? promoApplied.final_price : sp.price_monthly;
-        const finalAmount = isYearly ? yearlyPrice : monthlyFinal;
+        const beforeEarlyAdopter = isYearly ? yearlyPrice : monthlyFinal;
+        const eaPct = earlyAdopter.isEarlyAdopter ? earlyAdopter.discountPercent : 0;
+        const eaSavings = isPaid && eaPct > 0 ? Math.round(beforeEarlyAdopter * (eaPct / 100)) : 0;
+        const finalAmount = Math.max(isPaid ? 200 : 0, beforeEarlyAdopter - eaSavings);
 
         return (
           <Card className="border-primary/30 bg-primary/5">
