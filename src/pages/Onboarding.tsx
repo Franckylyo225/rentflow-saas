@@ -847,6 +847,18 @@ export default function Onboarding() {
                       </div>
                     )}
 
+                    {selectedPlanData.price_monthly > 0 && eaPct > 0 && (
+                      <div className="flex justify-between items-center gap-3 text-sm">
+                        <span className="text-success flex items-center gap-1.5 shrink-0 font-medium">
+                          <Sparkles className="h-3.5 w-3.5" />
+                          Early Adopter (−{eaPct}% à vie)
+                        </span>
+                        <span className="font-semibold text-success text-right break-all">
+                          −{formatPrice(eaSavings)} FCFA
+                        </span>
+                      </div>
+                    )}
+
                     <div className="h-px bg-border" />
 
                     <div className="flex justify-between items-baseline gap-3 pt-1">
