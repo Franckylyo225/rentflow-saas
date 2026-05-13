@@ -133,9 +133,9 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        amount: body.amount,
+        amount: finalAmount,
         currency: "XOF",
-        description: `Abonnement RentFlow - ${plan.name} (${billingCycle === "yearly" ? "annuel" : "mensuel"})`,
+        description: `Abonnement RentFlow - ${plan.name} (${billingCycle === "yearly" ? "annuel" : "mensuel"})${earlyAdopterDiscount > 0 ? ` — Early Adopter -${earlyAdopterDiscount}%` : ""}`,
         customer: {
           name: profile.full_name || user.email,
           email: profile.email || user.email,
@@ -150,6 +150,8 @@ Deno.serve(async (req) => {
           plan_slug: plan.slug,
           billing_cycle: billingCycle,
           purpose: "subscription",
+          early_adopter_discount: earlyAdopterDiscount,
+          original_amount: body.amount,
         },
       }),
     });
