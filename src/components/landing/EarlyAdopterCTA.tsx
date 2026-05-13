@@ -89,13 +89,17 @@ export function EarlyAdopterCTA() {
               ))}
             </div>
 
-            {/* Prix */}
+            {/* Mise en avant -X% à vie */}
             <div className="text-center">
-              <p className="text-muted-foreground line-through text-lg">{config.price_before.toLocaleString("fr-FR")} FCFA</p>
-              <p className="text-4xl md:text-5xl font-extrabold text-foreground mt-1">
-                {config.price_after.toLocaleString("fr-FR")} <span className="text-xl text-muted-foreground">FCFA/mois</span>
+              <p className="text-6xl md:text-7xl font-extrabold text-success leading-none">
+                −{config.discount_percent}%
               </p>
-              <Badge className="mt-3 bg-success text-success-foreground">−{config.discount_percent}% garanti</Badge>
+              <p className="text-2xl md:text-3xl font-bold text-foreground mt-2">
+                à vie, garanti
+              </p>
+              <p className="text-muted-foreground mt-2">
+                Bloquez ce tarif préférentiel pour toujours, sans augmentation
+              </p>
             </div>
 
             {/* Avatars + compteur */}
