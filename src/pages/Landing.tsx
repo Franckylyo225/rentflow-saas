@@ -5,6 +5,7 @@ import { RealEstateSalesSection } from "@/components/landing/RealEstateSalesSect
 import { ProblemSolutionSection } from "@/components/landing/ProblemSolutionSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { PricingSection } from "@/components/landing/PricingSection";
+import { EarlyAdopterCTA } from "@/components/landing/EarlyAdopterCTA";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { CtaSection } from "@/components/landing/CtaSection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
@@ -27,6 +28,7 @@ const Landing = () => {
       <ProblemSolutionSection />
       <HowItWorksSection />
       <PricingSection />
+      <EarlyAdopterCTA />
       <TestimonialsSection />
       <CtaSection />
       <LandingFooter />

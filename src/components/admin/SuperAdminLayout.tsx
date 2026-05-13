@@ -19,6 +19,7 @@ import {
   Workflow,
   Rocket,
   LifeBuoy,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -48,6 +49,7 @@ const NAV_ITEMS = [
   { label: "Super Admins", href: "/admin/admins", icon: Users },
   { label: "Utilisateurs", href: "/admin/users", icon: UserCheck },
   { label: "Pilote de croissance", href: "/admin/growth", icon: Rocket },
+  { label: "Early Adopters", href: "/admin/early-adopters", icon: Sparkles },
   { label: "Tickets de support", href: "/admin/tickets", icon: LifeBuoy },
   { label: "Paramètres", href: "/admin/settings", icon: Settings },
 ];
