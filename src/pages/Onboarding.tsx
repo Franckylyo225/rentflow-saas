@@ -14,6 +14,7 @@ import {
   MapPin, Home, Users, Briefcase, Tag, Gift, CreditCard, XCircle, CheckCircle2, RefreshCw,
 } from "lucide-react";
 import { PromoCodeInput } from "@/components/promo/PromoCodeInput";
+import { useEarlyAdopterStatus } from "@/hooks/useEarlyAdopterStatus";
 import { toast } from "sonner";
 
 interface Plan {
