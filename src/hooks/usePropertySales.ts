@@ -4,7 +4,7 @@ import { useProfile } from "@/hooks/useProfile";
 
 export type ListingStatus = "en_vente" | "offre" | "suspendu";
 export type SaleStatus = "finalise" | "notaire" | "annule";
-export type PropertyType = "villa" | "appartement" | "studio" | "duplex" | "local";
+export type PropertyType = "villa" | "appartement" | "studio" | "duplex" | "local" | "terrain";
 
 export interface SaleListing {
   id: string;
