@@ -45,6 +45,7 @@ const PROPERTY_TYPES: { value: PropertyType; label: string; emoji: string; bg: s
   { value: "studio", label: "Studio", emoji: "🛏️", bg: "bg-purple-500/15", text: "text-purple-600 dark:text-purple-400" },
   { value: "duplex", label: "Duplex", emoji: "🏘️", bg: "bg-warning/15", text: "text-warning" },
   { value: "local", label: "Local commercial", emoji: "🏬", bg: "bg-muted", text: "text-muted-foreground" },
+  { value: "terrain", label: "Terrain", emoji: "🌿", bg: "bg-emerald-700/15", text: "text-emerald-700 dark:text-emerald-400" },
 ];
 function typeMeta(t: PropertyType) {
   return PROPERTY_TYPES.find(p => p.value === t) ?? PROPERTY_TYPES[0];
