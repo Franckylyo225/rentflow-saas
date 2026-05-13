@@ -2,12 +2,19 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 
+export type ListingStatus = "en_vente" | "offre" | "suspendu";
+export type SaleStatus = "finalise" | "notaire" | "annule";
+export type PropertyType = "villa" | "appartement" | "studio" | "duplex" | "local";
+
 export interface SaleListing {
   id: string;
   name: string;
   location: string;
   askingPrice: number;
-  listedAt: string; // ISO date
+  listedAt: string;
+  propertyType: PropertyType;
+  visitsCount: number;
+  status: ListingStatus;
 }
 
 export interface SaleRecord {
@@ -15,9 +22,10 @@ export interface SaleRecord {
   name: string;
   location: string;
   salePrice: number;
-  saleDate: string; // ISO date
+  saleDate: string;
   buyerName: string;
   commission: number;
+  status: SaleStatus;
 }
 
 export const SALES_COMMISSION_RATE = 0.05;
@@ -49,12 +57,12 @@ export function usePropertySales() {
     const [listingsRes, salesRes] = await Promise.all([
       supabase
         .from("property_listings")
-        .select("id, name, location, asking_price, listed_at")
+        .select("id, name, location, asking_price, listed_at, property_type, visits_count, status")
         .eq("organization_id", orgId)
         .order("listed_at", { ascending: false }),
       supabase
         .from("property_sales")
-        .select("id, name, location, sale_price, sale_date, buyer_name, commission")
+        .select("id, name, location, sale_price, sale_date, buyer_name, commission, status")
         .eq("organization_id", orgId)
         .order("sale_date", { ascending: false }),
     ]);
@@ -67,6 +75,9 @@ export function usePropertySales() {
           location: l.location ?? "",
           askingPrice: Number(l.asking_price) || 0,
           listedAt: l.listed_at,
+          propertyType: (l.property_type ?? "villa") as PropertyType,
+          visitsCount: Number(l.visits_count) || 0,
+          status: (l.status ?? "en_vente") as ListingStatus,
         }))
       );
     }
@@ -80,6 +91,7 @@ export function usePropertySales() {
           saleDate: s.sale_date,
           buyerName: s.buyer_name ?? "",
           commission: Number(s.commission) || 0,
+          status: (s.status ?? "finalise") as SaleStatus,
         }))
       );
     }
@@ -94,7 +106,7 @@ export function usePropertySales() {
   }, [fetchAll]);
 
   const addListing = useCallback(
-    async (data: Omit<SaleListing, "id">) => {
+    async (data: Omit<SaleListing, "id" | "visitsCount" | "status"> & { visitsCount?: number; status?: ListingStatus }) => {
       if (!orgId) return;
       const { error } = await supabase.from("property_listings").insert({
         organization_id: orgId,
@@ -102,6 +114,9 @@ export function usePropertySales() {
         location: data.location,
         asking_price: data.askingPrice,
         listed_at: data.listedAt,
+        property_type: data.propertyType,
+        visits_count: data.visitsCount ?? 0,
+        status: data.status ?? "en_vente",
       });
       if (!error) {
         await fetchAll();
@@ -118,6 +133,9 @@ export function usePropertySales() {
       if (data.location !== undefined) payload.location = data.location;
       if (data.askingPrice !== undefined) payload.asking_price = data.askingPrice;
       if (data.listedAt !== undefined) payload.listed_at = data.listedAt;
+      if (data.propertyType !== undefined) payload.property_type = data.propertyType;
+      if (data.visitsCount !== undefined) payload.visits_count = data.visitsCount;
+      if (data.status !== undefined) payload.status = data.status;
       const { error } = await supabase.from("property_listings").update(payload).eq("id", id);
       if (!error) {
         await fetchAll();
@@ -141,7 +159,7 @@ export function usePropertySales() {
   const recordSale = useCallback(
     async (
       listingId: string,
-      data: { salePrice: number; saleDate: string; buyerName: string; commission: number }
+      data: { salePrice: number; saleDate: string; buyerName: string; commission: number; status?: SaleStatus }
     ) => {
       if (!orgId) return;
       const listing = listings.find((l) => l.id === listingId);
@@ -155,6 +173,7 @@ export function usePropertySales() {
         sale_date: data.saleDate,
         buyer_name: data.buyerName,
         commission: data.commission,
+        status: data.status ?? "finalise",
       });
       if (insertError) return;
 
