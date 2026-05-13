@@ -98,6 +98,7 @@ export default function Onboarding() {
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [saving, setSaving] = useState(false);
   const [promoApplied, setPromoApplied] = useState<{ discount: number; final_price: number } | null>(null);
+  const earlyAdopter = useEarlyAdopterStatus();
   const [paymentReturn, setPaymentReturn] = useState<"success" | "error" | null>(initialPaymentReturn);
   const [finalizing, setFinalizing] = useState(false);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
