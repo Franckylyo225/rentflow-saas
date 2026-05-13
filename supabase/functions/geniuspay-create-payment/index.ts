@@ -102,6 +102,24 @@ Deno.serve(async (req) => {
       });
     }
 
+    // === Early Adopter discount (à vie) ===
+    // Source de vérité serveur : on applique systématiquement la remise
+    // si l'utilisateur figure dans early_adopters et est actif.
+    let finalAmount = body.amount;
+    let earlyAdopterDiscount = 0;
+    const { data: ea } = await supabase
+      .from("early_adopters")
+      .select("discount_percent, is_active")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (ea && ea.discount_percent > 0) {
+      earlyAdopterDiscount = ea.discount_percent;
+      finalAmount = Math.max(200, Math.round(body.amount * (1 - earlyAdopterDiscount / 100)));
+      console.log(`Early adopter discount -${earlyAdopterDiscount}% applied for user ${user.id}: ${body.amount} -> ${finalAmount}`);
+    }
+
     const origin = req.headers.get("origin") ||
       req.headers.get("referer")?.replace(/\/$/, "") ||
       "https://app.lovable.dev";
