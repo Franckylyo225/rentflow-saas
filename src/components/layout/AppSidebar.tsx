@@ -1,11 +1,12 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { navItems } from "@/data/mockData";
 import { cn } from "@/lib/utils";
-import { X, Lock, CreditCard, ArrowUpRight } from "lucide-react";
+import { X, Lock, CreditCard, ArrowUpRight, Sparkles } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
+import { useEarlyAdopterStatus } from "@/hooks/useEarlyAdopterStatus";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
   const { settings } = useOrganizationSettings();
   const { hasFeature, loading: featuresLoading } = useFeatureAccess();
   const { planName, daysUntilExpiry, expired, subscriptionStatus, loading: planLoading } = usePlanLimits();
+  const earlyAdopter = useEarlyAdopterStatus();
   const navigate = useNavigate();
 
   const initials = profile?.full_name
