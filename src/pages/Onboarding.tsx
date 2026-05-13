@@ -14,6 +14,7 @@ import {
   MapPin, Home, Users, Briefcase, Tag, Gift, CreditCard, XCircle, CheckCircle2, RefreshCw,
 } from "lucide-react";
 import { PromoCodeInput } from "@/components/promo/PromoCodeInput";
+import { useEarlyAdopterStatus } from "@/hooks/useEarlyAdopterStatus";
 import { toast } from "sonner";
 
 interface Plan {
@@ -97,6 +98,7 @@ export default function Onboarding() {
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [saving, setSaving] = useState(false);
   const [promoApplied, setPromoApplied] = useState<{ discount: number; final_price: number } | null>(null);
+  const earlyAdopter = useEarlyAdopterStatus();
   const [paymentReturn, setPaymentReturn] = useState<"success" | "error" | null>(initialPaymentReturn);
   const [finalizing, setFinalizing] = useState(false);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
@@ -749,7 +751,10 @@ export default function Onboarding() {
                 const yearlyTotal = Math.round(selectedPlanData.price_monthly * 12 * (1 - yearlyDiscount / 100));
                 const yearlyEquivMonthly = Math.round(yearlyTotal / 12);
                 const yearlySavings = selectedPlanData.price_monthly * 12 - yearlyTotal;
-                const totalDue = isYearly ? yearlyTotal : monthlyPrice;
+                const beforeEA = isYearly ? yearlyTotal : monthlyPrice;
+                const eaPct = earlyAdopter.isEarlyAdopter ? earlyAdopter.discountPercent : 0;
+                const eaSavings = selectedPlanData.price_monthly > 0 && eaPct > 0 ? Math.round(beforeEA * (eaPct / 100)) : 0;
+                const totalDue = Math.max(selectedPlanData.price_monthly > 0 ? 200 : 0, beforeEA - eaSavings);
                 return (
                 <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-4">
                   <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -842,6 +847,18 @@ export default function Onboarding() {
                       </div>
                     )}
 
+                    {selectedPlanData.price_monthly > 0 && eaPct > 0 && (
+                      <div className="flex justify-between items-center gap-3 text-sm">
+                        <span className="text-success flex items-center gap-1.5 shrink-0 font-medium">
+                          <Sparkles className="h-3.5 w-3.5" />
+                          Early Adopter (−{eaPct}% à vie)
+                        </span>
+                        <span className="font-semibold text-success text-right break-all">
+                          −{formatPrice(eaSavings)} FCFA
+                        </span>
+                      </div>
+                    )}
+
                     <div className="h-px bg-border" />
 
                     <div className="flex justify-between items-baseline gap-3 pt-1">
@@ -911,7 +928,11 @@ export default function Onboarding() {
                 const isYearly = billingCycle === "yearly" && yearlyDiscount > 0;
                 const yearlyTotal = Math.round(selectedPlanData.price_monthly * 12 * (1 - yearlyDiscount / 100));
                 const monthlyDue = promoApplied ? promoApplied.final_price : selectedPlanData.price_monthly;
-                const totalDue = isYearly ? yearlyTotal : monthlyDue;
+                const beforeEA = isYearly ? yearlyTotal : monthlyDue;
+                const eaPct = earlyAdopter.isEarlyAdopter ? earlyAdopter.discountPercent : 0;
+                const totalDue = eaPct > 0
+                  ? Math.max(200, Math.round(beforeEA * (1 - eaPct / 100)))
+                  : beforeEA;
                 return (
                 <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
                   <div className="flex items-start gap-3">

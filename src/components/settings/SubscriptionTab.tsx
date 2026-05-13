@@ -172,13 +172,18 @@ export function SubscriptionTab() {
     setUpgrading(true);
     try {
       const isYearly = billingCycle === "yearly" && (plan.yearly_discount_percent ?? 0) > 0;
-      const amount = isYearly
+      const baseAmount = isYearly
         ? computeYearlyPrice(plan.price_monthly, plan.yearly_discount_percent)
         : promoApplied ? promoApplied.final_price : plan.price_monthly;
+      // Note: la remise Early Adopter est ré-appliquée côté serveur (source de vérité)
+      const eaPct = earlyAdopter.isEarlyAdopter ? earlyAdopter.discountPercent : 0;
+      const amount = eaPct > 0
+        ? Math.max(200, Math.round(baseAmount * (1 - eaPct / 100)))
+        : baseAmount;
       const { data, error } = await supabase.functions.invoke("geniuspay-create-payment", {
         body: {
           plan_slug: selectedPlan,
-          amount,
+          amount: baseAmount, // brut : le serveur applique la remise EA
           billing_cycle: isYearly ? "yearly" : "monthly",
         },
       });
@@ -477,7 +482,10 @@ export function SubscriptionTab() {
         const yearlyPrice = computeYearlyPrice(sp.price_monthly, yearlyPct);
         const yearlySavings = sp.price_monthly * 12 - yearlyPrice;
         const monthlyFinal = promoApplied ? promoApplied.final_price : sp.price_monthly;
-        const finalAmount = isYearly ? yearlyPrice : monthlyFinal;
+        const beforeEarlyAdopter = isYearly ? yearlyPrice : monthlyFinal;
+        const eaPct = earlyAdopter.isEarlyAdopter ? earlyAdopter.discountPercent : 0;
+        const eaSavings = isPaid && eaPct > 0 ? Math.round(beforeEarlyAdopter * (eaPct / 100)) : 0;
+        const finalAmount = Math.max(isPaid ? 200 : 0, beforeEarlyAdopter - eaSavings);
 
         return (
           <Card className="border-primary/30 bg-primary/5">
@@ -539,6 +547,14 @@ export function SubscriptionTab() {
                         <Tag className="h-3.5 w-3.5" /> Remise promo
                       </span>
                       <span className="font-semibold text-primary text-right break-all">−{formatPrice(promoApplied.discount)} FCFA</span>
+                    </div>
+                  )}
+                  {isPaid && eaPct > 0 && (
+                    <div className="flex justify-between items-center gap-3 text-sm">
+                      <span className="text-success flex items-center gap-1.5 shrink-0 font-medium">
+                        <Sparkles className="h-3.5 w-3.5" /> Early Adopter (−{eaPct}% à vie)
+                      </span>
+                      <span className="font-semibold text-success text-right break-all">−{formatPrice(eaSavings)} FCFA</span>
                     </div>
                   )}
                   <div className="h-px bg-border" />
