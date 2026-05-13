@@ -98,6 +98,18 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
             );
           })}
         </nav>
+
+        {/* Early Adopter badge */}
+        {earlyAdopter.isEarlyAdopter && !earlyAdopter.loading && (
+          <div className="mx-3 mb-2 rounded-xl bg-lime-50 dark:bg-lime-950/30 border border-lime-200 dark:border-lime-900 px-3 py-2 flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-lime-600 dark:text-lime-400 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-[11px] font-bold text-lime-800 dark:text-lime-300 uppercase tracking-wide">Early Adopter</p>
+              <p className="text-[11px] text-lime-700 dark:text-lime-400">−{earlyAdopter.discountPercent}% à vie garanti</p>
+            </div>
+          </div>
+        )}
+
         {/* Subscription / trial card */}
         {!planLoading && planName && (() => {
           const isTrial = subscriptionStatus === "trial";
