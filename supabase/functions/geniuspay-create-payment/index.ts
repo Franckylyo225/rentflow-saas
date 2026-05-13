@@ -178,7 +178,7 @@ Deno.serve(async (req) => {
       provider: "geniuspay",
       reference: tx.reference,
       provider_transaction_id: String(tx.id ?? ""),
-      amount: body.amount,
+      amount: finalAmount,
       currency: "XOF",
       status: tx.status || "pending",
       environment: tx.environment || "sandbox",
@@ -190,6 +190,8 @@ Deno.serve(async (req) => {
         plan_name: plan.name,
         billing_cycle: billingCycle,
         yearly_discount_percent: plan.yearly_discount_percent ?? 0,
+        early_adopter_discount: earlyAdopterDiscount,
+        original_amount: body.amount,
       },
     });
 
