@@ -9,10 +9,16 @@ import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { CtaSection } from "@/components/landing/CtaSection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { AnnouncementBanner } from "@/components/layout/AnnouncementBanner";
+import { Seo } from "@/components/seo/Seo";
 
 const Landing = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <Seo
+        title="RentFlow — Logiciel de gestion locative en Afrique"
+        description="Gérez loyers, locataires, quittances et patrimoine immobilier depuis une seule plateforme pensée pour l'Afrique. Essai gratuit 7 jours."
+        path="/"
+      />
       <AnnouncementBanner />
       <LandingNavbar />
       <HeroSection />

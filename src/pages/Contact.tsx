@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { LandingNavbar } from "@/components/landing/LandingNavbar";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { Mail, MapPin, Send } from "lucide-react";
+import { Seo } from "@/components/seo/Seo";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Le nom est requis").max(100),
@@ -55,6 +56,11 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <Seo
+        title="Contact RentFlow — Démo et support"
+        description="Contactez l'équipe RentFlow à Abidjan pour une démonstration, un devis ou toute question sur la gestion locative de vos biens en Afrique."
+        path="/contact"
+      />
       <LandingNavbar />
 
       <main className="max-w-5xl mx-auto px-5 sm:px-8 pt-28 pb-20">

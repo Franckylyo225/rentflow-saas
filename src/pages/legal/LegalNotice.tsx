@@ -1,7 +1,12 @@
 import { LegalLayout } from "./LegalLayout";
 
 const LegalNotice = () => (
-  <LegalLayout title="Mentions Légales" lastUpdated="11 avril 2026">
+  <LegalLayout
+    title="Mentions Légales"
+    lastUpdated="11 avril 2026"
+    path="/legal"
+    seoDescription="Mentions légales de RentFlow, édité par New Wave Conception à Abidjan. Hébergement, propriété intellectuelle et coordonnées de l'éditeur."
+  >
     <h2>1. Éditeur de la Plateforme</h2>
     <ul>
       <li><strong>Raison sociale :</strong> New Wave Conception</li>
