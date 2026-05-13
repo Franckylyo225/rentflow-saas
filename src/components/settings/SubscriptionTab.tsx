@@ -172,13 +172,18 @@ export function SubscriptionTab() {
     setUpgrading(true);
     try {
       const isYearly = billingCycle === "yearly" && (plan.yearly_discount_percent ?? 0) > 0;
-      const amount = isYearly
+      const baseAmount = isYearly
         ? computeYearlyPrice(plan.price_monthly, plan.yearly_discount_percent)
         : promoApplied ? promoApplied.final_price : plan.price_monthly;
+      // Note: la remise Early Adopter est ré-appliquée côté serveur (source de vérité)
+      const eaPct = earlyAdopter.isEarlyAdopter ? earlyAdopter.discountPercent : 0;
+      const amount = eaPct > 0
+        ? Math.max(200, Math.round(baseAmount * (1 - eaPct / 100)))
+        : baseAmount;
       const { data, error } = await supabase.functions.invoke("geniuspay-create-payment", {
         body: {
           plan_slug: selectedPlan,
-          amount,
+          amount: baseAmount, // brut : le serveur applique la remise EA
           billing_cycle: isYearly ? "yearly" : "monthly",
         },
       });
