@@ -2238,7 +2238,10 @@ export type Database = {
           location: string
           name: string
           organization_id: string
+          property_type: string
+          status: string
           updated_at: string
+          visits_count: number
         }
         Insert: {
           asking_price?: number
@@ -2248,7 +2251,10 @@ export type Database = {
           location?: string
           name: string
           organization_id: string
+          property_type?: string
+          status?: string
           updated_at?: string
+          visits_count?: number
         }
         Update: {
           asking_price?: number
@@ -2258,7 +2264,10 @@ export type Database = {
           location?: string
           name?: string
           organization_id?: string
+          property_type?: string
+          status?: string
           updated_at?: string
+          visits_count?: number
         }
         Relationships: [
           {
@@ -2281,6 +2290,7 @@ export type Database = {
           organization_id: string
           sale_date: string
           sale_price: number
+          status: string
           updated_at: string
         }
         Insert: {
@@ -2293,6 +2303,7 @@ export type Database = {
           organization_id: string
           sale_date?: string
           sale_price?: number
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -2305,6 +2316,7 @@ export type Database = {
           organization_id?: string
           sale_date?: string
           sale_price?: number
+          status?: string
           updated_at?: string
         }
         Relationships: [
