@@ -205,7 +205,9 @@ Deno.serve(async (req) => {
         reference: tx.reference,
         checkout_url: tx.checkout_url || tx.payment_url,
         environment: tx.environment,
-        amount: body.amount,
+        amount: finalAmount,
+        original_amount: body.amount,
+        early_adopter_discount: earlyAdopterDiscount,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
