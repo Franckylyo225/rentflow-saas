@@ -123,13 +123,21 @@ export default function FinancialReports() {
     return { from, to };
   }, [range]);
 
-  const inRange = (d: Date) => {
-    if (!range.from || !range.to) return true;
-    return isWithinInterval(d, { start: range.from, end: range.to });
+  const safeParse = (s?: string | null): Date | null => {
+    if (!s) return null;
+    try {
+      const d = parseISO(s);
+      return isNaN(d.getTime()) ? null : d;
+    } catch { return null; }
   };
-  const inPrev = (d: Date) => {
-    if (!previousRange) return false;
-    return isWithinInterval(d, { start: previousRange.from, end: previousRange.to });
+  const inRange = (d: Date | null) => {
+    if (!d) return false;
+    if (!range.from || !range.to) return true;
+    try { return isWithinInterval(d, { start: range.from, end: range.to }); } catch { return false; }
+  };
+  const inPrev = (d: Date | null) => {
+    if (!d || !previousRange) return false;
+    try { return isWithinInterval(d, { start: previousRange.from, end: previousRange.to }); } catch { return false; }
   };
   const matchProperty = (pid?: string | null) => propertyId === "all" || pid === propertyId;
 
