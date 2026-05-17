@@ -53,7 +53,8 @@ export function PlanLimitBanner() {
               size="sm"
               variant={expired ? "default" : "outline"}
               className="gap-1.5 shrink-0 self-start sm:self-center"
-              onClick={() => navigate("/settings")}
+              onClick={() => navigate("/settings?tab=subscription")}
+              data-allow-readonly
             >
               {expired ? "Souscrire" : "Renouveler"} <ArrowUpRight className="h-3.5 w-3.5" />
             </Button>
