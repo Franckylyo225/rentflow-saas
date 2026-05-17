@@ -3152,7 +3152,15 @@ export type Database = {
       }
       is_gestionnaire_or_admin: { Args: { _user_id: string }; Returns: boolean }
       is_org_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_org_subscription_active: {
+        Args: { _org_id: string }
+        Returns: boolean
+      }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      resolve_org_from_property: { Args: { _pid: string }; Returns: string }
+      resolve_org_from_rent_payment: { Args: { _rid: string }; Returns: string }
+      resolve_org_from_tenant: { Args: { _tid: string }; Returns: string }
+      resolve_org_from_unit: { Args: { _uid: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "gestionnaire" | "comptable"
