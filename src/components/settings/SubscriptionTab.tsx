@@ -51,18 +51,27 @@ interface HistoryEntry {
 }
 
 const FEATURE_LABELS: Record<string, string> = {
-  sms: "Relances SMS",
-  reports: "Rapports financiers",
-  patrimoine: "Gestion du patrimoine",
-  multi_city: "Multi-villes",
-  multi_country: "Multi-pays",
-  api: "API & intégrations",
-  sla: "SLA garanti",
+  sms: "Relances SMS automatiques",
+  reports: "Rapports financiers détaillés",
+  patrimoine: "Gestion du patrimoine immobilier",
+  multi_city: "Gestion multi-villes",
+  multi_country: "Gestion multi-pays",
+  api: "API et intégrations sur mesure",
+  sla: "SLA garanti 99,9 %",
   dedicated_manager: "Account manager dédié",
-  onsite_training: "Formation sur site",
-  email_reminders: "Relances email",
-  quittances: "Quittances PDF",
-  rent_tracking: "Suivi des loyers",
+  onsite_training: "Formation sur site incluse",
+  email_reminders: "Relances par email",
+  quittances: "Quittances PDF illimitées",
+  rent_tracking: "Suivi des loyers en temps réel",
+  contracts: "Génération de contrats de bail",
+  ventes: "Module de ventes immobilières",
+  employees: "Gestion des employés",
+  expenses: "Suivi des dépenses",
+  notifications: "Notifications avancées",
+  custom_roles: "Rôles et permissions personnalisés",
+  white_label: "Marque blanche",
+  priority_support: "Support prioritaire",
+  audit_logs: "Journaux d'audit",
 };
 
 const STATUS_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
