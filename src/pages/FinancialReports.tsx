@@ -44,6 +44,14 @@ const formatShort = (v: number) => {
   return `${v}`;
 };
 
+const safeParse = (s?: string | null): Date | null => {
+  if (!s) return null;
+  try {
+    const d = parseISO(s);
+    return isNaN(d.getTime()) ? null : d;
+  } catch { return null; }
+};
+
 type PeriodPreset = "this_month" | "last_month" | "last_3_months" | "this_year" | "all" | "custom";
 
 const PERIOD_LABELS: Record<PeriodPreset, string> = {
