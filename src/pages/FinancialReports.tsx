@@ -81,6 +81,7 @@ export default function FinancialReports() {
   const [exporting, setExporting] = useState(false);
   const [paymentRecords, setPaymentRecords] = useState<Array<{ rent_payment_id: string; method: string }>>([]);
   const [reminderLogs, setReminderLogs] = useState<Array<{ id: string; rent_payment_id: string; template_key: string; sent_at: string; status: string }>>([]);
+  const [units, setUnits] = useState<Array<{ id: string; property_id: string; status: string; rent: number }>>([]);
   const reportRef = useRef<HTMLDivElement>(null);
 
   const loading = expLoading || payLoading;
@@ -92,6 +93,8 @@ export default function FinancialReports() {
       if (pr) setPaymentRecords(pr as any);
       const { data: rl } = await supabase.from("email_reminder_logs").select("id, rent_payment_id, template_key, sent_at, status").order("sent_at", { ascending: false }).limit(500);
       if (rl) setReminderLogs(rl as any);
+      const { data: us } = await supabase.from("units").select("id, property_id, status, rent");
+      if (us) setUnits(us as any);
     })();
   }, []);
 
@@ -164,31 +167,39 @@ export default function FinancialReports() {
   const expPrev = fPrevExpenses.reduce((s, e) => s + e.amount, 0);
   const expDelta = expPrev > 0 ? Math.round(((totalExpenses - expPrev) / expPrev) * 100) : null;
 
+  // Loyers attendus = somme des montants dus (paid+pending+late) sur la période
   const expectedRent = fPayments.reduce((s, p) => s + (p.amount || 0), 0);
-  const pendingAmount = fPayments.filter(p => p.status !== "paid").reduce((s, p) => s + Math.max(0, (p.amount || 0) - (p.paid_amount || 0)), 0);
+  // En attente = pending (non échus ou partiels) — reste à encaisser
+  const pendingAmount = fPayments
+    .filter(p => p.status === "pending" || p.status === "partial")
+    .reduce((s, p) => s + Math.max(0, (p.amount || 0) - (p.paid_amount || 0)), 0);
+  // Impayé = statut "late" uniquement (échéance dépassée)
+  const lateAmount = fPayments
+    .filter(p => p.status === "late")
+    .reduce((s, p) => s + Math.max(0, (p.amount || 0) - (p.paid_amount || 0)), 0);
+  // Taux d'encaissement = CA / loyers attendus
   const collectionRate = expectedRent > 0 ? Math.round((ca / expectedRent) * 100) : 0;
 
   const benefice = ca - totalExpenses;
   const marge = ca > 0 ? Number(((benefice / ca) * 100).toFixed(1)) : 0;
 
-  // Properties (filtered by selection if needed)
-  const propsList = useMemo(() => propertyId === "all" ? properties : properties.filter(p => p.id === propertyId), [properties, propertyId]);
-  const occupied = propsList.length; // we don't have units detail; approximate by properties with active payments
-  const activeProps = useMemo(() => {
-    const set = new Set<string>();
-    fPayments.forEach(p => {
-      const pid = (p.tenants?.units as any)?.property_id;
-      if (pid) set.add(pid);
-    });
-    return set.size;
-  }, [fPayments]);
-  const totalProps = propsList.length;
-  const vacant = Math.max(0, totalProps - activeProps);
-  const occupationRate = totalProps > 0 ? Math.round((activeProps / totalProps) * 100) : 0;
+  // Occupation : source de vérité = table units (status = 'occupied' | 'vacant')
+  const fUnits = useMemo(
+    () => units.filter(u => propertyId === "all" || u.property_id === propertyId),
+    [units, propertyId]
+  );
+  const totalUnits = fUnits.length;
+  const activeProps = fUnits.filter(u => u.status === "occupied").length;
+  const vacant = fUnits.filter(u => u.status === "vacant").length;
+  const occupationRate = totalUnits > 0 ? Math.round((activeProps / totalUnits) * 100) : 0;
+  const propsList = useMemo(
+    () => (propertyId === "all" ? properties : properties.filter(p => p.id === propertyId)),
+    [properties, propertyId]
+  );
 
-  // Impayés
-  const unpaid = fPayments.filter(p => p.status === "late" || (p.status === "pending" && parseISO(p.due_date) < new Date()));
-  const unpaidAmount = unpaid.reduce((s, p) => s + Math.max(0, (p.amount || 0) - (p.paid_amount || 0)), 0);
+  // Impayés détaillés (locataires, retard moyen)
+  const unpaid = fPayments.filter(p => p.status === "late");
+  const unpaidAmount = lateAmount;
   const unpaidTenants = new Set(unpaid.map(p => p.tenant_id)).size;
   const avgLateDays = unpaid.length > 0
     ? Math.round(unpaid.reduce((s, p) => s + Math.max(0, differenceInDays(new Date(), parseISO(p.due_date))), 0) / unpaid.length)
@@ -582,7 +593,7 @@ export default function FinancialReports() {
                   iconBg="bg-primary"
                   label="Biens actifs"
                   value={`${activeProps}`}
-                  sub={`${vacant} vacants sur ${totalProps} total`}
+                  sub={`${vacant} vacants sur ${totalUnits} total`}
                   footer={<span className="text-muted-foreground">{occupationRate}% d'occupation</span>}
                 />
                 <KpiCard
