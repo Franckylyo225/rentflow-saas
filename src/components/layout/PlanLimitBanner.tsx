@@ -44,8 +44,8 @@ export function PlanLimitBanner() {
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {expired
-                    ? "Souscrivez à un plan pour continuer à utiliser toutes les fonctionnalités."
-                    : "Pensez à renouveler pour éviter toute interruption de service."}
+                    ? "Votre espace est passé en lecture seule : la création et la modification de données sont bloquées. Souscrivez à un plan pour reprendre la saisie."
+                    : "Pensez à renouveler pour éviter le passage en lecture seule."}
                 </p>
               </div>
             </div>
