@@ -52,11 +52,18 @@ interface HistoryEntry {
 
 const FEATURE_LABELS: Record<string, string> = {
   sms: "Relances SMS automatiques",
+  sms_reminders: "Rappels SMS manuels",
+  sms_auto_basic: "Relances SMS automatiques basiques",
+  sms_auto_full: "Relances SMS automatiques avancées",
+  sms_templates_edit: "Modèles SMS personnalisables",
+  sms_schedule: "Planification d'envois SMS",
   reports: "Rapports financiers détaillés",
+  advanced_reports: "Rapports financiers avancés",
   patrimoine: "Gestion du patrimoine immobilier",
   multi_city: "Gestion multi-villes",
   multi_country: "Gestion multi-pays",
   api: "API et intégrations sur mesure",
+  api_access: "API et intégrations sur mesure",
   sla: "SLA garanti 99,9 %",
   dedicated_manager: "Account manager dédié",
   onsite_training: "Formation sur site incluse",
@@ -65,6 +72,7 @@ const FEATURE_LABELS: Record<string, string> = {
   rent_tracking: "Suivi des loyers en temps réel",
   contracts: "Génération de contrats de bail",
   ventes: "Module de ventes immobilières",
+  property_sales: "Ventes immobilières",
   employees: "Gestion des employés",
   expenses: "Suivi des dépenses",
   notifications: "Notifications avancées",
@@ -72,6 +80,11 @@ const FEATURE_LABELS: Record<string, string> = {
   white_label: "Marque blanche",
   priority_support: "Support prioritaire",
   audit_logs: "Journaux d'audit",
+  digital_receipts: "Reçus de paiement numériques",
+  properties: "Gestion des biens immobiliers",
+  rents: "Gestion des loyers",
+  tenants: "Gestion des locataires",
+  multi_agency: "Multi-agences",
 };
 
 const STATUS_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
