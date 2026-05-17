@@ -879,7 +879,7 @@ export default function FinancialReports() {
                             <td className="py-2 px-2">{e.expense_categories?.name || "—"}</td>
                             <td className="py-2 px-2 text-muted-foreground">{e.description || "—"}</td>
                             <td className="py-2 px-2 text-right font-medium">{formatFCFA(e.amount)}</td>
-                            <td className="py-2 px-2 text-muted-foreground">{format(safeParse(e.expense_date), "dd/MM/yyyy")}</td>
+                            <td className="py-2 px-2 text-muted-foreground">{(safeParse(e.expense_date) ? format(safeParse(e.expense_date)!, "dd/MM/yyyy") : "—")}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -919,7 +919,7 @@ export default function FinancialReports() {
                     <tbody>
                       {remindersInPeriod.slice(0, 50).map(r => (
                         <tr key={r.id} className="border-b border-border/50">
-                          <td className="py-2 px-2 text-muted-foreground">{format(safeParse(r.sent_at), "dd/MM/yyyy HH:mm")}</td>
+                          <td className="py-2 px-2 text-muted-foreground">{(safeParse(r.sent_at) ? format(safeParse(r.sent_at)!, "dd/MM/yyyy HH:mm") : "—")}</td>
                           <td className="py-2 px-2">{r.template_key}</td>
                           <td className="py-2 px-2">Email</td>
                           <td className="py-2 px-2"><Badge variant="outline">{r.status}</Badge></td>
@@ -1053,7 +1053,7 @@ function PaymentsTable({ title, rows, tableTab, setTableTab, search, setSearch, 
                       <span className="text-xs">{method}</span>
                     </span>
                   </td>
-                  <td className="py-2 px-2 text-muted-foreground">{format(safeParse(p.due_date), "dd/MM/yyyy")}</td>
+                  <td className="py-2 px-2 text-muted-foreground">{(safeParse(p.due_date) ? format(safeParse(p.due_date)!, "dd/MM/yyyy") : "—")}</td>
                   <td className="py-2 px-2"><StatusBadge status={p.status} /></td>
                 </tr>
               );
