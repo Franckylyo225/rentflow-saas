@@ -395,6 +395,15 @@ export default function FinancialReports() {
     }
   };
 
+  // Rent calendar (current period)
+  const calendarDays = useMemo(() => {
+    if (!range.from || !range.to) return [];
+    return eachDayOfInterval({ start: range.from, end: range.to }).map(d => {
+      const dueCount = fPayments.filter(p => { const pd = safeParse(p.due_date); return pd ? pd.toDateString() === d.toDateString() : false; }).length;
+      return { date: d, count: dueCount };
+    });
+  }, [range, fPayments]);
+
   if (loading) {
     return <AppLayout><div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div></AppLayout>;
   }
@@ -432,15 +441,6 @@ export default function FinancialReports() {
     const s = map[status] || { label: status, cls: "" };
     return <Badge variant="outline" className={s.cls}>{s.label}</Badge>;
   };
-
-  // Rent calendar (current period)
-  const calendarDays = useMemo(() => {
-    if (!range.from || !range.to) return [];
-    return eachDayOfInterval({ start: range.from, end: range.to }).map(d => {
-      const dueCount = fPayments.filter(p => { const pd = safeParse(p.due_date); return pd ? pd.toDateString() === d.toDateString() : false; }).length;
-      return { date: d, count: dueCount };
-    });
-  }, [range, fPayments]);
 
   return (
     <AppLayout>
