@@ -744,10 +744,12 @@ export default function FinancialReports() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {/* Tendance CA */}
-                    <div className={`p-3 rounded-lg border-l-4 ${trendInfo.pct >= 0 ? "bg-success/5 border-success" : "bg-destructive/5 border-destructive"}`}>
-                      <div className="font-medium text-sm">{trendInfo.pct >= 0 ? "Tendance positive" : "Tendance à surveiller"}</div>
+                    <div className={`p-3 rounded-lg border-l-4 ${!trendInfo.hasBaseline ? "bg-muted/30 border-muted-foreground/30" : trendInfo.pct >= 0 ? "bg-success/5 border-success" : "bg-destructive/5 border-destructive"}`}>
+                      <div className="font-medium text-sm">{!trendInfo.hasBaseline ? "Tendance indisponible" : trendInfo.pct >= 0 ? "Tendance positive" : "Tendance à surveiller"}</div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        {trendInfo.pct >= 0
+                        {!trendInfo.hasBaseline
+                          ? "Historique insuffisant pour calculer une tendance fiable (pas assez de mois avec du CA)."
+                          : trendInfo.pct >= 0
                           ? `Votre CA progresse de +${trendInfo.pct}%/mois. Projection : ${formatFCFA(trendInfo.projection)} le mois prochain.`
                           : `Votre CA baisse de ${trendInfo.pct}%/mois. Surveillez vos relances.`}
                       </div>
