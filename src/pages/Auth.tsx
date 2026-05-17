@@ -57,11 +57,14 @@ export default function AuthPage() {
     }
     setSubmitting(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const { error } = await supabase.functions.invoke("send-password-reset", {
+        body: {
+          email: email.trim().toLowerCase(),
+          redirectTo: `${window.location.origin}/reset-password`,
+        },
       });
       if (error) throw error;
-      toast.success("Un email de réinitialisation vous a été envoyé");
+      toast.success("Si un compte existe avec cet email, un lien de réinitialisation vous a été envoyé.");
       setIsForgotPassword(false);
     } catch (e: any) {
       toast.error("Erreur : " + e.message);
