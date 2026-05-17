@@ -250,16 +250,29 @@ export default function FinancialReports() {
     return months;
   }, [payments, expenses, propertyId]);
 
-  // Trend pct & projection
+  // Trend pct & projection (moyenne mois à mois, ignore mois sans CA pour la base)
   const trendInfo = useMemo(() => {
     const last3 = last6.slice(-3);
-    if (last3.length < 2) return { pct: 0, projection: 0 };
-    const first = last3[0].ca || 1;
+    if (last3.length < 2) return { pct: 0, projection: 0, hasBaseline: false };
+    // Variation moyenne mois à mois en %, en ignorant les périodes où le mois précédent est à 0
+    const pcts: number[] = [];
+    const deltas: number[] = [];
+    for (let i = 1; i < last3.length; i++) {
+      const prev = last3[i - 1].ca;
+      const cur = last3[i].ca;
+      deltas.push(cur - prev);
+      if (prev > 0) pcts.push(((cur - prev) / prev) * 100);
+    }
+    const avgDelta = deltas.reduce((s, d) => s + d, 0) / deltas.length;
     const last = last3[last3.length - 1].ca;
-    const pct = Math.round(((last - first) / first) * 100 / Math.max(1, last3.length - 1));
-    const avgDelta = (last - first) / Math.max(1, last3.length - 1);
     const projection = Math.max(0, Math.round(last + avgDelta));
-    return { pct, projection };
+    if (pcts.length === 0) {
+      return { pct: 0, projection, hasBaseline: false };
+    }
+    const rawPct = pcts.reduce((s, p) => s + p, 0) / pcts.length;
+    // Cap à ±999% pour éviter les valeurs aberrantes liées à de très petites bases
+    const pct = Math.round(Math.max(-999, Math.min(999, rawPct)));
+    return { pct, projection, hasBaseline: true };
   }, [last6]);
 
   // Rent status distribution
