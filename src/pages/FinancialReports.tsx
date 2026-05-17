@@ -81,6 +81,7 @@ export default function FinancialReports() {
   const [exporting, setExporting] = useState(false);
   const [paymentRecords, setPaymentRecords] = useState<Array<{ rent_payment_id: string; method: string }>>([]);
   const [reminderLogs, setReminderLogs] = useState<Array<{ id: string; rent_payment_id: string; template_key: string; sent_at: string; status: string }>>([]);
+  const [units, setUnits] = useState<Array<{ id: string; property_id: string; status: string; rent: number }>>([]);
   const reportRef = useRef<HTMLDivElement>(null);
 
   const loading = expLoading || payLoading;
@@ -92,6 +93,8 @@ export default function FinancialReports() {
       if (pr) setPaymentRecords(pr as any);
       const { data: rl } = await supabase.from("email_reminder_logs").select("id, rent_payment_id, template_key, sent_at, status").order("sent_at", { ascending: false }).limit(500);
       if (rl) setReminderLogs(rl as any);
+      const { data: us } = await supabase.from("units").select("id, property_id, status, rent");
+      if (us) setUnits(us as any);
     })();
   }, []);
 
