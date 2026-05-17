@@ -143,7 +143,7 @@ export default function FinancialReports() {
 
   // Filtered datasets
   const fPayments = useMemo(() => payments.filter(p => {
-    const d = parseISO(p.due_date);
+    const d = safeParse(p.due_date);
     const pid = p.tenants?.units?.properties ? (payments && (p as any).tenants?.units?.property_id) : null;
     // We need property id from tenants.units.property_id
     const propId = (p.tenants?.units as any)?.property_id ?? null;
@@ -151,18 +151,18 @@ export default function FinancialReports() {
   }), [payments, range, propertyId]);
 
   const fPrevPayments = useMemo(() => payments.filter(p => {
-    const d = parseISO(p.due_date);
+    const d = safeParse(p.due_date);
     const propId = (p.tenants?.units as any)?.property_id ?? null;
     return inPrev(d) && matchProperty(propId);
   }), [payments, previousRange, propertyId]);
 
   const fExpenses = useMemo(() => expenses.filter(e => {
-    const d = parseISO(e.expense_date);
+    const d = safeParse(e.expense_date);
     return inRange(d) && matchProperty(e.property_id);
   }), [expenses, range, propertyId]);
 
   const fPrevExpenses = useMemo(() => expenses.filter(e => {
-    const d = parseISO(e.expense_date);
+    const d = safeParse(e.expense_date);
     return inPrev(d) && matchProperty(e.property_id);
   }), [expenses, previousRange, propertyId]);
 
@@ -210,11 +210,11 @@ export default function FinancialReports() {
   const unpaidAmount = lateAmount;
   const unpaidTenants = new Set(unpaid.map(p => p.tenant_id)).size;
   const avgLateDays = unpaid.length > 0
-    ? Math.round(unpaid.reduce((s, p) => s + Math.max(0, differenceInDays(new Date(), parseISO(p.due_date))), 0) / unpaid.length)
+    ? Math.round(unpaid.reduce((s, p) => s + Math.max(0, differenceInDays(new Date(), safeParse(p.due_date))), 0) / unpaid.length)
     : 0;
 
   // Relances
-  const remindersInPeriod = useMemo(() => reminderLogs.filter(r => inRange(parseISO(r.sent_at))), [reminderLogs, range]);
+  const remindersInPeriod = useMemo(() => reminderLogs.filter(r => inRange(safeParse(r.sent_at))), [reminderLogs, range]);
   const remindersCount = remindersInPeriod.length;
   // "Réponse": paiements après relance — approx = paiements payés du mois
   const respondedRate = remindersCount > 0
@@ -230,12 +230,12 @@ export default function FinancialReports() {
       const start = startOfMonth(m);
       const end = endOfMonth(m);
       const monthPayments = payments.filter(p => {
-        const d = parseISO(p.due_date);
+        const d = safeParse(p.due_date);
         const propId = (p.tenants?.units as any)?.property_id ?? null;
         return isWithinInterval(d, { start, end }) && matchProperty(propId);
       });
       const monthExp = expenses.filter(e => {
-        const d = parseISO(e.expense_date);
+        const d = safeParse(e.expense_date);
         return isWithinInterval(d, { start, end }) && matchProperty(e.property_id);
       });
       months.push({
@@ -436,7 +436,7 @@ export default function FinancialReports() {
   const calendarDays = useMemo(() => {
     if (!range.from || !range.to) return [];
     return eachDayOfInterval({ start: range.from, end: range.to }).map(d => {
-      const dueCount = fPayments.filter(p => parseISO(p.due_date).toDateString() === d.toDateString()).length;
+      const dueCount = fPayments.filter(p => safeParse(p.due_date).toDateString() === d.toDateString()).length;
       return { date: d, count: dueCount };
     });
   }, [range, fPayments]);
@@ -878,7 +878,7 @@ export default function FinancialReports() {
                             <td className="py-2 px-2">{e.expense_categories?.name || "—"}</td>
                             <td className="py-2 px-2 text-muted-foreground">{e.description || "—"}</td>
                             <td className="py-2 px-2 text-right font-medium">{formatFCFA(e.amount)}</td>
-                            <td className="py-2 px-2 text-muted-foreground">{format(parseISO(e.expense_date), "dd/MM/yyyy")}</td>
+                            <td className="py-2 px-2 text-muted-foreground">{format(safeParse(e.expense_date), "dd/MM/yyyy")}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -918,7 +918,7 @@ export default function FinancialReports() {
                     <tbody>
                       {remindersInPeriod.slice(0, 50).map(r => (
                         <tr key={r.id} className="border-b border-border/50">
-                          <td className="py-2 px-2 text-muted-foreground">{format(parseISO(r.sent_at), "dd/MM/yyyy HH:mm")}</td>
+                          <td className="py-2 px-2 text-muted-foreground">{format(safeParse(r.sent_at), "dd/MM/yyyy HH:mm")}</td>
                           <td className="py-2 px-2">{r.template_key}</td>
                           <td className="py-2 px-2">Email</td>
                           <td className="py-2 px-2"><Badge variant="outline">{r.status}</Badge></td>
@@ -1052,7 +1052,7 @@ function PaymentsTable({ title, rows, tableTab, setTableTab, search, setSearch, 
                       <span className="text-xs">{method}</span>
                     </span>
                   </td>
-                  <td className="py-2 px-2 text-muted-foreground">{format(parseISO(p.due_date), "dd/MM/yyyy")}</td>
+                  <td className="py-2 px-2 text-muted-foreground">{format(safeParse(p.due_date), "dd/MM/yyyy")}</td>
                   <td className="py-2 px-2"><StatusBadge status={p.status} /></td>
                 </tr>
               );
