@@ -210,7 +210,7 @@ export default function FinancialReports() {
   const unpaidAmount = lateAmount;
   const unpaidTenants = new Set(unpaid.map(p => p.tenant_id)).size;
   const avgLateDays = unpaid.length > 0
-    ? Math.round(unpaid.reduce((s, p) => s + Math.max(0, differenceInDays(new Date(), safeParse(p.due_date))), 0) / unpaid.length)
+    ? Math.round(unpaid.reduce((s, p) => { const d = safeParse(p.due_date); return s + (d ? Math.max(0, differenceInDays(new Date(), d)) : 0); }, 0) / unpaid.length)
     : 0;
 
   // Relances
