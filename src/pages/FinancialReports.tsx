@@ -250,16 +250,29 @@ export default function FinancialReports() {
     return months;
   }, [payments, expenses, propertyId]);
 
-  // Trend pct & projection
+  // Trend pct & projection (moyenne mois à mois, ignore mois sans CA pour la base)
   const trendInfo = useMemo(() => {
     const last3 = last6.slice(-3);
-    if (last3.length < 2) return { pct: 0, projection: 0 };
-    const first = last3[0].ca || 1;
+    if (last3.length < 2) return { pct: 0, projection: 0, hasBaseline: false };
+    // Variation moyenne mois à mois en %, en ignorant les périodes où le mois précédent est à 0
+    const pcts: number[] = [];
+    const deltas: number[] = [];
+    for (let i = 1; i < last3.length; i++) {
+      const prev = last3[i - 1].ca;
+      const cur = last3[i].ca;
+      deltas.push(cur - prev);
+      if (prev > 0) pcts.push(((cur - prev) / prev) * 100);
+    }
+    const avgDelta = deltas.reduce((s, d) => s + d, 0) / deltas.length;
     const last = last3[last3.length - 1].ca;
-    const pct = Math.round(((last - first) / first) * 100 / Math.max(1, last3.length - 1));
-    const avgDelta = (last - first) / Math.max(1, last3.length - 1);
     const projection = Math.max(0, Math.round(last + avgDelta));
-    return { pct, projection };
+    if (pcts.length === 0) {
+      return { pct: 0, projection, hasBaseline: false };
+    }
+    const rawPct = pcts.reduce((s, p) => s + p, 0) / pcts.length;
+    // Cap à ±999% pour éviter les valeurs aberrantes liées à de très petites bases
+    const pct = Math.round(Math.max(-999, Math.min(999, rawPct)));
+    return { pct, projection, hasBaseline: true };
   }, [last6]);
 
   // Rent status distribution
@@ -652,7 +665,7 @@ export default function FinancialReports() {
                       </BarChart>
                     </ResponsiveContainer>
                     <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
-                      <span>Tendance : <strong className={trendInfo.pct >= 0 ? "text-success" : "text-destructive"}>{trendInfo.pct >= 0 ? "+" : ""}{trendInfo.pct}% par mois</strong></span>
+                      <span>Tendance : <strong className={!trendInfo.hasBaseline ? "text-muted-foreground" : trendInfo.pct >= 0 ? "text-success" : "text-destructive"}>{trendInfo.hasBaseline ? `${trendInfo.pct >= 0 ? "+" : ""}${trendInfo.pct}% par mois` : "n/a (historique insuffisant)"}</strong></span>
                       <span>Projeté mois prochain : <strong className="text-foreground">~{formatFCFA(trendInfo.projection)}</strong></span>
                     </div>
                   </CardContent>
@@ -731,10 +744,12 @@ export default function FinancialReports() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {/* Tendance CA */}
-                    <div className={`p-3 rounded-lg border-l-4 ${trendInfo.pct >= 0 ? "bg-success/5 border-success" : "bg-destructive/5 border-destructive"}`}>
-                      <div className="font-medium text-sm">{trendInfo.pct >= 0 ? "Tendance positive" : "Tendance à surveiller"}</div>
+                    <div className={`p-3 rounded-lg border-l-4 ${!trendInfo.hasBaseline ? "bg-muted/30 border-muted-foreground/30" : trendInfo.pct >= 0 ? "bg-success/5 border-success" : "bg-destructive/5 border-destructive"}`}>
+                      <div className="font-medium text-sm">{!trendInfo.hasBaseline ? "Tendance indisponible" : trendInfo.pct >= 0 ? "Tendance positive" : "Tendance à surveiller"}</div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        {trendInfo.pct >= 0
+                        {!trendInfo.hasBaseline
+                          ? "Historique insuffisant pour calculer une tendance fiable (pas assez de mois avec du CA)."
+                          : trendInfo.pct >= 0
                           ? `Votre CA progresse de +${trendInfo.pct}%/mois. Projection : ${formatFCFA(trendInfo.projection)} le mois prochain.`
                           : `Votre CA baisse de ${trendInfo.pct}%/mois. Surveillez vos relances.`}
                       </div>
