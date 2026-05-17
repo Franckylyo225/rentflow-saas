@@ -665,7 +665,7 @@ export default function FinancialReports() {
                       </BarChart>
                     </ResponsiveContainer>
                     <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground">
-                      <span>Tendance : <strong className={trendInfo.pct >= 0 ? "text-success" : "text-destructive"}>{trendInfo.pct >= 0 ? "+" : ""}{trendInfo.pct}% par mois</strong></span>
+                      <span>Tendance : <strong className={!trendInfo.hasBaseline ? "text-muted-foreground" : trendInfo.pct >= 0 ? "text-success" : "text-destructive"}>{trendInfo.hasBaseline ? `${trendInfo.pct >= 0 ? "+" : ""}${trendInfo.pct}% par mois` : "n/a (historique insuffisant)"}</strong></span>
                       <span>Projeté mois prochain : <strong className="text-foreground">~{formatFCFA(trendInfo.projection)}</strong></span>
                     </div>
                   </CardContent>
