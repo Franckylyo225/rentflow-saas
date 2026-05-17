@@ -147,3 +147,17 @@
     background: radial-gradient(ellipse at center, hsl(var(--landing-blob) / 0.5) 0%, transparent 70%);
   }
 }
+
+/* Read-only mode when subscription is expired
+   - Disables forms, inputs, and most buttons
+   - Keeps navigation links, tabs, settings/subscription pages, and elements explicitly opted-in via data-allow-readonly */
+[data-readonly-mode="true"] [data-main-content] :is(input, textarea, select, [contenteditable="true"]):not([data-allow-readonly]),
+[data-readonly-mode="true"] [data-main-content] button:not([data-allow-readonly]):not([role="tab"]):not([data-state]):not([aria-haspopup="menu"]):not([data-sidebar]) {
+  pointer-events: none !important;
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+  filter: grayscale(0.2);
+}
+[data-readonly-mode="true"] [data-main-content] form:not([data-allow-readonly]) {
+  position: relative;
+}
