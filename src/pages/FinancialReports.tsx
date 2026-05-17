@@ -328,7 +328,7 @@ export default function FinancialReports() {
       ];
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summary), "Résumé");
 
-      const paySheet = [["Locataire", "Bien", "Montant", "Payé", "Méthode", "Date d'échéance", "Statut"]];
+      const paySheet: any[][] = [["Locataire", "Bien", "Montant", "Payé", "Méthode", "Date d'échéance", "Statut"]];
       filteredRows.forEach(p => paySheet.push([
         p.tenants?.full_name || "—",
         p.tenants?.units?.properties?.name || "—",
@@ -340,7 +340,7 @@ export default function FinancialReports() {
       ]));
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(paySheet), "Loyers");
 
-      const expSheet = [["Catégorie", "Description", "Montant", "Date"]];
+      const expSheet: any[][] = [["Catégorie", "Description", "Montant", "Date"]];
       fExpenses.forEach(e => expSheet.push([e.expense_categories?.name || "—", e.description || "", e.amount, e.expense_date]));
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(expSheet), "Dépenses");
 
