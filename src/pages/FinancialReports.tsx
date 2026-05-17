@@ -437,7 +437,7 @@ export default function FinancialReports() {
   const calendarDays = useMemo(() => {
     if (!range.from || !range.to) return [];
     return eachDayOfInterval({ start: range.from, end: range.to }).map(d => {
-      const dueCount = fPayments.filter(p => safeParse(p.due_date).toDateString() === d.toDateString()).length;
+      const dueCount = fPayments.filter(p => { const pd = safeParse(p.due_date); return pd ? pd.toDateString() === d.toDateString() : false; }).length;
       return { date: d, count: dueCount };
     });
   }, [range, fPayments]);
