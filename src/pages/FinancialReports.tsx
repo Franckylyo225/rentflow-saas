@@ -593,7 +593,7 @@ export default function FinancialReports() {
                   iconBg="bg-primary"
                   label="Biens actifs"
                   value={`${activeProps}`}
-                  sub={`${vacant} vacants sur ${totalProps} total`}
+                  sub={`${vacant} vacants sur ${totalUnits} total`}
                   footer={<span className="text-muted-foreground">{occupationRate}% d'occupation</span>}
                 />
                 <KpiCard
