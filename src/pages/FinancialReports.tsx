@@ -123,13 +123,6 @@ export default function FinancialReports() {
     return { from, to };
   }, [range]);
 
-  const safeParse = (s?: string | null): Date | null => {
-    if (!s) return null;
-    try {
-      const d = parseISO(s);
-      return isNaN(d.getTime()) ? null : d;
-    } catch { return null; }
-  };
   const inRange = (d: Date | null) => {
     if (!d) return false;
     if (!range.from || !range.to) return true;
