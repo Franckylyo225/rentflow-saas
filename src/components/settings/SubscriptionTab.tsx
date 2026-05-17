@@ -363,115 +363,179 @@ export function SubscriptionTab() {
 
       {/* Plan selection */}
       <div>
-        <h3 className="text-lg font-semibold text-foreground mb-1">
-          {expired ? "Choisissez un plan pour continuer" : "Changer de plan"}
-        </h3>
-        <p className="text-sm text-muted-foreground mb-6">
-          Sélectionnez le plan adapté à votre activité.
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">
+              {expired ? "Choisissez un plan pour continuer" : "Nos formules d'abonnement"}
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Sélectionnez la formule la mieux adaptée à votre activité. Vous pouvez changer à tout moment.
+            </p>
+          </div>
+          {plans.some(p => (p.yearly_discount_percent ?? 0) > 0) && (
+            <div className="inline-flex items-center rounded-full border border-border bg-card p-1 gap-1 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setBillingCycle("monthly")}
+                className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-colors ${billingCycle === "monthly" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Mensuel
+              </button>
+              <button
+                type="button"
+                onClick={() => setBillingCycle("yearly")}
+                className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-colors flex items-center gap-1.5 ${billingCycle === "yearly" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Annuel
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                  −{Math.max(...plans.map(p => p.yearly_discount_percent ?? 0))}%
+                </Badge>
+              </button>
+            </div>
+          )}
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {plans.map((plan) => {
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {plans.map((plan, idx) => {
             const isCurrent = plan.slug === currentSlug && !expired;
             const isSelected = plan.slug === selectedPlan;
             const isCustom = plan.price_monthly === 0 && plan.max_properties === null;
-            const isPopular = plans.length >= 2 && plan.slug === plans[Math.floor(plans.length / 2)]?.slug;
+            const isPaid = plan.price_monthly > 0;
+            const isPopular = plans.length >= 2 && plan.slug === plans[Math.floor(plans.length / 2)]?.slug && !isCustom;
+            const yearlyPct = plan.yearly_discount_percent ?? 0;
+            const showYearly = billingCycle === "yearly" && isPaid && yearlyPct > 0;
+            const monthlyEquivalent = showYearly
+              ? Math.round(computeYearlyPrice(plan.price_monthly, yearlyPct) / 12)
+              : plan.price_monthly;
 
-            const features: string[] = [];
+            const previousPlanName = idx > 0 ? plans[idx - 1].name : null;
+
+            const limitsFeatures: string[] = [];
             if (plan.max_properties !== null) {
-              features.push(`Jusqu'à ${plan.max_properties} unités`);
+              limitsFeatures.push(`Jusqu'à ${plan.max_properties} unité${plan.max_properties > 1 ? "s" : ""} gérée${plan.max_properties > 1 ? "s" : ""}`);
             } else {
-              features.push("Unités illimitées");
+              limitsFeatures.push("Unités locatives illimitées");
             }
             if (plan.max_users !== null) {
-              features.push(`${plan.max_users} utilisateur${plan.max_users > 1 ? "s" : ""}`);
+              limitsFeatures.push(`${plan.max_users} utilisateur${plan.max_users > 1 ? "s" : ""} de l'équipe`);
             } else {
-              features.push("Utilisateurs illimités");
+              limitsFeatures.push("Utilisateurs illimités");
             }
-            plan.feature_flags.forEach((flag) => {
-              features.push(FEATURE_LABELS[flag] || flag);
-            });
+            const flagFeatures = plan.feature_flags.map(flag => FEATURE_LABELS[flag] || flag);
 
             return (
               <div
                 key={plan.slug}
                 onClick={() => !isCurrent && handleSelectPlan(plan.slug)}
-                className={`relative flex flex-col rounded-2xl border-2 p-6 transition-all ${
+                className={`relative flex flex-col rounded-2xl border p-6 transition-all ${
                   isCurrent
-                    ? "border-primary/40 bg-primary/5 cursor-default"
+                    ? "border-primary/50 bg-primary/5 cursor-default ring-1 ring-primary/20"
                     : isSelected
-                      ? "border-primary bg-primary/5 shadow-md cursor-pointer"
+                      ? "border-primary bg-card shadow-lg ring-2 ring-primary cursor-pointer"
                       : isPopular
-                        ? "border-primary/30 bg-card hover:shadow-md cursor-pointer"
-                        : "border-border bg-card hover:border-primary/30 hover:shadow-sm cursor-pointer"
+                        ? "border-primary/40 bg-card shadow-md hover:shadow-lg cursor-pointer"
+                        : "border-border bg-card hover:border-primary/40 hover:shadow-md cursor-pointer"
                 }`}
               >
                 {isPopular && !isCurrent && (
-                  <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-0.5 text-xs rounded-full">
-                    Recommandé
+                  <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-0.5 text-xs rounded-full font-semibold">
+                    ★ Recommandé
                   </Badge>
                 )}
                 {isCurrent && (
-                  <Badge variant="outline" className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-background px-4 py-0.5 text-xs rounded-full">
-                    Plan actuel
+                  <Badge variant="outline" className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-background px-4 py-0.5 text-xs rounded-full font-semibold border-primary/50 text-primary">
+                    Votre plan actuel
                   </Badge>
                 )}
 
-                <div className="mb-4">
-                  <h3 className="text-lg font-bold text-foreground">{plan.name}</h3>
+                {/* Header */}
+                <div className="mb-5">
+                  <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
                   {plan.description && (
-                    <p className="text-xs text-muted-foreground mt-1">{plan.description}</p>
+                    <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed min-h-[2.5rem]">
+                      {plan.description}
+                    </p>
                   )}
                 </div>
 
-                <div className="mb-5">
+                {/* Price */}
+                <div className="mb-5 min-h-[60px]">
                   {isCustom ? (
-                    <span className="text-2xl font-extrabold text-foreground">Sur mesure</span>
+                    <>
+                      <span className="text-3xl font-extrabold text-foreground">Sur mesure</span>
+                      <p className="text-xs text-muted-foreground mt-1">Tarif adapté à votre volume</p>
+                    </>
                   ) : (
                     <>
-                      <span className="text-2xl font-extrabold text-foreground">
-                        {formatPrice(plan.price_monthly)}
-                      </span>
-                      <span className="text-muted-foreground ml-1 text-xs">FCFA/mois</span>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-3xl font-extrabold text-foreground tracking-tight">
+                          {formatPrice(monthlyEquivalent)}
+                        </span>
+                        <span className="text-sm text-muted-foreground">FCFA / mois</span>
+                      </div>
+                      {showYearly ? (
+                        <p className="text-xs text-success mt-1 font-medium">
+                          Facturé {formatPrice(computeYearlyPrice(plan.price_monthly, yearlyPct))} FCFA / an (−{yearlyPct}%)
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {plan.price_monthly === 0 ? "Aucun engagement" : "Sans engagement, résiliable à tout moment"}
+                        </p>
+                      )}
                     </>
                   )}
                 </div>
 
-                <ul className="space-y-2 flex-1">
-                  {features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-xs">
-                      <div className="mt-0.5 p-0.5 rounded-full bg-primary/10">
-                        <Check className="h-3 w-3 text-primary" />
-                      </div>
-                      <span className="text-foreground">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-4">
+                {/* CTA */}
+                <div className="mb-5">
                   {isCurrent ? (
-                    <Button variant="outline" size="sm" className="w-full rounded-full" disabled>
+                    <Button variant="outline" size="default" className="w-full rounded-full" disabled>
                       Plan actuel
                     </Button>
                   ) : isCustom ? (
                     <Button
                       variant="outline"
-                      size="sm"
-                      className="w-full rounded-full"
+                      size="default"
+                      className="w-full rounded-full font-semibold"
                       onClick={(e) => { e.stopPropagation(); window.open("/contact", "_blank"); }}
                     >
-                      Contactez-nous
+                      Demander un devis
                     </Button>
                   ) : (
                     <Button
-                      variant={isSelected ? "default" : "outline"}
-                      size="sm"
-                      className="w-full rounded-full"
+                      variant={isSelected || isPopular ? "default" : "outline"}
+                      size="default"
+                      className="w-full rounded-full font-semibold"
                       onClick={(e) => { e.stopPropagation(); handleSelectPlan(plan.slug); }}
                     >
-                      {isSelected ? "✓ Sélectionné" : "Choisir cette offre"}
+                      {isSelected ? "✓ Sélectionné" : expired ? "Souscrire" : "Choisir cette formule"}
                     </Button>
                   )}
+                </div>
+
+                <div className="h-px bg-border mb-5" />
+
+                {/* Features */}
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-foreground mb-3">
+                    {previousPlanName
+                      ? `Tout du plan ${previousPlanName}, plus :`
+                      : "Inclus dans cette formule :"}
+                  </p>
+                  <ul className="space-y-2.5">
+                    {limitsFeatures.map((f) => (
+                      <li key={f} className="flex items-start gap-2.5 text-sm">
+                        <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                        <span className="text-foreground leading-snug">{f}</span>
+                      </li>
+                    ))}
+                    {flagFeatures.map((f) => (
+                      <li key={f} className="flex items-start gap-2.5 text-sm">
+                        <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                        <span className="text-foreground leading-snug">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             );
