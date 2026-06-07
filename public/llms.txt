@@ -1,12 +1,12 @@
-# RentFlow
+# Loca.ci
 
 > Logiciel SaaS de gestion locative pensé pour l'Afrique : suivi des loyers, locataires, quittances, impayés et patrimoine immobilier.
 
-RentFlow aide les agences immobilières et bailleurs en Afrique de l'Ouest à digitaliser la gestion de leurs biens : encaissement des loyers en FCFA, génération automatique des quittances, relances SMS aux locataires, suivi du patrimoine et reporting financier.
+Loca.ci aide les agences immobilières et bailleurs en Afrique de l'Ouest à digitaliser la gestion de leurs biens : encaissement des loyers en FCFA, génération automatique des quittances, relances SMS aux locataires, suivi du patrimoine et reporting financier.
 
 ## Pages
 
-- [Accueil](/): Présentation de RentFlow et des principales fonctionnalités.
+- [Accueil](/): Présentation de Loca.ci et des principales fonctionnalités.
 - [Tarifs](/pricing): Plans d'abonnement et grille tarifaire en FCFA.
 - [À propos](/about): Notre mission et notre équipe basée à Abidjan.
 - [Contact](/contact): Formulaire de contact et coordonnées.

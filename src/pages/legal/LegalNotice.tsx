@@ -5,7 +5,7 @@ const LegalNotice = () => (
     title="Mentions Légales"
     lastUpdated="11 avril 2026"
     path="/legal"
-    seoDescription="Mentions légales de RentFlow, édité par New Wave Conception à Abidjan. Hébergement, propriété intellectuelle et coordonnées de l'éditeur."
+    seoDescription="Mentions légales de Loca.ci, édité par New Wave Conception à Abidjan. Hébergement, propriété intellectuelle et coordonnées de l'éditeur."
   >
     <h2>1. Éditeur de la Plateforme</h2>
     <ul>
@@ -29,7 +29,7 @@ const LegalNotice = () => (
 
     <h2>4. Propriété intellectuelle</h2>
     <p>
-      L'ensemble du contenu de la Plateforme (textes, graphismes, logos, icônes, images, logiciels) est protégé par les lois relatives à la propriété intellectuelle. Le nom « RentFlow » et le logo associé sont des marques de New Wave Conception.
+      L'ensemble du contenu de la Plateforme (textes, graphismes, logos, icônes, images, logiciels) est protégé par les lois relatives à la propriété intellectuelle. Le nom « Loca.ci » et le logo associé sont des marques de New Wave Conception.
     </p>
     <p>
       Toute reproduction, représentation ou diffusion, totale ou partielle, du contenu de la Plateforme sans autorisation préalable et écrite est interdite.

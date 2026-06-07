@@ -57,7 +57,7 @@ export function UrgentAlertsSection({ selectedMonth }: { selectedMonth: string }
   const { hasFeature } = useFeatureAccess();
   const { profile } = useProfile();
   const { settings } = useOrganizationSettings();
-  const orgName = (settings as any)?.sms_sender_name || (settings as any)?.name || "RentFlow";
+  const orgName = (settings as any)?.sms_sender_name || (settings as any)?.name || "Loca.ci";
 
   const canSms = hasFeature("sms_reminders");
   const canEmail = hasFeature("email_reminders");

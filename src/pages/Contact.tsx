@@ -57,8 +57,8 @@ export default function Contact() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Seo
-        title="Contact RentFlow — Démo et support"
-        description="Contactez l'équipe RentFlow à Abidjan pour une démonstration, un devis ou toute question sur la gestion locative de vos biens en Afrique."
+        title="Contact Loca.ci — Démo et support"
+        description="Contactez l'équipe Loca.ci à Abidjan pour une démonstration, un devis ou toute question sur la gestion locative de vos biens en Afrique."
         path="/contact"
       />
       <LandingNavbar />

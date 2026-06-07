@@ -108,7 +108,7 @@ serve(async (req) => {
       .select("sms_sender_name")
       .eq("id", smsRow.organization_id)
       .single();
-    const senderName = org?.sms_sender_name || "RentFlow";
+    const senderName = org?.sms_sender_name || "Loca.ci";
 
     const phone = formatPhoneNumber(smsRow.recipient_phone);
 

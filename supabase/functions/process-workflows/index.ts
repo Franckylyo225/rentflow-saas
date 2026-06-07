@@ -12,7 +12,7 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
-const FROM_EMAIL = "RentFlow <noreply@rent-flow.net>";
+const FROM_EMAIL = "Loca.ci <noreply@rent-flow.net>";
 const PUBLIC_FN_BASE = `${SUPABASE_URL}/functions/v1`;
 
 function replaceVars(template: string, data: Record<string, string>): string {

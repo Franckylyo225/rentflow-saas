@@ -82,7 +82,7 @@ function AdminSidebar() {
             </div>
             {!collapsed && (
               <div className="overflow-hidden">
-                <p className="text-sm font-bold text-foreground truncate">RentFlow</p>
+                <p className="text-sm font-bold text-foreground truncate">Loca.ci</p>
                 <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Super Admin</p>
               </div>
             )}

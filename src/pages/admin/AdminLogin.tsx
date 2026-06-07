@@ -114,7 +114,7 @@ export default function AdminLogin() {
           <p className="text-sm text-muted-foreground">
             {isSignUp
               ? "Aucun super administrateur n'existe encore. Créez le premier compte."
-              : "Accès réservé aux super administrateurs RentFlow"}
+              : "Accès réservé aux super administrateurs Loca.ci"}
           </p>
         </div>
 
@@ -136,7 +136,7 @@ export default function AdminLogin() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@rentflow.com"
+                  placeholder="admin@loca.ci"
                   className="pl-10 h-12 bg-muted/50 border-border/60"
                   required
                 />

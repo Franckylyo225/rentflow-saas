@@ -103,7 +103,7 @@ serve(async (req) => {
       .select("id, name, sms_sender_name")
       .in("id", orgIds);
     const orgNameById = new Map<string, string>();
-    for (const o of orgs || []) orgNameById.set(o.id, o.sms_sender_name || o.name || "RentFlow");
+    for (const o of orgs || []) orgNameById.set(o.id, o.sms_sender_name || o.name || "Loca.ci");
 
     let generated = 0;
     let emailsSent = 0;
@@ -182,7 +182,7 @@ serve(async (req) => {
           tenant_name: tenant.full_name,
           rent_amount: fmtAmount(payment.amount),
           due_date: fmtDate(dueDate),
-          agency_name: orgNameById.get(orgId) || "RentFlow",
+          agency_name: orgNameById.get(orgId) || "Loca.ci",
         };
 
         // Audit context: explains WHY this tenant was targeted

@@ -25,7 +25,7 @@ export function LandingFooter() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-10">
           {/* Brand */}
           <div className="col-span-2 md:col-span-2">
-            <img src="/logo-horizontal.png" alt="RentFlow" className="h-8 mb-5" />
+            <img src="/logo-horizontal.png" alt="Loca.ci" className="h-8 mb-5" />
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mb-5">
               La plateforme de gestion locative conçue pour l'Afrique.
             </p>
@@ -68,7 +68,7 @@ export function LandingFooter() {
 
         <div className="mt-14 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} RentFlow. Tous droits réservés.
+            © {new Date().getFullYear()} Loca.ci. Tous droits réservés.
           </p>
           <p className="text-xs text-muted-foreground">
             Développé avec ❤️ à Abidjan

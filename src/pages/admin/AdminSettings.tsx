@@ -483,7 +483,7 @@ function EmailTab() {
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Nom d'expéditeur</Label>
-              <Input defaultValue="RentFlow" />
+              <Input defaultValue="Loca.ci" />
             </div>
             <div className="space-y-2">
               <Label>Email de réponse (reply-to)</Label>
@@ -702,7 +702,7 @@ function PlatformTab() {
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Nom de la plateforme</Label>
-              <Input defaultValue="RentFlow" />
+              <Input defaultValue="Loca.ci" />
             </div>
             <div className="space-y-2">
               <Label>URL du site</Label>
@@ -1042,7 +1042,7 @@ export default function AdminSettings() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Paramètres</h1>
-          <p className="text-muted-foreground text-sm mt-1">Configuration globale de la plateforme RentFlow</p>
+          <p className="text-muted-foreground text-sm mt-1">Configuration globale de la plateforme Loca.ci</p>
         </div>
 
         <Tabs defaultValue="emails" className="space-y-6">
