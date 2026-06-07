@@ -49,7 +49,7 @@ export function TestSendDialog({
   const [tab, setTab] = useState<"email" | "sms">("email");
   const [email, setEmail] = useState(profile?.email || "");
   const [phone, setPhone] = useState(profile?.phone || "");
-  const [subject, setSubject] = useState(defaultSubject || "Test relance — RentFlow");
+  const [subject, setSubject] = useState(defaultSubject || "Test relance — Loca.ci");
   const [body, setBody] = useState(
     defaultBody ||
       "Bonjour [Prénom], ceci est un message de test de votre système de relances. Loyer : [Montant] pour [Bien].",

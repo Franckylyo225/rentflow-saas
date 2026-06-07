@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
         'X-Connection-Api-Key': RESEND_API_KEY,
       },
       body: JSON.stringify({
-        from: `RentFlow <noreply@rent-flow.net>`,
+        from: `Loca.ci <noreply@rent-flow.net>`,
         to: ['contact@rent-flow.net'],
         reply_to: email,
         subject: `[Contact] ${subject}`,
@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
             <h3>Message :</h3>
             <div style="background: #f9f9f9; padding: 16px; border-radius: 8px; white-space: pre-wrap;">${escapeHtml(message)}</div>
             <hr style="border: 1px solid #e5e5e5; margin-top: 24px;" />
-            <p style="font-size: 12px; color: #999;">Envoyé depuis le formulaire de contact RentFlow</p>
+            <p style="font-size: 12px; color: #999;">Envoyé depuis le formulaire de contact Loca.ci</p>
           </div>
         `,
       }),

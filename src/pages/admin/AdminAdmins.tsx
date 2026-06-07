@@ -110,7 +110,7 @@ export default function AdminAdmins() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="admin@rentflow.com"
+                      placeholder="admin@loca.ci"
                       className="pl-10"
                       required
                     />
