@@ -5,14 +5,14 @@ const TermsOfService = () => (
     title="Conditions Générales d'Utilisation"
     lastUpdated="11 avril 2026"
     path="/terms"
-    seoDescription="Conditions générales d'utilisation de Loca.ci, logiciel SaaS de gestion locative pour les bailleurs et agences en Afrique de l'Ouest."
+    seoDescription="Conditions générales d'utilisation de RentFlow, logiciel SaaS de gestion locative pour les bailleurs et agences en Afrique de l'Ouest."
   >
     <h2>1. Objet</h2>
     <p>
-      Les présentes Conditions Générales d'Utilisation (ci-après « CGU ») définissent les modalités d'accès et d'utilisation de la plateforme Loca.ci, éditée par New Wave Conception, accessible à l'adresse rent-flow.net (ci-après « la Plateforme »).
+      Les présentes Conditions Générales d'Utilisation (ci-après « CGU ») définissent les modalités d'accès et d'utilisation de la plateforme RentFlow, éditée par New Wave Conception, accessible à l'adresse rentflow.app (ci-après « la Plateforme »).
     </p>
     <p>
-      Loca.ci est un logiciel en ligne (SaaS) de gestion locative immobilière destiné aux propriétaires, sociétés civiles immobilières et gestionnaires de biens en Afrique de l'Ouest.
+      RentFlow est un logiciel en ligne (SaaS) de gestion locative immobilière destiné aux propriétaires, sociétés civiles immobilières et gestionnaires de biens en Afrique de l'Ouest.
     </p>
 
     <h2>2. Acceptation des CGU</h2>
@@ -42,7 +42,7 @@ const TermsOfService = () => (
 
     <h2>5. Plans et tarification</h2>
     <p>
-      Loca.ci propose plusieurs formules d'abonnement mensuel. Les prix sont affichés en Francs CFA (FCFA) et peuvent être modifiés avec un préavis de 30 jours. Un essai gratuit peut être proposé selon les offres en cours.
+      RentFlow propose plusieurs formules d'abonnement mensuel. Les prix sont affichés en Francs CFA (FCFA) et peuvent être modifiés avec un préavis de 30 jours. Un essai gratuit peut être proposé selon les offres en cours.
     </p>
 
     <h2>6. Obligations de l'utilisateur</h2>
@@ -59,17 +59,17 @@ const TermsOfService = () => (
       La Plateforme, son code source, son design, ses logos et contenus sont la propriété exclusive de New Wave Conception. Toute reproduction, distribution ou utilisation non autorisée est strictement interdite.
     </p>
     <p>
-      Les données saisies par l'utilisateur restent sa propriété. L'utilisateur accorde à Loca.ci une licence limitée pour traiter ces données dans le cadre de la fourniture du service.
+      Les données saisies par l'utilisateur restent sa propriété. L'utilisateur accorde à RentFlow une licence limitée pour traiter ces données dans le cadre de la fourniture du service.
     </p>
 
     <h2>8. Disponibilité et maintenance</h2>
     <p>
-      Loca.ci s'engage à maintenir la Plateforme accessible 24h/24, 7j/7, sauf en cas de maintenance programmée ou de force majeure. Aucune garantie de disponibilité absolue n'est accordée.
+      RentFlow s'engage à maintenir la Plateforme accessible 24h/24, 7j/7, sauf en cas de maintenance programmée ou de force majeure. Aucune garantie de disponibilité absolue n'est accordée.
     </p>
 
     <h2>9. Limitation de responsabilité</h2>
     <p>
-      Loca.ci ne saurait être tenu responsable des dommages indirects résultant de l'utilisation de la Plateforme, notamment les pertes de données, les manques à gagner ou les interruptions d'activité. La responsabilité est limitée au montant des abonnements versés au cours des 12 derniers mois.
+      RentFlow ne saurait être tenu responsable des dommages indirects résultant de l'utilisation de la Plateforme, notamment les pertes de données, les manques à gagner ou les interruptions d'activité. La responsabilité est limitée au montant des abonnements versés au cours des 12 derniers mois.
     </p>
 
     <h2>10. Résiliation</h2>

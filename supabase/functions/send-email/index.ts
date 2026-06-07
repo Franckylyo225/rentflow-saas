@@ -5,7 +5,7 @@ const corsHeaders = {
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
-const FROM_EMAIL = "Loca.ci <noreply@rent-flow.net>";
+const FROM_EMAIL = "RentFlow <noreply@rent-flow.net>";
 const MAX_RETRIES = 2;
 const LOGO_BASE = "https://dljpgpplvqhhfndpsihz.supabase.co/storage/v1/object/public/logos/platform";
 const LOGO_WHITE_URL = `${LOGO_BASE}%2Frentflow-logo-white.png`;
@@ -24,7 +24,7 @@ async function resolveLogoUrl(): Promise<string> {
 }
 
 function buildLogoImg(url: string): string {
-  return `<img src="${url}" alt="Loca.ci" height="36" style="display:block;margin:0 auto 12px;max-height:36px;width:auto;border:0;outline:none;text-decoration:none" />`;
+  return `<img src="${url}" alt="RentFlow" height="36" style="display:block;margin:0 auto 12px;max-height:36px;width:auto;border:0;outline:none;text-decoration:none" />`;
 }
 
 // Defaults used by fallbackTemplates declaration; overridden per-request below.
@@ -34,8 +34,8 @@ let LOGO_IMG = buildLogoImg(LOGO_URL);
 // Fallback templates (used if DB fetch fails)
 const fallbackTemplates: Record<string, (data: Record<string, any>) => { subject: string; html: string }> = {
   "signup-confirmation": (data) => ({
-    subject: "Bienvenue sur Loca.ci !",
-    html: `<div style="font-family:'Inter',Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden"><div style="background:hsl(160,84%,39%);padding:32px 24px;text-align:center">${LOGO_IMG}<h1 style="color:#fff;margin:0;font-size:24px;font-weight:700">Bienvenue sur Loca.ci</h1></div><div style="padding:32px 24px"><p style="color:#1a1a2e;font-size:16px;line-height:1.6">Bonjour${data.name ? ` <strong>${data.name}</strong>` : ""},</p><p style="color:#555;font-size:14px;line-height:1.6">Votre compte a été créé avec succès.</p></div></div>`,
+    subject: "Bienvenue sur RentFlow !",
+    html: `<div style="font-family:'Inter',Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden"><div style="background:hsl(160,84%,39%);padding:32px 24px;text-align:center">${LOGO_IMG}<h1 style="color:#fff;margin:0;font-size:24px;font-weight:700">Bienvenue sur RentFlow</h1></div><div style="padding:32px 24px"><p style="color:#1a1a2e;font-size:16px;line-height:1.6">Bonjour${data.name ? ` <strong>${data.name}</strong>` : ""},</p><p style="color:#555;font-size:14px;line-height:1.6">Votre compte a été créé avec succès.</p></div></div>`,
   }),
   "new-user-admin": (data) => ({
     subject: `Nouvel utilisateur : ${data.email || "inscription"}`,

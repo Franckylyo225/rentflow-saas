@@ -37,7 +37,7 @@ export function RealEstateSalesSection() {
           <AnimatedSection direction="right">
             <img
               src={salesImg}
-              alt="Interface de gestion de vente immobilière Loca.ci"
+              alt="Interface de gestion de vente immobilière RentFlow"
               className="w-full rounded-2xl shadow-xl border border-border"
               loading="lazy"
               width={1024}

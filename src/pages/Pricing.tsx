@@ -70,7 +70,7 @@ const Pricing = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Seo
-        title="Tarifs Loca.ci — Plans en FCFA pour bailleurs"
+        title="Tarifs RentFlow — Plans en FCFA pour bailleurs"
         description="Plans simples et transparents pour la gestion locative en Afrique. Essai gratuit 7 jours, sans carte bancaire. Tarifs en FCFA pour toutes les agences."
         path="/pricing"
       />

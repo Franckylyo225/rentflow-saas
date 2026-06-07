@@ -16,7 +16,7 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Seo
-        title="Loca.ci — Logiciel de gestion locative en Afrique"
+        title="RentFlow — Logiciel de gestion locative en Afrique"
         description="Gérez loyers, locataires, quittances et patrimoine immobilier depuis une seule plateforme pensée pour l'Afrique. Essai gratuit 7 jours."
         path="/"
       />

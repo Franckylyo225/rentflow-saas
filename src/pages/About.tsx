@@ -31,8 +31,8 @@ export default function About() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Seo
-        title="À propos de Loca.ci — Notre mission en Afrique"
-        description="Loca.ci est édité par New Wave Conception à Abidjan. Découvrez notre mission : simplifier la gestion locative pour les bailleurs en Afrique de l'Ouest."
+        title="À propos de RentFlow — Notre mission en Afrique"
+        description="RentFlow est édité par New Wave Conception à Abidjan. Découvrez notre mission : simplifier la gestion locative pour les bailleurs en Afrique de l'Ouest."
         path="/about"
       />
       <LandingNavbar />
@@ -41,10 +41,10 @@ export default function About() {
         {/* Hero */}
         <div className="text-center mb-16">
           <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            À propos de Loca.ci
+            À propos de RentFlow
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Loca.ci est une solution de gestion locative moderne, conçue par{" "}
+            RentFlow est une solution de gestion locative moderne, conçue par{" "}
             <strong className="text-foreground">New Wave Conception</strong> pour simplifier
             le quotidien des gestionnaires immobiliers en Afrique.
           </p>
@@ -95,7 +95,7 @@ export default function About() {
             <p className="text-muted-foreground text-sm leading-relaxed">
               Basée à Abidjan en Côte d'Ivoire, New Wave Conception accompagne les entreprises
               dans leur transformation numérique en concevant des solutions web sur mesure,
-              robustes et évolutives. Loca.ci est notre réponse aux défis de la gestion
+              robustes et évolutives. RentFlow est notre réponse aux défis de la gestion
               locative sur le continent africain.
             </p>
           </div>
@@ -107,7 +107,7 @@ export default function About() {
             Une question ? Un projet ?
           </h2>
           <p className="text-muted-foreground mb-5">
-            N'hésitez pas à nous contacter pour en savoir plus sur Loca.ci.
+            N'hésitez pas à nous contacter pour en savoir plus sur RentFlow.
           </p>
           <a
             href="/contact"

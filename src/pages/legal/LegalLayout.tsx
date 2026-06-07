@@ -20,8 +20,8 @@ export function LegalLayout({
     <div className="min-h-screen bg-background text-foreground">
       {path && (
         <Seo
-          title={`${title} — Loca.ci`}
-          description={seoDescription ?? `${title} de Loca.ci, plateforme de gestion locative en Afrique.`}
+          title={`${title} — RentFlow`}
+          description={seoDescription ?? `${title} de RentFlow, plateforme de gestion locative en Afrique.`}
           path={path}
         />
       )}

@@ -1,6 +1,6 @@
 // Edge Function: geniuspay-create-payment
 // Crée une session de paiement GeniusPay (page de checkout hébergée)
-// pour la souscription/upgrade d'abonnement Loca.ci.
+// pour la souscription/upgrade d'abonnement RentFlow.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         amount: finalAmount,
         currency: "XOF",
-        description: `Abonnement Loca.ci - ${plan.name} (${billingCycle === "yearly" ? "annuel" : "mensuel"})${earlyAdopterDiscount > 0 ? ` — Early Adopter -${earlyAdopterDiscount}%` : ""}`,
+        description: `Abonnement RentFlow - ${plan.name} (${billingCycle === "yearly" ? "annuel" : "mensuel"})${earlyAdopterDiscount > 0 ? ` — Early Adopter -${earlyAdopterDiscount}%` : ""}`,
         customer: {
           name: profile.full_name || user.email,
           email: profile.email || user.email,

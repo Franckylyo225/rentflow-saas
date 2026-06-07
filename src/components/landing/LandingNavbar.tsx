@@ -18,7 +18,7 @@ export function LandingNavbar() {
         <div className="px-6 sm:px-8">
           <div className="flex items-center justify-between h-[68px]">
             <Link to="/" className="flex items-center gap-2.5 group">
-              <img src="/logo-horizontal.png" alt="Loca.ci" className="h-9 transition-transform duration-200 group-hover:scale-105" />
+              <img src="/logo-horizontal.png" alt="RentFlow" className="h-9 transition-transform duration-200 group-hover:scale-105" />
             </Link>
 
             {/* Desktop nav */}

@@ -6,19 +6,19 @@ const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-const FROM = "Loca.ci <noreply@rent-flow.net>";
+const FROM = "RentFlow <noreply@rent-flow.net>";
 
 function buildHtml(resetUrl: string) {
   return `<!DOCTYPE html><html><body style="margin:0;background:#f5f7fa;font-family:Inter,Arial,sans-serif;color:#1a1a2e">
   <div style="max-width:560px;margin:32px auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb">
     <div style="background:linear-gradient(135deg,hsl(160,84%,39%),hsl(160,84%,32%));padding:28px;text-align:center">
-      <h1 style="color:#fff;margin:0;font-size:22px;font-weight:700">Loca.ci</h1>
+      <h1 style="color:#fff;margin:0;font-size:22px;font-weight:700">RentFlow</h1>
       <p style="color:rgba(255,255,255,.85);margin:6px 0 0;font-size:13px">Gestion locative simplifiée</p>
     </div>
     <div style="padding:36px 28px">
       <h2 style="margin:0 0 12px;font-size:20px">Réinitialisation de votre mot de passe</h2>
       <p style="line-height:1.6;color:#475569">
-        Vous avez demandé à réinitialiser votre mot de passe Loca.ci. Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe. Ce lien est valable pendant 1 heure.
+        Vous avez demandé à réinitialiser votre mot de passe RentFlow. Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe. Ce lien est valable pendant 1 heure.
       </p>
       <div style="text-align:center;margin:28px 0">
         <a href="${resetUrl}" style="display:inline-block;background:hsl(160,84%,39%);color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600">Réinitialiser mon mot de passe</a>
@@ -33,7 +33,7 @@ function buildHtml(resetUrl: string) {
       </p>
     </div>
     <div style="background:#f8fafc;padding:18px;text-align:center;color:#94a3b8;font-size:12px">
-      © ${new Date().getFullYear()} Loca.ci · rent-flow.net
+      © ${new Date().getFullYear()} RentFlow · rent-flow.net
     </div>
   </div></body></html>`;
 }
@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: FROM,
         to: [email],
-        subject: "Réinitialisation de votre mot de passe Loca.ci",
+        subject: "Réinitialisation de votre mot de passe RentFlow",
         html: buildHtml(actionLink),
       }),
     });
