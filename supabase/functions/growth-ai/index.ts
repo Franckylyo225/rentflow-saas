@@ -1,17 +1,39 @@
 // Edge function: appel Lovable AI pour le Pilote de croissance
 // Modes: "suggestions" | "content" | "chat"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+function unauthorized(msg = "Unauthorized") {
+  return new Response(JSON.stringify({ error: msg }), {
+    status: 401,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
+
+    // === AUTH : super_admin uniquement ===
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) return unauthorized("Missing bearer token");
+    const token = authHeader.slice(7);
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
+    const { data: userData, error: userErr } = await admin.auth.getUser(token);
+    if (userErr || !userData?.user) return unauthorized("Invalid token");
+    const { data: isSuper } = await admin.rpc("is_super_admin", { _user_id: userData.user.id });
+    if (!isSuper) return unauthorized("Super admin required");
+
     const body = await req.json();
     const mode: string = body.mode || "chat";
     const context = body.context || {};
