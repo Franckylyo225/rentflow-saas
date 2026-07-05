@@ -47,6 +47,34 @@ serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   try {
+    // === AUTH : JWT requis + appartenance à l'org (bypass pour service_role) ===
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const token = authHeader.slice(7);
+    const isServiceRole = token === SUPABASE_SERVICE_ROLE_KEY;
+    let callerOrgId: string | null = null;
+    let callerUserId: string | null = null;
+    if (!isServiceRole) {
+      const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+      if (userErr || !userData?.user) {
+        return new Response(JSON.stringify({ success: false, error: "Invalid token" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      callerUserId = userData.user.id;
+      const { data: orgId } = await supabase.rpc("get_user_org_id", { _user_id: callerUserId });
+      callerOrgId = orgId as string | null;
+      if (!callerOrgId) {
+        return new Response(JSON.stringify({ success: false, error: "No organization" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const MONSMS_API_KEY = Deno.env.get("MONSMS_API_KEY");
     const MONSMS_COMPANY_ID = Deno.env.get("MONSMS_COMPANY_ID");
     if (!MONSMS_API_KEY || !MONSMS_COMPANY_ID) {
@@ -66,6 +94,12 @@ serve(async (req) => {
         .single();
       if (error || !data) throw new Error(`SMS message not found: ${body.sms_message_id}`);
       smsRow = data;
+      // Check org ownership on queue mode
+      if (!isServiceRole && smsRow.organization_id !== callerOrgId) {
+        return new Response(JSON.stringify({ success: false, error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     } else {
       // Ad-hoc / manual send: build payload from body
       if (!body.organization_id || !body.to || !body.message) {
@@ -73,6 +107,11 @@ serve(async (req) => {
           JSON.stringify({ success: false, error: "organization_id, to, and message are required" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
+      }
+      if (!isServiceRole && body.organization_id !== callerOrgId) {
+        return new Response(JSON.stringify({ success: false, error: "Forbidden: org mismatch" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
       const phone = formatPhoneNumber(body.to);
       const insertRes = await supabase
