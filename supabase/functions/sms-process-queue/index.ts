@@ -4,16 +4,44 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "authorization, x-client-info, apikey, content-type, x-cron-secret, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const MAX_RETRIES = 3;
 const BATCH_SIZE = 50;
 
+async function assertCronCaller(req: Request): Promise<Response | null> {
+  const expected = Deno.env.get("CRON_SECRET");
+  const provided = req.headers.get("x-cron-secret");
+  if (expected && provided && provided === expected) return null;
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (token) {
+    try {
+      const svc = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      );
+      const { data: userData } = await svc.auth.getUser(token);
+      if (userData?.user) {
+        const { data: isAdmin } = await svc.rpc("is_super_admin", { _user_id: userData.user.id });
+        if (isAdmin === true) return null;
+      }
+    } catch { /* fallthrough */ }
+  }
+  return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    status: 401,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+  const denied = await assertCronCaller(req);
+  if (denied) return denied;
+
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

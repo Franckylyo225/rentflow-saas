@@ -7,11 +7,40 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
+
+async function assertCronCaller(req: Request): Promise<Response | null> {
+  const expected = Deno.env.get("CRON_SECRET");
+  const provided = req.headers.get("x-cron-secret");
+  if (expected && provided && provided === expected) return null;
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (token) {
+    try {
+      const svc = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      );
+      const { data: userData } = await svc.auth.getUser(token);
+      if (userData?.user) {
+        const { data: isAdmin } = await svc.rpc("is_super_admin", { _user_id: userData.user.id });
+        if (isAdmin === true) return null;
+      }
+    } catch { /* fallthrough */ }
+  }
+  return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    status: 401,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const denied = await assertCronCaller(req);
+  if (denied) return denied;
+
+
 
   try {
     const supabase = createClient(
