@@ -116,9 +116,31 @@ Deno.serve(async (req) => {
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     if (!LOVABLE_API_KEY || !RESEND_API_KEY) {
       throw new Error("Missing API keys");
+    }
+
+    // === AUTH : JWT requis + appartenance à l'org ===
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const bearer = authHeader.slice(7);
+    const isServiceRole = bearer === SERVICE_ROLE;
+    let callerOrgId: string | null = null;
+    if (!isServiceRole) {
+      const { data: userData, error: userErr } = await supabase.auth.getUser(bearer);
+      if (userErr || !userData?.user) {
+        return new Response(JSON.stringify({ error: "Invalid token" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: orgId } = await supabase.rpc("get_user_org_id", { _user_id: userData.user.id });
+      callerOrgId = orgId as string | null;
     }
 
     // Resolve which logo variant (white/color) to use for this send
@@ -137,6 +159,16 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Contrôle d'accès : soit service-role, soit l'utilisateur appartient à l'organisation cible.
+    // Le mode __inline__ (HTML libre) est restreint : service-role OU même org.
+    if (!isServiceRole) {
+      if (!organizationId || organizationId !== callerOrgId) {
+        return new Response(JSON.stringify({ error: "Forbidden: organization mismatch" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     logTemplateKey = templateName;
     logRecipient = recipientEmail;
     logContext = templateData || {};
@@ -146,6 +178,7 @@ Deno.serve(async (req) => {
     let subject: string;
     let html: string;
     let useDb = false;
+
 
     // Inline mode: caller provides subject + html directly (used by relance emails)
     if (templateName === "__inline__") {
