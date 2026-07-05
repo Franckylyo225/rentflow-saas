@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, ArrowRight, Loader2, Bell, Clock } from "lucide-react";
+import { Check, ArrowRight, Loader2, Bell, Clock, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AnimatedSection, StaggerContainer, StaggerItem } from "./AnimatedSection";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,19 +65,17 @@ export function PricingSection() {
   };
 
   return (
-    <section id="pricing" className="py-24 sm:py-32 relative overflow-hidden">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] landing-blob rounded-full -z-10 opacity-40" />
-
+    <section id="pricing" className="py-24 sm:py-32 bg-secondary/40">
       <div className="max-w-6xl mx-auto px-5 sm:px-8">
         <AnimatedSection className="max-w-2xl mx-auto text-center mb-16">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-secondary text-xs font-semibold text-foreground uppercase tracking-wider mb-4">
+          <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-xs font-semibold text-primary uppercase tracking-wider mb-4">
             Tarifs
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight">
-            Des tarifs adaptés à votre activité
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight leading-tight">
+            Un prix clair, sans surprise
           </h2>
           <p className="mt-5 text-muted-foreground text-lg leading-relaxed">
-            7 jours d'essai gratuit. Aucune carte requise.
+            7 jours d'essai gratuit. Aucune carte requise. Résiliable à tout moment.
           </p>
         </AnimatedSection>
 
@@ -87,56 +85,64 @@ export function PricingSection() {
           </div>
         ) : (
           <StaggerContainer
-            className={`grid grid-cols-1 ${plans.length === 2 ? "lg:grid-cols-2 max-w-3xl" : "lg:grid-cols-3 max-w-5xl"} gap-6 mx-auto`}
-            staggerDelay={0.12}
+            className={`grid grid-cols-1 ${plans.length === 2 ? "lg:grid-cols-2 max-w-3xl" : "lg:grid-cols-3 max-w-5xl"} gap-5 mx-auto`}
+            staggerDelay={0.08}
           >
-            {plans.map((plan) => {
+            {plans.map((plan, idx) => {
               const isComingSoon = plan.status === "coming_soon";
               const isActive = plan.status === "active";
+              const isHighlighted = isActive && (plans.length === 1 || idx === Math.floor(plans.length / 2));
 
               return (
                 <StaggerItem key={plan.slug}>
                   <div
-                    className={`relative flex flex-col rounded-3xl border p-8 h-full transition-all duration-300 ${
-                      isComingSoon
-                        ? "border-primary/40 bg-gradient-to-b from-primary/5 to-card shadow-lg ring-1 ring-primary/10"
-                        : "border-border bg-card hover:shadow-md"
+                    className={`relative flex flex-col rounded-3xl p-8 h-full transition-all duration-300 ${
+                      isHighlighted
+                        ? "bg-card border-2 border-primary shadow-lg hover:-translate-y-0.5"
+                        : "bg-card border border-border/60 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5"
                     }`}
                   >
+                    {isHighlighted && (
+                      <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-xs font-semibold gap-1.5">
+                        <Sparkles className="h-3 w-3" />
+                        Recommandé
+                      </Badge>
+                    )}
                     {isComingSoon && (
-                      <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white px-5 py-1 rounded-full text-xs font-semibold gap-1.5">
+                      <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-foreground text-background px-4 py-1 rounded-full text-xs font-semibold gap-1.5">
                         <Clock className="h-3 w-3" />
                         Bientôt disponible
                       </Badge>
                     )}
 
-                    {isActive && plans.length > 1 && (
-                      <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-5 py-1 rounded-full text-xs font-semibold">
-                        Disponible maintenant
-                      </Badge>
-                    )}
-
                     <div className="mb-6">
-                      <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
+                      <h3 className="font-display text-xl font-bold text-foreground tracking-tight">
+                        {plan.name}
+                      </h3>
                       {plan.description && (
-                        <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
+                        <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+                          {plan.description}
+                        </p>
                       )}
                     </div>
 
-                    <div className="mb-8">
-                      <span className="text-4xl font-extrabold text-foreground tracking-tight">
-                        {formatPrice(plan.price_monthly)}
-                      </span>
-                      <span className="text-muted-foreground ml-1 text-sm">FCFA/mois</span>
+                    <div className="mb-8 pb-6 border-b border-border/60">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="font-display text-5xl font-bold text-foreground tracking-tight">
+                          {formatPrice(plan.price_monthly)}
+                        </span>
+                        <span className="text-muted-foreground text-sm font-medium">FCFA</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground mt-1 block">par mois, HT</span>
                     </div>
 
-                    <ul className="space-y-3.5 mb-8 flex-1">
+                    <ul className="space-y-3 mb-8 flex-1">
                       {(plan.display_features || []).map((feature) => (
                         <li key={feature} className="flex items-start gap-3 text-sm">
-                          <div className="mt-0.5 p-0.5 rounded-full bg-primary/10">
+                          <div className="mt-0.5 p-0.5 rounded-full bg-primary/10 shrink-0">
                             <Check className="h-3.5 w-3.5 text-primary" />
                           </div>
-                          <span className="text-foreground">{feature}</span>
+                          <span className="text-foreground leading-relaxed">{feature}</span>
                         </li>
                       ))}
                     </ul>
@@ -144,7 +150,7 @@ export function PricingSection() {
                     {isActive ? (
                       <Button
                         className="w-full rounded-full font-semibold gap-2"
-                        variant="default"
+                        variant={isHighlighted ? "default" : "outline"}
                         size="lg"
                         asChild
                       >
@@ -202,6 +208,15 @@ export function PricingSection() {
             })}
           </StaggerContainer>
         )}
+
+        <AnimatedSection className="mt-12 text-center">
+          <p className="text-sm text-muted-foreground">
+            Besoin d'un plan sur mesure pour plusieurs agences ?{" "}
+            <Link to="/auth" className="text-primary font-semibold hover:underline">
+              Contactez-nous
+            </Link>
+          </p>
+        </AnimatedSection>
       </div>
     </section>
   );
