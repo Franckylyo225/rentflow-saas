@@ -49,8 +49,33 @@ Deno.serve(async (req) => {
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     if (!LOVABLE_API_KEY || !RESEND_API_KEY) {
       throw new Error("Missing API keys");
+    }
+
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
+
+    // === AUTH : JWT requis + appartenance à l'org ===
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized", code: "unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const token = authHeader.slice(7);
+    const isServiceRole = token === SERVICE_ROLE;
+    let callerOrgId: string | null = null;
+    if (!isServiceRole) {
+      const { data: userData, error: userErr } = await admin.auth.getUser(token);
+      if (userErr || !userData?.user) {
+        return new Response(JSON.stringify({ error: "Invalid token", code: "unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: orgId } = await admin.rpc("get_user_org_id", { _user_id: userData.user.id });
+      callerOrgId = orgId as string | null;
     }
 
     const {
@@ -70,6 +95,20 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "Champs requis manquants (destinataire, PDF ou mois).", code: "missing_fields" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Vérif appartenance à l'organisation cible
+    if (!isServiceRole) {
+      let targetOrg: string | null = organizationId ?? null;
+      if (!targetOrg && rentPaymentId) {
+        const { data: orgFromRp } = await admin.rpc("resolve_org_from_rent_payment", { _rid: rentPaymentId });
+        targetOrg = orgFromRp as string | null;
+      }
+      if (!targetOrg || targetOrg !== callerOrgId) {
+        return new Response(JSON.stringify({ error: "Forbidden", code: "forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Validation basique du format email
