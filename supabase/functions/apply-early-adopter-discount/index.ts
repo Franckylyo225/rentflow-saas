@@ -15,6 +15,30 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
+
+    // === AUTH : JWT requis, user_id doit == caller.uid (sauf service_role) ===
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const token = authHeader.slice(7);
+    const isServiceRole = token === SERVICE_ROLE;
+    let callerUid: string | null = null;
+    if (!isServiceRole) {
+      const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+      if (userErr || !userData?.user) {
+        return new Response(JSON.stringify({ error: "Invalid token" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      callerUid = userData.user.id;
+    }
+
     const { user_id, email: bodyEmail, full_name } = await req.json().catch(() => ({}));
     if (!user_id && !bodyEmail) {
       return new Response(JSON.stringify({ error: "user_id or email required" }), {
@@ -22,10 +46,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    // L'appelant ne peut déclencher l'email que pour lui-même
+    if (!isServiceRole && user_id && user_id !== callerUid) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Récupération de la config + statut early adopter
     const { data: cfgRow } = await supabase.rpc("get_early_adopter_public_config");
