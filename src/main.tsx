@@ -1,7 +1,11 @@
 import { createRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
+import "@fontsource/space-grotesk/500.css";
+import "@fontsource/space-grotesk/600.css";
+import "@fontsource/space-grotesk/700.css";
 import App from "./App.tsx";
 import "./index.css";
+
 
 createRoot(document.getElementById("root")!).render(
   <HelmetProvider>

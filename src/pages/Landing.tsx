@@ -16,17 +16,17 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Seo
-        title="RentFlow — Logiciel de gestion locative en Afrique"
-        description="Gérez loyers, locataires, quittances et patrimoine immobilier depuis une seule plateforme pensée pour l'Afrique. Essai gratuit 7 jours."
+        title="RentFlow — Logiciel de gestion locative en FCFA pour l'Afrique de l'Ouest"
+        description="Loyers, quittances, relances SMS et comptabilité automatisés en FCFA. Le logiciel de gestion locative pensé pour les agences et propriétaires d'Afrique de l'Ouest. Essai gratuit 7 jours."
         path="/"
       />
       <AnnouncementBanner />
       <LandingNavbar />
       <HeroSection />
-      <FeaturesSection />
-      <RealEstateSalesSection />
-      <ProblemSolutionSection />
       <HowItWorksSection />
+      <FeaturesSection />
+      <ProblemSolutionSection />
+      <RealEstateSalesSection />
       <PricingSection />
       <EarlyAdopterCTA />
       <TestimonialsSection />
@@ -37,3 +37,4 @@ const Landing = () => {
 };
 
 export default Landing;
+

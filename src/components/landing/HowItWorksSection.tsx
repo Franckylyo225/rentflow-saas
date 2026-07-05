@@ -1,81 +1,117 @@
-import { Building2, Users, BarChart3, ArrowRight } from "lucide-react";
-import { AnimatedSection, StaggerContainer, StaggerItem } from "./AnimatedSection";
+import { Building2, Users, Wallet, ArrowRight } from "lucide-react";
+import { AnimatedSection } from "./AnimatedSection";
 
 const STEPS = [
   {
     number: "01",
     title: "Ajoutez vos biens",
     description:
-      "Enregistrez vos immeubles, villas et unités locatives en quelques clics. Importez vos données existantes via Excel.",
+      "Enregistrez immeubles, villas, studios ou commerces en quelques clics. Importez vos données existantes via Excel.",
     icon: Building2,
-    color: "primary",
+    accent: [
+      { label: "Villa Cocody", meta: "3 unités · 750 000 FCFA / mois" },
+      { label: "Immeuble Plateau", meta: "12 unités · Occupation 92%" },
+    ],
   },
   {
     number: "02",
-    title: "Gérez vos locataires",
+    title: "Enregistrez vos locataires",
     description:
-      "Créez les fiches locataires, générez les échéances automatiquement et suivez les paiements en temps réel.",
+      "Fiches locataires complètes, contrats de bail conformes OHADA, pièces d'identité et historiques centralisés.",
     icon: Users,
-    color: "primary",
+    accent: [
+      { label: "M. Traoré Moussa", meta: "Bail 2 ans · Caution 900 000 FCFA" },
+      { label: "Mme Diallo Awa", meta: "Bail 1 an · Paiement à jour" },
+    ],
   },
   {
     number: "03",
-    title: "Pilotez votre activité",
+    title: "Encaissez et relancez",
     description:
-      "Consultez vos revenus, dépenses et taux d'occupation depuis un tableau de bord clair et actionnable.",
-    icon: BarChart3,
-    color: "primary",
+      "Quittances générées automatiquement, rappels par SMS et e-mail avant l'échéance. Recouvrement quasi total, sans stress.",
+    icon: Wallet,
+    accent: [
+      { label: "Quittance PDF · Mai 2026", meta: "Envoyée par e-mail" },
+      { label: "SMS rappel · J-5", meta: "Envoyé à 3 locataires" },
+    ],
   },
 ];
 
 export function HowItWorksSection() {
   return (
-    <section className="py-24 sm:py-32 bg-foreground/[0.03] dark:bg-foreground/[0.06]">
+    <section id="how-it-works" className="py-24 sm:py-32 bg-secondary/40 border-y border-border/50">
       <div className="max-w-6xl mx-auto px-5 sm:px-8">
-        <AnimatedSection className="text-center mb-16">
+        <AnimatedSection className="max-w-2xl mx-auto text-center mb-20">
           <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-xs font-semibold text-primary uppercase tracking-wider mb-4">
-            Simple & rapide
+            Un fonctionnement simple
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight">
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight leading-tight">
             Comment ça marche ?
           </h2>
-          <p className="mt-4 text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
-            Trois étapes suffisent pour digitaliser votre gestion locative
+          <p className="mt-4 text-muted-foreground text-lg leading-relaxed">
+            Simple comme 1, 2, 3. Prenez la main sur votre patrimoine en moins de 5 minutes.
           </p>
         </AnimatedSection>
 
-        <StaggerContainer staggerDelay={0.15} className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10">
-          {STEPS.map((step, index) => (
-            <StaggerItem key={step.number}>
-              <div className="relative group h-full">
-                {/* Connector arrow — hidden on last card and on mobile */}
-                {index < STEPS.length - 1 && (
-                  <div className="hidden md:flex absolute -right-5 lg:-right-5 top-1/3 z-10 text-muted-foreground/30">
-                    <ArrowRight className="h-6 w-6" />
+        <div className="space-y-12 sm:space-y-16">
+          {STEPS.map((step, idx) => (
+            <AnimatedSection key={step.number} delay={idx * 0.1}>
+              <div
+                className={`grid lg:grid-cols-2 gap-8 lg:gap-16 items-center ${
+                  idx % 2 === 1 ? "lg:[&>*:first-child]:order-2" : ""
+                }`}
+              >
+                {/* Text */}
+                <div>
+                  <div className="flex items-center gap-4 mb-6">
+                    <span className="font-display text-6xl sm:text-7xl font-bold text-primary/25 leading-none select-none">
+                      {step.number}
+                    </span>
+                    <div className="h-px flex-1 bg-gradient-to-r from-primary/40 to-transparent" />
                   </div>
-                )}
-
-                <div className="rounded-3xl border border-border bg-background p-8 sm:p-10 h-full transition-shadow duration-300 hover:shadow-lg hover:shadow-primary/5">
-                  {/* Step number */}
-                  <span className="text-5xl font-black text-primary/15 select-none leading-none">
-                    {step.number}
-                  </span>
-
-                  {/* Icon */}
-                  <div className="mt-5 mb-5 inline-flex items-center justify-center p-3.5 rounded-2xl bg-primary/10 text-primary">
-                    <step.icon className="h-6 w-6" />
+                  <div className="inline-flex items-center gap-2 p-2.5 rounded-2xl bg-primary/10 text-primary mb-5">
+                    <step.icon className="h-5 w-5" />
                   </div>
+                  <h3 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-4 tracking-tight">
+                    {step.title}
+                  </h3>
+                  <p className="text-muted-foreground text-lg leading-relaxed">{step.description}</p>
+                </div>
 
-                  {/* Content */}
-                  <h3 className="text-xl font-bold text-foreground mb-3">{step.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed text-[0.95rem]">
-                    {step.description}
-                  </p>
+                {/* Mock card */}
+                <div className="relative">
+                  <div className="absolute inset-0 bg-primary/5 rounded-[2rem] blur-2xl" />
+                  <div className="relative bg-card border border-border/60 rounded-[2rem] p-6 sm:p-8 shadow-xl shadow-foreground/5">
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2.5 w-2.5 rounded-full bg-destructive/60" />
+                        <div className="h-2.5 w-2.5 rounded-full bg-warning/60" />
+                        <div className="h-2.5 w-2.5 rounded-full bg-primary/60" />
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        Étape {step.number}
+                      </span>
+                    </div>
+                    <div className="space-y-3">
+                      {step.accent.map((a) => (
+                        <div
+                          key={a.label}
+                          className="flex items-center justify-between gap-3 p-4 rounded-xl bg-secondary/60 border border-border/40"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-foreground truncate">{a.label}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5 truncate">{a.meta}</p>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-muted-foreground/60 shrink-0" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </StaggerItem>
+            </AnimatedSection>
           ))}
-        </StaggerContainer>
+        </div>
       </div>
     </section>
   );
