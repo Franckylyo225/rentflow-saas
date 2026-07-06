@@ -33,16 +33,16 @@ export function RealEstateSalesSection() {
   return (
     <section className="py-24 sm:py-32">
       <div className="max-w-6xl mx-auto px-5 sm:px-8">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-stretch">
           {/* Left — visual */}
-          <AnimatedSection direction="left" className="order-2 lg:order-1">
-            <div className="relative">
+          <AnimatedSection direction="left" className="order-2 lg:order-1 h-full">
+            <div className="relative h-full">
               <div className="absolute -inset-6 rounded-[2.5rem] bg-primary/10 blur-3xl" />
-              <div className="relative rounded-[2rem] overflow-hidden border border-border/60 bg-card shadow-xl">
+              <div className="relative h-full rounded-[2rem] overflow-hidden border border-border/60 bg-card shadow-xl">
                 <img
                   src={salesImg}
                   alt="Interface de gestion de vente immobilière Rentflow"
-                  className="w-full h-auto"
+                  className="w-full h-full object-cover"
                   loading="lazy"
                   width={1024}
                   height={768}
