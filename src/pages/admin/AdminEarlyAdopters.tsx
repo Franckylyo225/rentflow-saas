@@ -121,6 +121,13 @@ export default function AdminEarlyAdopters() {
   const handleToggleActive = async (next: boolean) => {
     if (!config) return;
     setConfig({ ...config, active: next });
+    try {
+      await updateConfigKeys({ active: String(next) });
+      toast.success(next ? "Programme activé" : "Programme désactivé");
+    } catch (e: any) {
+      setConfig({ ...config, active: !next });
+      toast.error(e.message || "Erreur lors de la mise à jour");
+    }
   };
 
   const handleAdjustCounter = async () => {
