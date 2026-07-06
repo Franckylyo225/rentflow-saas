@@ -143,6 +143,14 @@
     background-image: var(--gradient-primary);
   }
 
+  .text-underline {
+    background-image: linear-gradient(to top, hsl(var(--primary) / 0.15) 0.75rem, transparent 0.75rem);
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
   .landing-blob {
     background: radial-gradient(ellipse at center, hsl(var(--landing-blob) / 0.5) 0%, transparent 70%);
   }
