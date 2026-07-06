@@ -54,7 +54,7 @@ export function TestimonialsSection() {
           {TESTIMONIALS.map((t, i) => (
             <StaggerItem key={t.name}>
               <div
-                className={`group flex flex-col p-8 rounded-3xl bg-card border border-border h-full shadow-[var(--shadow-elevated)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[var(--shadow-card-hover)] ${
+                className={`group flex flex-col p-8 rounded-3xl bg-card border border-border h-full shadow-[var(--shadow-elevated)] transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
                   i === 1 ? "md:translate-y-4" : ""
                 }`}
               >
