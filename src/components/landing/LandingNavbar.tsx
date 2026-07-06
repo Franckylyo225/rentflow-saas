@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 const NAV_LINKS = [
   { label: "Fonctionnalités", href: "#features" },
   { label: "Tarifs", href: "/pricing" },
+  { label: "FAQ", href: "#faq" },
   { label: "Témoignages", href: "#testimonials" },
 ];
 
