@@ -1,4 +1,4 @@
-import { Star, Quote } from "lucide-react";
+import { Star } from "lucide-react";
 import { AnimatedSection, StaggerContainer, StaggerItem } from "./AnimatedSection";
 
 const TESTIMONIALS = [
@@ -9,6 +9,7 @@ const TESTIMONIALS = [
     content:
       "Depuis que nous utilisons cette plateforme, notre taux de recouvrement est passé de 78% à 97%. Les relances automatiques ont tout changé.",
     rating: 5,
+    initials: "AD",
   },
   {
     name: "Fatou Ndiaye",
@@ -17,6 +18,7 @@ const TESTIMONIALS = [
     content:
       "L'interface est intuitive et les rapports financiers me donnent une vue claire sur tous mes biens. Je recommande à 100%.",
     rating: 5,
+    initials: "FN",
   },
   {
     name: "Jean-Paul Mbeki",
@@ -25,6 +27,7 @@ const TESTIMONIALS = [
     content:
       "La gestion multi-villes est un atout majeur. Je gère 200 unités réparties sur 3 villes depuis mon téléphone. Impressionnant.",
     rating: 5,
+    initials: "JPM",
   },
 ];
 
@@ -36,47 +39,45 @@ export function TestimonialsSection() {
 
       <div className="max-w-6xl mx-auto px-5 sm:px-8">
         <AnimatedSection className="max-w-2xl mx-auto text-center mb-16">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-secondary text-xs font-semibold text-foreground uppercase tracking-wider mb-4">
+          <span className="inline-block px-3 py-1 rounded-full bg-secondary text-xs font-semibold text-primary uppercase tracking-widest border border-border/50 mb-4">
             Témoignages
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight">
-            Ils nous font confiance
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
+            Ils nous font <span className="text-primary">confiance</span>
           </h2>
           <p className="mt-5 text-muted-foreground text-lg leading-relaxed">
             Des gestionnaires immobiliers à travers l'Afrique utilisent notre plateforme au quotidien.
           </p>
         </AnimatedSection>
 
-        <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-5xl mx-auto" staggerDelay={0.12}>
-          {TESTIMONIALS.map((t) => (
+        <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-6" staggerDelay={0.12}>
+          {TESTIMONIALS.map((t, i) => (
             <StaggerItem key={t.name}>
-              <div className="flex flex-col p-7 rounded-3xl bg-card border border-border h-full relative">
-                <Quote className="h-8 w-8 text-primary/15 absolute top-6 right-6" />
-
-                <div className="flex gap-1 mb-5">
-                  {Array.from({ length: t.rating }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className="h-4 w-4 fill-primary text-primary"
-                    />
+              <div
+                className={`group flex flex-col p-8 rounded-3xl bg-card border border-border h-full shadow-[var(--shadow-elevated)] transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
+                  i === 1 ? "md:translate-y-4" : ""
+                }`}
+              >
+                <div className="flex gap-1 mb-6">
+                  {Array.from({ length: t.rating }).map((_, idx) => (
+                    <Star key={idx} className="h-4 w-4 fill-primary text-primary" />
                   ))}
                 </div>
 
-                <blockquote className="text-sm text-foreground leading-relaxed flex-1">
+                <blockquote className="text-foreground leading-relaxed font-medium flex-1">
                   « {t.content} »
                 </blockquote>
 
-                <div className="mt-6 pt-5 border-t border-border">
-                  <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-                      {t.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
+                <div className="mt-8 pt-6 border-t border-border">
+                  <div className="flex items-center gap-4">
+                    <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm tracking-tight">
+                      {t.initials}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-foreground">{t.name}</p>
-                      <p className="text-xs text-muted-foreground">{t.role}</p>
+                      <p className="font-display text-sm font-bold text-foreground">{t.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {t.role} · {t.location}
+                      </p>
                     </div>
                   </div>
                 </div>
