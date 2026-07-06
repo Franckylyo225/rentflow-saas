@@ -12,7 +12,7 @@ const REASONS = [
     icon: MessageSquare,
     title: "SMS local intégré",
     description:
-      "Relances envoyées via MonSMS Pro depuis un numéro local. Vos locataires reçoivent et répondent vraiment.",
+      "Relances envoyées via SMS depuis un numéro local. Vos locataires reçoivent et répondent vraiment.",
   },
   {
     icon: ScrollText,
