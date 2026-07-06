@@ -30,12 +30,12 @@ export function HeroSection() {
 
             <AnimatedSection delay={0.08}>
               <h1 className="font-display text-5xl sm:text-6xl lg:text-[4.5rem] font-bold tracking-tight leading-[1.02] text-foreground">
-                Gérez vos locations en{" "}
+                Gérez vos locations{" "}
                 <span className="relative inline-block">
-                  <span className="relative z-10 text-primary">FCFA</span>
+                  <span className="relative z-10 text-primary">en toute simplicité</span>
                   <span className="absolute inset-x-0 bottom-1 h-3 bg-primary/15 -z-0 rounded-sm" />
-                </span>{" "}
-                en toute simplicité.
+                </span>
+                .
               </h1>
             </AnimatedSection>
 
