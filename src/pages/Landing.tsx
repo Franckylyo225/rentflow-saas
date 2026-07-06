@@ -29,6 +29,7 @@ const Landing = () => {
       <ProblemSolutionSection />
       <RealEstateSalesSection />
       <PricingSection />
+      <FaqSection />
       <TestimonialsSection />
       <CtaSection />
       <LandingFooter />
