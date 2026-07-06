@@ -5,12 +5,13 @@ import { RealEstateSalesSection } from "@/components/landing/RealEstateSalesSect
 import { ProblemSolutionSection } from "@/components/landing/ProblemSolutionSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { PricingSection } from "@/components/landing/PricingSection";
-
+import { FaqSection } from "@/components/landing/FaqSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { CtaSection } from "@/components/landing/CtaSection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { AnnouncementBanner } from "@/components/layout/AnnouncementBanner";
 import { Seo } from "@/components/seo/Seo";
+
 
 const Landing = () => {
   return (
